@@ -3,7 +3,7 @@
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 25 Feb 2019 09:26 
+# Last Modified   : 27 Feb 2019 18:46 
 
 import re, types
 from copy import deepcopy
@@ -17,6 +17,7 @@ from SingleBuToKstarMuMuFitter import SingleBuToKstarMuMuFitter
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
 
+from anaSetup import q2bins
 import dataCollection
 import pdfCollection
 
@@ -31,22 +32,23 @@ setupEffiFitter.update({
 })
 effiFitter = SingleBuToKstarMuMuFitter(setupEffiFitter)
 def effiFitter_preFitSteps(self):
-    """Prefix uncorrelated term"""
+    """Prefit uncorrelated term"""
     args = self.pdf.getParameters(self.data)
-    self.ToggleConstVar(args, isConst=True)
     self._initArgs(args)
+    self.ToggleConstVar(args, isConst=True)
 
     # Disable xTerm correction
     args.find('hasXTerm').setVal(0)
-    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^l\d+$"])
-    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^k\d+$"])
+    args.find('effi_norm').setConstant(False)
     self.ToggleConstVar(args, isConst=True, targetArgs=[r"^x\d+$"])
-    self.minimizer.migrad()
-    self.minimizer.migrad()
-    self.minimizer.minos()
+    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^k\d+$"])
+    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^l\d+$"])
+    for i in range(6):
+        self.minimizer.migrad()
 
     # Fix uncorrelated term and for later update with xTerms in main fit step
     args.find('hasXTerm').setVal(1)
+    args.find('effi_norm').setConstant(True)
     self.ToggleConstVar(args, isConst=True, targetArgs=[r"^l\d+$"])
     self.ToggleConstVar(args, isConst=True, targetArgs=[r"^k\d+$"])
     self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+$"])
@@ -97,17 +99,17 @@ finalFitter = SingleBuToKstarMuMuFitter(setupFinalFitter)
 
 def customize(binKey):
     for fitter in [effiFitter, sigMFitter, sig2DFitter, bkgCombAFitter, finalFitter]:
-        fitter.cfg['db'] = "fitResults_{0}.db".format(binKey)
+        fitter.cfg['db'] = "fitResults_{0}.db".format(q2bins[binKey]['label'])
 
 if __name__ == '__main__':
-    binKey = 'test'
+    binKey = 'belowJpsi'
     dataCollection.customize(binKey, ['SR', 'LSB', 'USB', 'test'])
     pdfCollection.customize(binKey)
     customize(binKey)
     p = Process("testFitCollection", "testProcess")
     p.logger.verbosityLevel = VerbosityLevels.DEBUG
-    # p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
-    p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])
+    p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
+    # p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])
     # p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sig2DFitter])
     # p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, bkgCombAFitter])
     p.beginSeq()
