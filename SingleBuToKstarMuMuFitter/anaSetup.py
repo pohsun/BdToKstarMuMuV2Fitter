@@ -3,7 +3,6 @@
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 20 Feb 2019 18:13 
 
 from math import sqrt
 from copy import deepcopy
@@ -50,17 +49,20 @@ bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['c
 
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
-cut_antiRadiation = "abs(Bmass-Mumumass-2.182)>0.09 && abs(Bmass-Mumumass-1.593)>0.03"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
+cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
+cut_antiRadiation = "abs(Bmass-Mumumass-2.182)>0.09 && abs(Bmass-Mumumass-1.593)>0.03"
 cuts = [
     cut_passTrigger,
-    cut_antiRadiation,
     cut_kstarMassWindow,
+    cut_resonanceRej,
+    cut_antiRadiation,
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
 
 # Developers Area
 isDEBUG = True
     # Unit test
-q2bins['test'] = q2bins['summary']
-bMassRegions['test'] = bMassRegions['Fit']
+if isDEBUG:
+    q2bins['test'] = q2bins['summary']
+    bMassRegions['test'] = bMassRegions['Fit']
