@@ -4,7 +4,7 @@
 
 # Description     : Define PDFs
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 27 Feb 2019 19:10 01:26
+# Last Modified   : 28 Feb 2019 09:54 01:26
 
 ############
 # WARNINGS #
@@ -81,12 +81,12 @@ f_effiSigA_format['DEFAULT'] = [ "l{0}[-10,10]".format(i) for i in range(1,6+1) 
         xTerm="(x0+x1*CosThetaK+x2*(3.*pow(CosThetaK,2)-1.)/2.+x3*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)+(x4+x5*CosThetaK+x6*(3.*pow(CosThetaK,2)-1.)/2.+x7*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)*pow(CosThetaL,2)+(x8+x9*CosThetaK+x10*(3.*pow(CosThetaK,2)-1.)/2.+x11*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)*pow(CosThetaL,3)+(x12+x13*CosThetaK+x14*(3.*pow(CosThetaK,2)-1.)/2.+x15*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)*pow(CosThetaL,4)",
         args="{CosThetaL, CosThetaK, hasXTerm, effi_norm, "+', '.join(["l{0}".format(i) for i in range(1,7)]+["k{0}".format(i) for i in range(1,7)]+["x{0}".format(i) for i in range(16)])+"}")]
 
-f_effiSigA_format['belowJpsi'] = [ "l{0}[-10,10]".format(i) for i in range(1,6+1) ] \
-    +[ "k1[0,-0.5,0.5]", "k2[.1,5]", "k3[0,10]", "k4[-1,-1,0.1]", "k5[.1,5]", "k6[0,10]", "k7[1,0.1,1]", "k8[.1,5]" ] \
+f_effiSigA_format['belowJpsi'] = [ "l1[0,-0.5,0.5]", "l2[.1,5]", "l3[0,10]", "l4[-1,-1,0.1]", "l5[.1,5]", "l6[0,10]", "l7[1,0.1,1]", "l8[.1,5]" ] \
+    +["k{0}[-10,10]".format(i) for i in range(1,6+1) ] \
     +[ "effi_norm[0,1]", "hasXTerm[0]"]+[ "x{0}[-100,100]".format(i) for i in range(15+1) ] \
     +[ "expr::effi_sigA('effi_norm*({pdfL})*({pdfK})*(1+hasXTerm*({xTerm}))', {{{args}}})".format(
-        pdfL="1/(2+0.666667*l2+0.4*l4+0.285714*l6)*(1+l1*CosThetaL+l2*pow(CosThetaL,2)+l3*pow(CosThetaL,3)+l4*pow(CosThetaL,4)+l5*pow(CosThetaL,5)+l6*pow(CosThetaL,6))",
-        pdfK="0.398942/(k2+k3*k5+k6*k8)*(exp(-0.5*pow((CosThetaK-k1)/k2, 2))+k3*exp(-0.5*pow((CosThetaK-k4)/k5, 2))+k6*exp(-0.5*pow((CosThetaK-k7)/k8, 2)))",
+        pdfL="0.398942/(l2+l3*l5+l6*l8)*(exp(-0.5*pow((CosThetaL-l1)/l2, 2))+l3*exp(-0.5*pow((CosThetaL-l4)/l5, 2))+l6*exp(-0.5*pow((CosThetaL-l7)/l8, 2)))",
+        pdfK="1/(2+0.666667*k2+0.4*k4+0.285714*k6)*(1+k1*CosThetaK+k2*pow(CosThetaK,2)+k3*pow(CosThetaK,3)+k4*pow(CosThetaK,4)+k5*pow(CosThetaK,5)+k6*pow(CosThetaK,6))",
         xTerm="(x0+x1*CosThetaK+x2*(3.*pow(CosThetaK,2)-1.)/2.+x3*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)+(x4+x5*CosThetaK+x6*(3.*pow(CosThetaK,2)-1.)/2.+x7*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)*pow(CosThetaL,2)+(x8+x9*CosThetaK+x10*(3.*pow(CosThetaK,2)-1.)/2.+x11*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)*pow(CosThetaL,3)+(x12+x13*CosThetaK+x14*(3.*pow(CosThetaK,2)-1.)/2.+x15*(5.*pow(CosThetaK,3)-3.*CosThetaK)/2.)*pow(CosThetaL,4)",
         args="{CosThetaL, CosThetaK, hasXTerm, effi_norm, "+', '.join(["l{0}".format(i) for i in range(1,7)]+["k{0}".format(i) for i in range(1,9)]+["x{0}".format(i) for i in range(16)])+"}")]
 setupBuildEffiSigA = {
