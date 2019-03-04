@@ -68,9 +68,9 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
             }
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
-                'baseString': "({0}) && ({1})".format(setupEfficiencyBuildProcedure['acc']['baseString'], setupEfficiencyBuildProcedure['acc']['cutString']),
-                'cutString': cuts[-1],
-                'fillXY': "CosThetaK:CosThetaL" # Y:X
+                'baseString': "{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
+                'cutString': "Bmass > 0.5 && ({0})".format(cuts[-1]),
+                'fillXY': "genCosThetaK:genCosThetaL" # Y:X
             }
             for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
                 if h2 == None or forceRebuild:
@@ -78,7 +78,7 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
                     for f in setupEfficiencyBuildProcedure[label]['ifiles']:
                         treein.Add(f)
 
-                    treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'],)
+                    treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'])
                     totEvtList = ROOT.gDirectory.Get("totEvtList")
                     treein.SetEventList(totEvtList)
                     treein.Draw(">>accEvtList", setupEfficiencyBuildProcedure[label]['cutString'])
