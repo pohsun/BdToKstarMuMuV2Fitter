@@ -103,8 +103,8 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
 
                     fin.cd()
                     for proj, var in [("ProjectionX", CosThetaL), ("ProjectionY", CosThetaK)]:
-                        proj_fine_total  = getattr(h2_fine_total, proj)()
-                        proj_fine_passed = getattr(h2_fine_passed, proj)()
+                        proj_fine_total  = getattr(h2_fine_total, proj)(0,-1,"e")
+                        proj_fine_passed = getattr(h2_fine_passed, proj)(0,-1,"e")
                         h_eff = TEfficiency(proj_fine_passed, proj_fine_total)
                         h_eff.Write("h_{0}_fine_{1}_{2}".format(label, q2bins[binKey]['label'], proj), ROOT.TObject.kOverwrite)
 
@@ -120,7 +120,7 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
                 h_accXrec_fine.Reset("ICESM")
                 for b in range(1, h_accXrec_fine.GetNbinsX()+1):
                     h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b)*h_rec_fine.GetEfficiency(b))
-                    h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b)*math.sqrt(2+h_acc_fine.GetEfficiency(b)*h_rec_fine.GetEfficiency(b)))
+                    h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b)*math.sqrt(1/h_acc_fine.GetTotalHistogram().GetBinContent(b)+1/h_acc_fine.GetPassedHistogram().GetBinContent(b)+1/h_rec_fine.GetTotalHistogram().GetBinContent(b)+1/h_rec_fine.GetPassedHistogram().GetBinContent(b)))
                 h_accXrec_fine.Write("h_accXrec_{0}_{1}".format(q2bins[binKey]['label'], proj), ROOT.TObject.kOverwrite)
 
             h2_acc = fin.Get("h2_acc_{0}".format(q2bins[binKey]['label']))
@@ -134,7 +134,7 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
                 else:
                     iLK = h2_acc.GetGlobalBin(iL, iK)
                     h2_accXrec.SetBinContent(iL, iK, h2_acc.GetEfficiency(iLK)*h2_rec.GetEfficiency(iLK))
-                    h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK)*math.sqrt(2+h2_acc.GetEfficiency(iLK)+h2_rec.GetEfficiency(iLK)))
+                    h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK)*math.sqrt(1/h2_acc.GetTotalHistogram().GetBinContent(iLK)+1/h2_acc.GetPassedHistogram().GetBinContent(iLK)+1/h2_rec.GetTotalHistogram().GetBinContent(iLK)+1/h2_rec.GetPassedHistogram().GetBinContent(iLK)))
             h2_accXrec.SetXTitle("cos#theta_{l}")
             h2_accXrec.SetYTitle("cos#theta_{K}")
             h2_accXrec.SetZTitle("Overall efficiency")

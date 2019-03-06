@@ -4,30 +4,38 @@
 
 # Description     : Fitter template without specification
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
+# Last Modified   : 06 Mar 2019 14:59 01:24
 
 from v2Fitter.Fitter.FitterCore import FitterCore
+from varCollection import CosThetaL, CosThetaK
 
 import shelve
 import functools
 
 import ROOT
 
-class SingleBuToKstarMuMuFitter(FitterCore):
-    """Implementation to standard fitting procdeure to BuToKstarMuMu angular analysis"""
+class EfficiencyFitter(FitterCore):
+    """Implementation to standard efficiency fitting procdeure to BuToKstarMuMu angular analysis"""
 
     @classmethod
     def templateConfig(cls):
         cfg = FitterCore.templateConfig()
         cfg.update({
-            'name': "SingleBuToKstarMuMuFitter",
-            'data': "dataReader.Fit",
-            'pdf' : "f",
+            'name': "EfficiencyFitter",
+            'data': "effiHistReader.accXrec",
+            'dataX': "effiHistReader.accXrec",
+            'dataY': "effiHistReader.accXrec",
+            'pdf' : "effi_sigA",
+            'pdfX' : "effi_sigA",
+            'pdfY' : "effi_sigA",
             'db'  : "fitResults.db",
-            'FitHesse':True,
-            'FitMinos': [True, ()],
-            'createNLLOpt': [ROOT.RooFit.Extended(1),],
         })
+        del cfg['createNLLOpt']
         return cfg
+
+    def _bookMinimizer(self):
+        """Pass complicate fitting control."""
+        pass
 
     def _initArgs(self, args):
         """Parameter initialization from db file"""
@@ -56,11 +64,33 @@ class SingleBuToKstarMuMuFitter(FitterCore):
         db.close()
 
     def _preFitSteps(self):
-        """Initialize """
+        """Prefit uncorrelated term"""
         args = self.pdf.getParameters(self.data)
         self._initArgs(args)
-        self.ToggleConstVar(args, True)
-        self.ToggleConstVar(args, False, self.cfg.get('argPattern', [r'^.+$',]))
+        self.ToggleConstVar(args, isConst=True)
+
+        # Disable xTerm correction and fit to 1-D
+        args.find('hasXTerm').setVal(0)
+        self.ToggleConstVar(args, isConst=False, targetArgs=[r"^k\d+$"])
+        self.ToggleConstVar(args, isConst=False, targetArgs=[r"^l\d+$"])
+        
+        h_accXrec_fine_ProjectionX = self.process.sourcemanager.get(self.cfg['dataX'])
+        h_accXrec_fine_ProjectionY = self.process.sourcemanager.get(self.cfg['dataY'])
+        effi_cosl = self.process.sourcemanager.get(self.cfg['pdfX'])
+        effi_cosK = self.process.sourcemanager.get(self.cfg['pdfY'])
+        for proj, pdf, var in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK)]:
+            hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
+            pdf.chi2FitTo(hdata, ROOT.RooLinkedList())
+
+        self.ToggleConstVar(args, isConst=True, targetArgs=[r"^l\d+$"])
+        self.ToggleConstVar(args, isConst=True, targetArgs=[r"^k\d+$"])
+        args.find('effi_norm').setConstant(False)
+        self.pdf.chi2FitTo(self.data)
+
+        # Fix uncorrelated term and for later update with xTerms in main fit step
+        args.find('hasXTerm').setVal(1)
+        self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+$"])
+        args.find('effi_norm').setConstant(True)
 
     def _updateArgs(self, args):
         """Update fit result to db file"""
@@ -89,49 +119,6 @@ class SingleBuToKstarMuMuFitter(FitterCore):
         self.ToggleConstVar(args, True)
         self._updateArgs(args)
 
-
     def _runFitSteps(self):
-        self.FitMigrad()
-        if self.cfg.get('FitHesse', False):
-            self.FitHesse()
-        if self.cfg.get('FitMinos', [False, ()])[0]:
-            self.FitMinos()
-
-    def FitMigrad(self):
-        """Migrad"""
-        isMigradConverge=[-1,0]
-
-        maxMigradCall = 10
-        for iL in range(maxMigradCall):
-            isMigradConverge[0]=self.minimizer.migrad()
-            if isMigradConverge[0] == 0:
-                break
-        isMigradConverge[1] = self._nll.getVal()
-        return isMigradConverge
-
-    def FitHesse(self):
-        """Hesse"""
-        isHesseValid = self.minimizer.hesse()
-        return isHesseValid
-
-    def FitMinos(self):
-        """Minos"""
-        isMinosValid = -1
-
-        par = self.pdf.getParameters(self.data)
-        if len(self.cfg['FitMinos']) > 1 and self.cfg['FitMinos'][1]:
-            iter = par.createIterator()
-            var = iter.Next()
-            while var:
-                if var.GetName() not in self.cfg['FitMinos'][1]:
-                    par.remove(var)
-                var = iter.Next()
-                par.Print()
-
-        maxMinosCall = 3
-        for iL in range(maxMinosCall):
-            isMinosValid = self.minimizer.minos(par)
-            if isMinosValid == 0:
-                break
-        return isMinosValid
+        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
 
