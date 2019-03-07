@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 06 Mar 2019 15:00 
-
 import re, types, math
 from copy import deepcopy
 import functools

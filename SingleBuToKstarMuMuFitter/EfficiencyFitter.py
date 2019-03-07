@@ -4,13 +4,16 @@
 
 # Description     : Fitter template without specification
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 06 Mar 2019 14:59 01:24
+# Last Modified   : 07 Mar 2019 21:25 01:24
 
 from v2Fitter.Fitter.FitterCore import FitterCore
 from varCollection import CosThetaL, CosThetaK
 
+import os
+import re
 import shelve
 import functools
+import itertools
 
 import ROOT
 
@@ -85,7 +88,7 @@ class EfficiencyFitter(FitterCore):
         self.ToggleConstVar(args, isConst=True, targetArgs=[r"^l\d+$"])
         self.ToggleConstVar(args, isConst=True, targetArgs=[r"^k\d+$"])
         args.find('effi_norm').setConstant(False)
-        self.pdf.chi2FitTo(self.data)
+        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
 
         # Fix uncorrelated term and for later update with xTerms in main fit step
         args.find('hasXTerm').setVal(1)
@@ -120,5 +123,42 @@ class EfficiencyFitter(FitterCore):
         self._updateArgs(args)
 
     def _runFitSteps(self):
-        self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
+        h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
+
+        effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
+        args = self.pdf.getParameters(self.data)
+        args_it = args.createIterator()
+        arg = args_it.Next()
+        nPar = 0
+        while arg:
+            if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", "^l\d+$", "^k\d+$"]):
+                effi_sigA_formula = re.sub(arg.GetName(), "({0})".format(arg.getVal()), effi_sigA_formula)
+            elif re.match("^x\d+$", arg.GetName()):
+                nPar += 1
+            arg = args_it.Next()
+        effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
+        effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
+        effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
+        f2_effi_sigA = ROOT.TF2("f2_effi_sigA", effi_sigA_formula, -1, 1, -1, 1)
+
+        if os.path.exists(os.path.abspath(os.path.dirname(__file__))+"/cpp/EfficiencyFitter_cc.so"):
+            ROOT.gROOT.ProcessLine(".L "+os.path.abspath(os.path.dirname(__file__))+"/cpp/EfficiencyFitter_cc.so")
+        else:
+            ROOT.gROOT.ProcessLine(".L "+os.path.abspath(os.path.dirname(__file__))+"/cpp/EfficiencyFitter.cc+")
+        fitter = ROOT.EfficiencyFitter()
+        minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
+        for xIdx in range(nPar):
+            minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0.,  1E-4,    -1E+1, 1E+1)
+        minuit.Command("MINI")
+        minuit.Command("MINI")
+        minuit.Command("MINOS")
+
+        parVal = ROOT.Double(0)
+        parErr = ROOT.Double(0)
+        for xIdx in range(nPar):
+            minuit.GetParameter(xIdx, parVal, parErr)
+            arg = args.find("x{0}".format(xIdx))
+            arg.setVal(parVal)
+            arg.setError(parErr)
+
 
