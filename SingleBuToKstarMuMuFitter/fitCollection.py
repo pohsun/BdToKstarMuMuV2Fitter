@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 27 Feb 2019 18:46 
-
-import re, types
+import re, types, math
 from copy import deepcopy
 import functools
 
 import ROOT
 
 from v2Fitter.Fitter.FitterCore import FitterCore
+from EfficiencyFitter import EfficiencyFitter
 from SingleBuToKstarMuMuFitter import SingleBuToKstarMuMuFitter
+from varCollection import CosThetaK, CosThetaL
 
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
@@ -23,37 +22,17 @@ import pdfCollection
 
 setupTemplateFitter = SingleBuToKstarMuMuFitter.templateConfig()
 
-setupEffiFitter = deepcopy(setupTemplateFitter)
+setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
 setupEffiFitter.update({
     'name': "effiFitter",
     'data': "effiHistReader.accXrec",
+    'dataX': "effiHistReader.h_accXrec_fine_ProjectionX",
+    'dataY': "effiHistReader.h_accXrec_fine_ProjectionY",
     'pdf': "effi_sigA",
-    'createNLLOpt': [],
+    'pdfX': "effi_cosl",
+    'pdfY': "effi_cosK",
 })
-effiFitter = SingleBuToKstarMuMuFitter(setupEffiFitter)
-def effiFitter_preFitSteps(self):
-    """Prefit uncorrelated term"""
-    args = self.pdf.getParameters(self.data)
-    self._initArgs(args)
-    self.ToggleConstVar(args, isConst=True)
-
-    # Disable xTerm correction
-    args.find('hasXTerm').setVal(0)
-    args.find('effi_norm').setConstant(False)
-    self.ToggleConstVar(args, isConst=True, targetArgs=[r"^x\d+$"])
-    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^k\d+$"])
-    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^l\d+$"])
-    for i in range(6):
-        self.minimizer.migrad()
-
-    # Fix uncorrelated term and for later update with xTerms in main fit step
-    args.find('hasXTerm').setVal(1)
-    args.find('effi_norm').setConstant(True)
-    self.ToggleConstVar(args, isConst=True, targetArgs=[r"^l\d+$"])
-    self.ToggleConstVar(args, isConst=True, targetArgs=[r"^k\d+$"])
-    self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+$"])
-
-effiFitter._preFitSteps = types.MethodType(effiFitter_preFitSteps, effiFitter)
+effiFitter = EfficiencyFitter(setupEffiFitter)
 
 setupSigMFitter = deepcopy(setupTemplateFitter)
 setupSigMFitter.update({

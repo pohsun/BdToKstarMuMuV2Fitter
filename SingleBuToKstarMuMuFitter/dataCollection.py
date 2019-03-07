@@ -68,9 +68,9 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
             }
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
-                'baseString': "({0}) && ({1})".format(setupEfficiencyBuildProcedure['acc']['baseString'], setupEfficiencyBuildProcedure['acc']['cutString']),
-                'cutString': cuts[-1],
-                'fillXY': "CosThetaK:CosThetaL" # Y:X
+                'baseString': "{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
+                'cutString': "Bmass > 0.5 && ({0})".format(cuts[-1]),
+                'fillXY': "genCosThetaK:genCosThetaL" # Y:X
             }
             for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
                 if h2 == None or forceRebuild:
@@ -78,7 +78,7 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
                     for f in setupEfficiencyBuildProcedure[label]['ifiles']:
                         treein.Add(f)
 
-                    treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'],)
+                    treein.Draw(">>totEvtList", setupEfficiencyBuildProcedure[label]['baseString'])
                     totEvtList = ROOT.gDirectory.Get("totEvtList")
                     treein.SetEventList(totEvtList)
                     treein.Draw(">>accEvtList", setupEfficiencyBuildProcedure[label]['cutString'])
@@ -102,10 +102,27 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
                     h2_eff_fine = TEfficiency(h2_fine_passed, h2_fine_total)
 
                     fin.cd()
+                    for proj, var in [("ProjectionX", CosThetaL), ("ProjectionY", CosThetaK)]:
+                        proj_fine_total  = getattr(h2_fine_total, proj)(0,-1,"e")
+                        proj_fine_passed = getattr(h2_fine_passed, proj)(0,-1,"e")
+                        h_eff = TEfficiency(proj_fine_passed, proj_fine_total)
+                        h_eff.Write("h_{0}_fine_{1}_{2}".format(label, q2bins[binKey]['label'], proj), ROOT.TObject.kOverwrite)
+
                     h2_eff.Write("h2_{0}_{1}".format(label, q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
                     h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
 
             # Merge acc and rec to accXrec
+            fin.cd()
+            for proj in ["ProjectionX", "ProjectionY"]:
+                h_acc_fine = fin.Get("h_acc_fine_{0}_{1}".format(q2bins[binKey]['label'], proj))
+                h_rec_fine = fin.Get("h_rec_fine_{0}_{1}".format(q2bins[binKey]['label'], proj))
+                h_accXrec_fine = h_acc_fine.GetPassedHistogram().Clone("h_accXrec_fine_{0}_{1}".format(q2bins[binKey]['label'], proj))
+                h_accXrec_fine.Reset("ICESM")
+                for b in range(1, h_accXrec_fine.GetNbinsX()+1):
+                    h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b)*h_rec_fine.GetEfficiency(b))
+                    h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b)*math.sqrt(1/h_acc_fine.GetTotalHistogram().GetBinContent(b)+1/h_acc_fine.GetPassedHistogram().GetBinContent(b)+1/h_rec_fine.GetTotalHistogram().GetBinContent(b)+1/h_rec_fine.GetPassedHistogram().GetBinContent(b)))
+                h_accXrec_fine.Write("h_accXrec_{0}_{1}".format(q2bins[binKey]['label'], proj), ROOT.TObject.kOverwrite)
+
             h2_acc = fin.Get("h2_acc_{0}".format(q2bins[binKey]['label']))
             h2_rec = fin.Get("h2_rec_{0}".format(q2bins[binKey]['label']))
             h2_accXrec = h2_acc.GetPassedHistogram().Clone("h2_accXrec_{0}".format(q2bins[binKey]['label']))
@@ -117,17 +134,19 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
                 else:
                     iLK = h2_acc.GetGlobalBin(iL, iK)
                     h2_accXrec.SetBinContent(iL, iK, h2_acc.GetEfficiency(iLK)*h2_rec.GetEfficiency(iLK))
-                    h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK)*math.sqrt(-1/h2_rec.GetTotalHistogram().GetBinContent(iL, iK)+1./h2_rec.GetPassedHistogram().GetBinContent(iL, iK)+pow(max(h2_acc.GetEfficiencyErrorUp(iLK), h2_acc.GetEfficiencyErrorLow(iLK))/h2_acc.GetEfficiency(iLK), 2)))
+                    h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK)*math.sqrt(1/h2_acc.GetTotalHistogram().GetBinContent(iLK)+1/h2_acc.GetPassedHistogram().GetBinContent(iLK)+1/h2_rec.GetTotalHistogram().GetBinContent(iLK)+1/h2_rec.GetPassedHistogram().GetBinContent(iLK)))
             h2_accXrec.SetXTitle("cos#theta_{l}")
             h2_accXrec.SetYTitle("cos#theta_{K}")
+            h2_accXrec.SetZTitle("Overall efficiency")
 
-            fin.cd()
             h2_accXrec.Write("h2_accXrec_{0}".format(q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
             self.logger.logINFO("Overall efficiency is built.")
 
         if binKey == targetBinKey:
             self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
             self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
+            self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(q2bins[binKey]['label']))
+            self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(q2bins[binKey]['label']))
 
 def customizeOne(reader, binKey, dumpBMassRegion = []):
     """Define datasets with arguments."""

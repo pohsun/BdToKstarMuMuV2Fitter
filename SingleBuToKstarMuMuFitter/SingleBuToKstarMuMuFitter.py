@@ -4,7 +4,6 @@
 
 # Description     : Fitter template without specification
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 26 Feb 2019 08:12 01:24
 
 from v2Fitter.Fitter.FitterCore import FitterCore
 

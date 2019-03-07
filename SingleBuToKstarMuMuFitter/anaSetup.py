@@ -28,7 +28,7 @@ q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumu
 q2bins['jpsi'] = createBinTemplate("jpsi", 8.68, 10.09)
 q2bins['psi2s'] = createBinTemplate("psi2s", 12.86, 14.18)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
-q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > sqrt(3.58608) && Mumumass < sqrt(3.76563))"
+q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
 
 # B mass regions
 bMassRegions = {}
