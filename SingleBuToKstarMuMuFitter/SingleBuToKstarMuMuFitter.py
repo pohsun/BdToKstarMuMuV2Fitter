@@ -6,7 +6,10 @@
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
 from v2Fitter.Fitter.FitterCore import FitterCore
+import FitDBPlayer
 
+import os
+import shutil
 import shelve
 import functools
 
@@ -26,68 +29,36 @@ class SingleBuToKstarMuMuFitter(FitterCore):
             'FitHesse':True,
             'FitMinos': [True, ()],
             'createNLLOpt': [ROOT.RooFit.Extended(1),],
+            'updateArgs': True,
+            'systematics': [],
         })
         return cfg
-
-    def _initArgs(self, args):
-        """Parameter initialization from db file"""
-        db = shelve.open(self.cfg.get('db', "fitResults.db"))
-        def initFromDB(iArg):
-            argName = iArg.GetName()
-            funcPair = [
-                ('setVal', 'getVal'),
-                ('setError', 'getError'),
-                ('setAsymError', 'getErrorHi'),
-                ('setAsymError', 'getErrorLo'),
-                ('setConstant', 'isConstant'),
-                ('setMax', 'getMax'),
-                ('setMin', 'getMin')]
-            if argName in db:
-                for setter, getter in funcPair:
-                    getattr(iArg, setter)(
-                        *{
-                            'getErrorHi': (db[argName]['getErrorLo'], db[argName][getter]),
-                            'getErrorLo': (db[argName][getter], db[argName]['getErrorHi']),
-                        }.get(getter, (db[argName][getter],))
-                    )
-            else:
-                self.logger.logINFO("Found new variable {0}".format(argName))
-        FitterCore.ArgLooper(args, initFromDB)
-        db.close()
 
     def _preFitSteps(self):
         """Initialize """
         args = self.pdf.getParameters(self.data)
-        self._initArgs(args)
+        FitDBPlayer.initFromDB(self.cfg.get('db', FitDBPlayer.outputfilename), args)
         self.ToggleConstVar(args, True)
         self.ToggleConstVar(args, False, self.cfg.get('argPattern', [r'^.+$',]))
 
-    def _updateArgs(self, args):
-        """Update fit result to db file"""
-        db = shelve.open(self.cfg.get('db', "fitResults.db"), writeback=True)
-        def updateToDB(iArg):
-            argName = iArg.GetName()
-            funcPair = [
-                ('setVal', 'getVal'),
-                ('setError', 'getError'),
-                ('setAsymError', 'getErrorHi'),
-                ('setAsymError', 'getErrorLo'),
-                ('setConstant', 'isConstant'),
-                ('setMax', 'getMax'),
-                ('setMin', 'getMin')]
-            if argName not in db:
-                self.logger.logINFO("Book new variable {0} to db file".format(argName))
-                db[argName] = {}
-            for setter, getter in funcPair:
-                db[argName][getter] = getattr(iArg, getter)()
-        FitterCore.ArgLooper(args, updateToDB)
-        db.close()
+        # customization for systematics
+        for syst in self.cfg['systematics']:
+            if syst == "AltEfficiency":
+                hasXTerm = args.find("hasXTerm")
+                hasXTerm.setVal(0)
+            else:
+                self.logger.logERROR("Unknown source of systematic uncertainty.")
+                raise NotImplementedError
 
     def _postFitSteps(self):
         """Post-processing"""
         args = self.pdf.getParameters(self.data)
         self.ToggleConstVar(args, True)
-        self._updateArgs(args)
+        if self.cfg['updateArgs']:
+            ofilename = "{0}_{1}.db".format(os.path.splitext(FitDBPlayer.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
+            if not os.path.exists(ofilename) and self.process.cfg.has_key("db"):
+                shutil.copy(self.process.cfg["db"], ofilename)
+            FitDBPlayer.UpdateToDB(ofilename, args)
 
 
     def _runFitSteps(self):

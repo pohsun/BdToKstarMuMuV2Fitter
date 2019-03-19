@@ -2,25 +2,23 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
-# Description     : The unit of a run-able job
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 24 Feb 2019 20:18 21:48
-
 from __future__ import print_function
 
 import os
+import types
 from collections import OrderedDict
 from v2Fitter.FlowControl.Logger import Logger
 from v2Fitter.FlowControl.SourceManager import SourceManager, FileManager
 
 class Process:
     """A unit of a run-able job."""
-    def __init__(self, name, work_dir):
+    def __init__(self, name, work_dir, cfg=None):
         self.name = name
         self.work_dir = work_dir
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         self.cwd = os.getcwd()
+        self.cfg = cfg if not cfg is None else Process.templateConfig()
 
         # Register services
         self._services = OrderedDict()
@@ -34,6 +32,14 @@ class Process:
 
     def __str__(self):
         return self._sequence.__str__()
+
+    @classmethod
+    def templateConfig(cls):
+        cfg = {
+            'binKey': "test",
+            'isBatchJob': False,
+        }
+        return cfg
 
     def setSequence(self, seq):
         """Define a sequence of path to be run."""

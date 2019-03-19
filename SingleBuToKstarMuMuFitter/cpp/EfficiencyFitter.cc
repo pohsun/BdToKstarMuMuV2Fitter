@@ -7,9 +7,11 @@
 
 TH2 *h2_fcn = 0;
 TF2 *f2_fcn = 0;
+int chi2Val = 0;
+
 void fcn_binnedChi2_2D(int &npar, double *gin, double &f, double *par, int iflag)
 {//{{{
-f=0;
+    f=0;
     for (int i = 1; i <= h2_fcn->GetNbinsX(); i++) {
         for (int j = 1; j <= h2_fcn->GetNbinsY(); j++) {
             int gBin = h2_fcn->GetBin(i,j);
@@ -25,6 +27,7 @@ f=0;
             f += pow( (f2_fcn->Integral(xi,xf,yi,yf)/(xf-xi)/(yf-yi)-measure)/error,2);
         }
     }
+    chi2Val = f;
 }//}}}
 
 class EfficiencyFitter{
@@ -33,6 +36,7 @@ public:
     virtual ~EfficiencyFitter();
     TH2* GetH2(){return h2_fcn;}
     TF2* GetF2(){return f2_fcn;}
+    int  GetChi2(){return chi2Val;}
     TMinuit* Init(int, TH2*, TF2*);
 private:
     TMinuit *minuit = 0;

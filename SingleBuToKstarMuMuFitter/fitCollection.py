@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
-import re, types, math
+import os, re, types, math
 from copy import deepcopy
 import functools
 
@@ -31,6 +31,7 @@ setupEffiFitter.update({
     'pdf': "effi_sigA",
     'pdfX': "effi_cosl",
     'pdfY': "effi_cosK",
+    'updateArgs': True,
 })
 effiFitter = EfficiencyFitter(setupEffiFitter)
 
@@ -41,6 +42,7 @@ setupSigMFitter.update({
     'pdf': "f_sigM",
     'argPattern': ['sigMGauss[12]_sigma', 'sigMGauss_mean', 'sigM_frac'],
     'createNLLOpt': [],
+    'updateArgs': True,
 })
 sigMFitter = SingleBuToKstarMuMuFitter(setupSigMFitter)
 
@@ -51,6 +53,7 @@ setupSig2DFitter.update({
     'pdf': "f_sig2D",
     'argPattern': ['afb', 'fl', 'fs', 'as'],
     'createNLLOpt': [],
+    'updateArgs': True,
 })
 sig2DFitter = SingleBuToKstarMuMuFitter(setupSig2DFitter)
 
@@ -63,6 +66,7 @@ setupBkgCombAFitter.update({
     'FitHesse':False,
     'FitMinos': [False, ()],
     'createNLLOpt': [],
+    'updateArgs': True,
 })
 bkgCombAFitter = SingleBuToKstarMuMuFitter(setupBkgCombAFitter)
 
@@ -73,12 +77,13 @@ setupFinalFitter.update({
     'pdf': "f_final",
     'argPattern': ['afb', 'fl', 'fs', 'as'],
     'createNLLOpt': [],
+    'updateArgs': True,
 })
 finalFitter = SingleBuToKstarMuMuFitter(setupFinalFitter)
 
 def customize(binKey):
     for fitter in [effiFitter, sigMFitter, sig2DFitter, bkgCombAFitter, finalFitter]:
-        fitter.cfg['db'] = "fitResults_{0}.db".format(q2bins[binKey]['label'])
+        fitter.cfg['db'] = "{0}/input/fitResults_{0}.db".format(os.path.dirname(__file__), q2bins[binKey]['label'])
 
 if __name__ == '__main__':
     binKey = 'belowJpsi'

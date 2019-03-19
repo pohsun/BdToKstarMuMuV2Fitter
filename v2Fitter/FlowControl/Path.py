@@ -4,11 +4,17 @@
 
 # Description     : A single step to be run in a process
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 20 Feb 2019 19:04 21:48
+# Last Modified   : 11 Mar 2019 20:06 21:48
 
 from __future__ import print_function
 
 import abc
+
+class PathModifier():
+    """To be called to modify a path"""
+    def customize(**kwargs):
+        """Customization"""
+        pass
 
 class Path():
     """Steps to be run in a Process"""
@@ -23,7 +29,7 @@ class Path():
     def __str__(self):
         return "Path[{0}]".format(self.name)
 
-    # @abc.abstractclassmethod
+    # @abc.abstractclassmethod # python3
     def templateConfig(cls):
         """Return template configuration."""
         raise NotImplementedError

@@ -4,7 +4,7 @@
 
 # Description     : Define PDFs
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 06 Mar 2019 14:13 01:26
+# Last Modified   : 19 Mar 2019 12:04 01:26
 
 ############
 # WARNINGS #
@@ -313,7 +313,7 @@ def customize(binKey):
     })
     CFG_WspaceReader.update({
         'wspaceTag': CFG_ObjProvider['wspaceTag'],
-        'fileName': "wspace_{0}.root".format(q2bins[binKey]['label']),
+        'fileName': "{0}/input/wspace_{0}.root".format(os.path.dirname(__file__), q2bins[binKey]['label']),
         'obj': OrderedDict([
             ('effi_cosl', 'effi_cosl'),
             ('effi_cosK', 'effi_cosK'),
