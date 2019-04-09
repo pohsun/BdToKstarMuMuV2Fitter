@@ -4,8 +4,20 @@
 
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
+import os
 from math import sqrt
 from copy import deepcopy
+
+# Shared global settings
+isDEBUG = True
+modulePath = os.path.dirname(__file__)
+
+
+# default configuration for Process
+processCfg = {
+    'isBatchJob': False,
+    'binKey': None,
+}
 
 # q2 bins
 q2bins = {}
@@ -69,7 +81,6 @@ cuts = [
 cuts.append("({0})".format(")&&(".join(cuts)))
 
 # Developers Area
-isDEBUG = True
     # Unit test
 if isDEBUG:
     q2bins['test'] = q2bins['summary']
