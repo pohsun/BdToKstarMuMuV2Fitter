@@ -39,6 +39,7 @@ class DataReader(Path):
             'name': "DataReader",
             'ifile': [],
             'argset': [],
+            'dataset': [],
         }
         return cfg
 

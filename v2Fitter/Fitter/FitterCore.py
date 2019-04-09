@@ -2,10 +2,6 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
-# Description     : Fitter template without specification
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 20 Feb 2019 19:39 01:24
-
 import re
 
 from ROOT import RooMinimizer
@@ -27,7 +23,17 @@ Following functions to be overloaded to customize the full procedure...
 
     def _bookPdfData(self):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
-        self.data = self.process.sourcemanager.get(self.cfg['data'])
+        if not hasattr(self.cfg['data'], "__iter__"):
+            self.data = self.process.sourcemanager.get(self.cfg['data'])
+        elif len(self.cfg['data']) <= 1:
+            self.data = self.process.sourcemanager.get(self.cfg['data'][0])
+        else:
+            # Merge list of input data/toy
+            for data in self.cfg['data']:
+                if self.data is not None:
+                    self.data.append(self.process.sourcemanager.get(data))
+                else:
+                    self.data = self.process.sourcemanager.get(data).Clone()
 
     def _bookMinimizer(self):
         """Bind a RooMinimizer object to bind to self.minimizer at Runtime"""

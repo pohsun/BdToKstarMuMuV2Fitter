@@ -2,18 +2,19 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
-# Description     : Fitter template without specification
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 07 Mar 2019 21:25 01:24
-
 from v2Fitter.Fitter.FitterCore import FitterCore
+from FitDBPlayer import FitDBPlayer
+from anaSetup import q2bins
 from varCollection import CosThetaL, CosThetaK
+from plotCollection import setStyle
 
 import os
 import re
+import shutil
 import shelve
 import functools
 import itertools
+from array import array
 
 import ROOT
 
@@ -26,12 +27,13 @@ class EfficiencyFitter(FitterCore):
         cfg.update({
             'name': "EfficiencyFitter",
             'data': "effiHistReader.accXrec",
-            'dataX': "effiHistReader.accXrec",
-            'dataY': "effiHistReader.accXrec",
+            'dataX': "effiHistReader.h_accXrec_fine_ProjectionX",
+            'dataY': "effiHistReader.h_accXrec_fine_ProjectionY",
             'pdf' : "effi_sigA",
-            'pdfX' : "effi_sigA",
-            'pdfY' : "effi_sigA",
+            'pdfX' : "effi_cosl",
+            'pdfY' : "effi_cosK",
             'db'  : "fitResults.db",
+            'updateArgs': True,
         })
         del cfg['createNLLOpt']
         return cfg
@@ -40,36 +42,10 @@ class EfficiencyFitter(FitterCore):
         """Pass complicate fitting control."""
         pass
 
-    def _initArgs(self, args):
-        """Parameter initialization from db file"""
-        db = shelve.open(self.cfg.get('db', "fitResults.db"))
-        def initFromDB(iArg):
-            argName = iArg.GetName()
-            funcPair = [
-                ('setVal', 'getVal'),
-                ('setError', 'getError'),
-                ('setAsymError', 'getErrorHi'),
-                ('setAsymError', 'getErrorLo'),
-                ('setConstant', 'isConstant'),
-                ('setMax', 'getMax'),
-                ('setMin', 'getMin')]
-            if argName in db:
-                for setter, getter in funcPair:
-                    getattr(iArg, setter)(
-                        *{
-                            'getErrorHi': (db[argName]['getErrorLo'], db[argName][getter]),
-                            'getErrorLo': (db[argName][getter], db[argName]['getErrorHi']),
-                        }.get(getter, (db[argName][getter],))
-                    )
-            else:
-                self.logger.logINFO("Found new variable {0}".format(argName))
-        FitterCore.ArgLooper(args, initFromDB)
-        db.close()
-
     def _preFitSteps(self):
         """Prefit uncorrelated term"""
         args = self.pdf.getParameters(self.data)
-        self._initArgs(args)
+        FitDBPlayer.initFromDB(self.cfg.get('db', FitDBPlayer.outputfilename), args)
         self.ToggleConstVar(args, isConst=True)
 
         # Disable xTerm correction and fit to 1-D
@@ -95,32 +71,15 @@ class EfficiencyFitter(FitterCore):
         self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+$"])
         args.find('effi_norm').setConstant(True)
 
-    def _updateArgs(self, args):
-        """Update fit result to db file"""
-        db = shelve.open(self.cfg.get('db', "fitResults.db"), writeback=True)
-        def updateToDB(iArg):
-            argName = iArg.GetName()
-            funcPair = [
-                ('setVal', 'getVal'),
-                ('setError', 'getError'),
-                ('setAsymError', 'getErrorHi'),
-                ('setAsymError', 'getErrorLo'),
-                ('setConstant', 'isConstant'),
-                ('setMax', 'getMax'),
-                ('setMin', 'getMin')]
-            if argName not in db:
-                self.logger.logINFO("Book new variable {0} to db file".format(argName))
-                db[argName] = {}
-            for setter, getter in funcPair:
-                db[argName][getter] = getattr(iArg, getter)()
-        FitterCore.ArgLooper(args, updateToDB)
-        db.close()
-
     def _postFitSteps(self):
         """Post-processing"""
         args = self.pdf.getParameters(self.data)
         self.ToggleConstVar(args, True)
-        self._updateArgs(args)
+        if self.cfg['updateArgs']:
+            ofilename = "{0}_{1}.db".format(os.path.splitext(FitDBPlayer.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
+            if not os.path.exists(ofilename) and self.process.cfg.has_key("db"):
+                shutil.copy(self.process.cfg["db"], ofilename)
+            FitDBPlayer.UpdateToDB(ofilename, args)
 
     def _runFitSteps(self):
         h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
@@ -134,7 +93,7 @@ class EfficiencyFitter(FitterCore):
             if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", "^l\d+$", "^k\d+$"]):
                 effi_sigA_formula = re.sub(arg.GetName(), "({0})".format(arg.getVal()), effi_sigA_formula)
             elif re.match("^x\d+$", arg.GetName()):
-                nPar += 1
+                nPar = nPar+1
             arg = args_it.Next()
         effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
@@ -160,5 +119,20 @@ class EfficiencyFitter(FitterCore):
             arg = args.find("x{0}".format(xIdx))
             arg.setVal(parVal)
             arg.setError(parErr)
+
+        setStyle()
+        canvas = ROOT.TCanvas()
+        latex = ROOT.TLatex()
+        h2_effi_sigA_comp = h2_accXrec.Clone("h2_effi_sigA_comp")
+        h2_effi_sigA_comp.Reset("ICESM")
+        for lBin, KBin in itertools.product(list(range(1, h2_effi_sigA_comp.GetNbinsX()+1)), list(range(1, h2_effi_sigA_comp.GetNbinsY()+1))):
+            h2_effi_sigA_comp.SetBinContent(lBin, KBin, f2_effi_sigA.Eval(h2_accXrec.GetXaxis().GetBinCenter(lBin), h2_accXrec.GetYaxis().GetBinCenter(KBin))/h2_accXrec.GetBinContent(lBin, KBin))
+        h2_effi_sigA_comp.SetMinimum(0)
+        h2_effi_sigA_comp.SetMaximum(1.5)
+        h2_effi_sigA_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
+        h2_effi_sigA_comp.Draw("LEGO2")
+        latex.DrawLatexNDC(.05, .9, "CMS Simulation")
+        latex.DrawLatexNDC(.85, .9, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
+        canvas.Print("h2_effi_sigA_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
 

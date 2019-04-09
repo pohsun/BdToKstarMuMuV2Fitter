@@ -4,8 +4,20 @@
 
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
+import os
 from math import sqrt
 from copy import deepcopy
+
+# Shared global settings
+isDEBUG = True
+modulePath = os.path.dirname(__file__)
+
+
+# default configuration for Process
+processCfg = {
+    'isBatchJob': False,
+    'binKey': None,
+}
 
 # q2 bins
 q2bins = {}
@@ -47,6 +59,14 @@ bMassRegions['USB'] = createBmassTemplate("USB", 5.38, 5.80)
 bMassRegions['SB']  = createBmassTemplate("SB", 4.76, 5.80)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
+    # systematics
+bMassRegions['altFit'] = createBmassTemplate("altFit", 4.68, 5.88)
+bMassRegions['altSR']  = createBmassTemplate("altSR", 5.18, 5.38)
+bMassRegions['altLSB'] = createBmassTemplate("altLSB", 4.68, 5.18)
+bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.38, 5.88)
+bMassRegions['altSB']  = createBmassTemplate("altSB", 4.68, 5.88)
+bMassRegions['altSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB']['cutString'], bMassRegions['altSR']['cutString'])
+
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
@@ -61,7 +81,6 @@ cuts = [
 cuts.append("({0})".format(")&&(".join(cuts)))
 
 # Developers Area
-isDEBUG = True
     # Unit test
 if isDEBUG:
     q2bins['test'] = q2bins['summary']
