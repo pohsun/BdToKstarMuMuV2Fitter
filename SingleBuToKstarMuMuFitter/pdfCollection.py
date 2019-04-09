@@ -14,6 +14,7 @@
 #   It is possible that the parser don't designed to handle RooAddition and RooProduct between RooConstVar
 
 import os
+import types
 import functools
 from copy import copy
 from collections import OrderedDict
@@ -23,8 +24,7 @@ from v2Fitter.FlowControl.Logger import VerbosityLevels
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.WspaceReader import WspaceReader
 
-import anaSetup
-from anaSetup import q2bins, cuts
+from anaSetup import modulePath, processCfg, q2bins, cuts, isDEBUG
 from varCollection import Bmass, CosThetaK, CosThetaL
 import dataCollection
 
@@ -42,15 +42,14 @@ def getWspace(self):
     if wspaceName in self.process.sourcemanager.keys():
         wspace = self.process.sourcemanager.get(wspaceName)
     else:
-        if anaSetup.isDEBUG == False:
+        if isDEBUG == False:
             self.logger.logERROR("No RooWorkspace '{0}' is found".format(wspaceName))
             self.logger.logDEBUG("Please access RooWorkspace with WspaceReader")
             raise RuntimeError
         wspace = RooWorkspace(wspaceName)
         self.process.sourcemanager.update(wspaceName, wspace)
     return wspace
-
-ObjProvider.getWspace = getWspace
+ObjProvider.getWspace = types.MethodType(getWspace, None, ObjProvider)
 
 #########################
 # Now start define PDFs #
@@ -285,20 +284,41 @@ def buildFinal(self):
 
     self.cfg['source']['f_final'] = f_final
 
-def customize(binKey):
-    """Customize pdf for q2 bins"""
+sharedWspaceTagString = "{binLabel}"
+CFG_WspaceReader= copy(WspaceReader.templateConfig())
+CFG_WspaceReader.update({
+    'obj': OrderedDict([
+        ('effi_cosl', 'effi_cosl'),
+        ('effi_cosK', 'effi_cosK'),
+        ('effi_sigA', 'effi_sigA'),
+        ('f_sigA', 'f_sigA'),
+        ('f_sigM', 'f_sigM'),
+        ('f_sig2D', 'f_sig2D'),
+        ('f_sig3D', 'f_sig3D'),
+        ('f_bkgCombA', 'f_bkgCombA'),
+        ('f_bkgCombM', 'f_bkgCombM'),
+        ('f_bkgComb', 'f_bkgComb'),
+        ('f_final', 'f_final'),
+    ])
+})
+stdWspaceReader = WspaceReader(CFG_WspaceReader)
+def customizeWspaceReader(self):
+    self.cfg['fileName'] = "{0}/input/wspace_{1}.root".format(modulePath, q2bins[self.process.cfg['binKey']]['label'])
+    self.cfg['wspaceTag'] = sharedWspaceTagString.format(binLabel = q2bins[self.process.cfg['binKey']]['label'])
+stdWspaceReader.customize = types.MethodType(customizeWspaceReader, stdWspaceReader)
 
-    setupBuildAnalyticBkgCombA['factoryCmd'] = f_analyticBkgCombA_format.get(binKey, f_analyticBkgCombA_format['DEFAULT'])
-    setupBuildEffiSigA['factoryCmd'] = f_effiSigA_format.get(binKey, f_effiSigA_format['DEFAULT'])
+CFG_PDFBuilder = ObjProvider.templateConfig()
+stdPDFBuilder = ObjProvider(copy(CFG_PDFBuilder))
+def customizePDFBuilder(self):
+    """Customize pdf for q2 bins"""
+    setupBuildAnalyticBkgCombA['factoryCmd'] = f_analyticBkgCombA_format.get(self.process.cfg['binKey'], f_analyticBkgCombA_format['DEFAULT'])
+    setupBuildEffiSigA['factoryCmd'] = f_effiSigA_format.get(self.process.cfg['binKey'], f_effiSigA_format['DEFAULT'])
     buildAnalyticBkgCombA = functools.partial(buildGenericObj, **setupBuildAnalyticBkgCombA)
     buildEffiSigA = functools.partial(buildGenericObj, **setupBuildEffiSigA)
 
     # Configure setup
-    CFG_ObjProvider = ObjProvider.templateConfig()
-    CFG_WspaceReader= WspaceReader.templateConfig()
-
-    CFG_ObjProvider.update({
-        'wspaceTag': '{0}'.format(q2bins[binKey]['label']),
+    self.cfg.update({
+        'wspaceTag': sharedWspaceTagString.format(binLabel = q2bins[self.process.cfg['binKey']]['label']),
         'obj': OrderedDict([
             ('effi_sigA', [buildEffiSigA,]),
             ('f_sigA', [buildSigA]),
@@ -311,40 +331,19 @@ def customize(binKey):
             ('f_final', [buildFinal]),
         ])
     })
-    CFG_WspaceReader.update({
-        'wspaceTag': CFG_ObjProvider['wspaceTag'],
-        'fileName': "{0}/input/wspace_{0}.root".format(os.path.dirname(__file__), q2bins[binKey]['label']),
-        'obj': OrderedDict([
-            ('effi_cosl', 'effi_cosl'),
-            ('effi_cosK', 'effi_cosK'),
-            ('effi_sigA', 'effi_sigA'),
-            ('f_sigA', 'f_sigA'),
-            ('f_sigM', 'f_sigM'),
-            ('f_sig2D', 'f_sig2D'),
-            ('f_sig3D', 'f_sig3D'),
-            ('f_bkgCombA', 'f_bkgCombA'),
-            ('f_bkgCombM', 'f_bkgCombM'),
-            ('f_bkgComb', 'f_bkgComb'),
-            ('f_final', 'f_final'),
-        ])
-    })
-
-    global stdWspaceReader, stdPDFBuilder
-    stdWspaceReader = WspaceReader(copy(CFG_WspaceReader))
-    stdPDFBuilder = ObjProvider(copy(CFG_ObjProvider))
-
-    pass
+stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
 
 if __name__ == '__main__':
     binKey = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
-    # binKey = ['test']
     for b in binKey:
-        dataCollection.customize(b, ['SR', 'test']) # Needed for data-driven smooth function
-        customize(b)
         p = Process("testPdfCollection", "testProcess")
+        p.cfg['binKey'] = b
         p.logger.verbosityLevel = VerbosityLevels.DEBUG
-        p.setSequence([stdWspaceReader, stdPDFBuilder])
+        p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
         p.beginSeq()
         p.runSeq()
         p.endSeq()
+
+        stdWspaceReader.reset()
+        stdPDFBuilder.reset()
 

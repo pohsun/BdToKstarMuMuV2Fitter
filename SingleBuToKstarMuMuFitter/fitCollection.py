@@ -16,9 +16,12 @@ from varCollection import CosThetaK, CosThetaL
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
 
-from anaSetup import q2bins
+from anaSetup import processCfg, q2bins
 import dataCollection
 import pdfCollection
+
+def customize(self):
+    self.cfg['db'] = "{0}/input/fitResults_{1}.db".format(os.path.dirname(__file__), q2bins[self.process.cfg['binKey']]['label'])
 
 setupTemplateFitter = SingleBuToKstarMuMuFitter.templateConfig()
 
@@ -46,6 +49,23 @@ setupSigMFitter.update({
 })
 sigMFitter = SingleBuToKstarMuMuFitter(setupSigMFitter)
 
+setupSigAFitter = deepcopy(setupTemplateFitter)
+setupSigAFitter.update({
+    'name': "sigAFitter",
+    'data': "sigMCGENReader.Fit",
+    'pdf': "f_sigA",
+    'argPattern': ['afb', 'fl', 'fs', 'as'],
+    'createNLLOpt': [],
+    'updateArgs': True,
+    'argAliasInDB': {'afb': 'afb_GEN', 'fl': 'fl_GEN', 'fs': 'fs_GEN', 'as': 'as_GEN'},
+})
+sigAFitter = SingleBuToKstarMuMuFitter(setupSigAFitter)
+def sigAFitter_bookPdfData(self):
+    SingleBuToKstarMuMuFitter._bookPdfData(self)
+    self.data.changeObservableName("genCosThetaK", "CosThetaK")
+    self.data.changeObservableName("genCosThetaL", "CosThetaL")
+sigAFitter._bookPdfData = sigAFitter_bookPdfData
+
 setupSig2DFitter = deepcopy(setupTemplateFitter)
 setupSig2DFitter.update({
     'name': "sig2DFitter",
@@ -54,9 +74,9 @@ setupSig2DFitter.update({
     'argPattern': ['afb', 'fl', 'fs', 'as'],
     'createNLLOpt': [],
     'updateArgs': True,
+    'argAliasInDB': {'afb': 'afb_2D', 'fl': 'fl_2D', 'fs': 'fs_2D', 'as': 'as_2D'},
 })
 sig2DFitter = SingleBuToKstarMuMuFitter(setupSig2DFitter)
-
 
 setupBkgCombAFitter = deepcopy(setupTemplateFitter)
 setupBkgCombAFitter.update({
@@ -80,17 +100,14 @@ setupFinalFitter.update({
     'updateArgs': True,
 })
 finalFitter = SingleBuToKstarMuMuFitter(setupFinalFitter)
+finalFitter.customize = types.MethodType(customize, finalFitter)
 
-def customize(binKey):
-    for fitter in [effiFitter, sigMFitter, sig2DFitter, bkgCombAFitter, finalFitter]:
-        fitter.cfg['db'] = "{0}/input/fitResults_{0}.db".format(os.path.dirname(__file__), q2bins[binKey]['label'])
+for fitter in [effiFitter, sigMFitter, sigAFitter, sig2DFitter, bkgCombAFitter, finalFitter]:
+    fitter.customize = types.MethodType(customize, fitter)
 
 if __name__ == '__main__':
-    binKey = 'belowJpsi'
-    dataCollection.customize(binKey, ['SR', 'LSB', 'USB', 'test'])
-    pdfCollection.customize(binKey)
-    customize(binKey)
-    p = Process("testFitCollection", "testProcess")
+    processCfg.update({'binKey': "belowJpsi",})
+    p = Process("testFitCollection", "testProcess", processCfg)
     p.logger.verbosityLevel = VerbosityLevels.DEBUG
     p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
     # p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])

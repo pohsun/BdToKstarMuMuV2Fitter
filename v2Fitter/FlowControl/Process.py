@@ -35,10 +35,7 @@ class Process:
 
     @classmethod
     def templateConfig(cls):
-        cfg = {
-            'binKey': "test",
-            'isBatchJob': False,
-        }
+        cfg = {}
         return cfg
 
     def setSequence(self, seq):
@@ -77,6 +74,7 @@ class Process:
 
         for p in self._sequence:
             self.logger.logDEBUG("Entering Path: {0}".format(p.cfg['name']))
+            p.customize()
             p._runPath()
             p._addSource()
             # print(self.sourcemanager)

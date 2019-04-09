@@ -13,6 +13,12 @@ class Service:
         self.logger  = None
         pass
 
+    def __repr__(self):
+        return "<{klass} at 0x{id:x}>".format(
+            klass=self.__class__.__name__,
+            id=id(self) & 0xFFFFFFF
+        )
+
     def _beginSeq(self):
         """Function to be triggered before running Paths."""
         pass

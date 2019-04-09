@@ -3,14 +3,16 @@
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
 import re
+import types
 import functools
 import itertools
 from copy import copy
 from array import array
 import math
 
-from anaSetup import q2bins, bMassRegions, cuts
+from anaSetup import processCfg, q2bins, bMassRegions, cuts
 from varCollection import dataArgs, CosThetaL, CosThetaK
+from varCollection import dataArgsGEN
 
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
@@ -25,33 +27,88 @@ from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
 
 
-CFG = {
-    'name': "DataReaderTemplate",
-    'ifile': [],
-    'isData': True,
+CFG = DataReader.templateConfig()
+CFG.update({
     'argset': dataArgs,
-    'dataset':[]
-}
+})
 
 # dataReader
-CFG['name'] = "dataReader"
-CFG['ifile'] = ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"]
-dataReader = DataReader(copy(CFG))
+def customizeOne(self, targetBMassRegion = []):
+    """Define datasets with arguments."""
+    if not self.process.cfg['binKey'] in q2bins.keys():
+        print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
+        raise AttributeError
+
+    # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
+    for key, val in bMassRegions.items():
+        if any([re.match(pat, key) for pat in targetBMassRegion]):
+            self.cfg['dataset'].append(
+                (
+                    "{0}.{1}".format(self.cfg['name'], key),
+                    "({0}) && ({1}) && ({2})".format(
+                        val['cutString'],
+                        q2bins[self.process.cfg['binKey']]['cutString'],
+                        cuts[-1],
+                    )
+                )
+            )
+
+dataReaderCfg = DataReader.templateConfig()
+dataReaderCfg.update({
+    'name': "dataReader",
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"],
+    'argset': dataArgs,
+})
+dataReader = DataReader(dataReaderCfg)
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^test$', '^Fit$', '^SR$', '^.SB$'])
+dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
-CFG['name'] = "sigMCReader"
-CFG['ifile'] = ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*.root"]
-CFG['isData'] = False
-sigMCReader = DataReader(copy(CFG))
+sigMCReaderCfg = DataReader.templateConfig()
+sigMCReaderCfg.update({
+    'name': "sigMCReader",
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*.root"],
+    'argset': dataArgs,
+})
+sigMCReader = DataReader(sigMCReaderCfg)
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^test$', '^Fit$'])
+sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
+
+# sigMCGENReader
+def customizeGEN(self):
+    """Define datasets with arguments."""
+    if not self.process.cfg['binKey'] in q2bins.keys():
+        print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
+        raise AttributeError
+
+    # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
+    self.cfg['dataset'].append(
+        (
+            "{0}.Fit".format(self.cfg['name']),
+            re.sub("Mumumass", "sqrt(genQ2)", q2bins[self.process.cfg['binKey']]['cutString'])
+        )
+    )
+
+sigMCGENReaderCfg = DataReader.templateConfig()
+sigMCGENReaderCfg.update({
+    'name': "sigMCGENReader",
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*s0.root"],
+    'argset': dataArgsGEN,
+})
+sigMCGENReader = DataReader(sigMCGENReaderCfg)
+sigMCGENReader.customize = types.MethodType(customizeGEN, sigMCGENReader)
 
 # effiHistReader
 accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
 accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
-def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
+def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
     fin = self.process.filemanager.open("buildAccXRecEffiHist", "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/data/accXrecEffHists_Run2012.root", "UPDATE")
+    forceRebuild = False
     for binKey in q2bins.keys():
-        if binKey in ['test', 'jpsi', 'psi2s', 'peaks']: continue
+        if binKey in ['jpsi', 'psi2s', 'peaks']: continue
+        if binKey == "test":
+            binKey == 'summary'
         h2_accXrec = fin.Get("h2_accXrec_{0}".format(q2bins[binKey]['label']))
 
         if h2_accXrec == None or forceRebuild:
@@ -142,56 +199,26 @@ def buildAccXRecEffiHist(self, targetBinKey, forceRebuild=False):
             h2_accXrec.Write("h2_accXrec_{0}".format(q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
             self.logger.logINFO("Overall efficiency is built.")
 
-        if binKey == targetBinKey:
+        if binKey == self.process.cfg['binKey']:
             self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
             self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
             self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(q2bins[binKey]['label']))
             self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(q2bins[binKey]['label']))
 
-def customizeOne(reader, binKey, dumpBMassRegion = []):
-    """Define datasets with arguments."""
-    if not binKey in q2bins.keys():
-        print("ERROR\t: Bin {0} is not defined.\n".format(binKey))
-        reader.cfg['dataset'] = []
-        raise AttributeError
-
-    # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
-    reader.cfg['dataset'] = []
-    for key, val in bMassRegions.items():
-        if key in dumpBMassRegion:
-            continue
-        reader.cfg['dataset'].append(
-            (
-                "{0}.{1}".format(reader.cfg['name'], key),
-                "({0}) && ({1}) && ({2})".format(
-                    val['cutString'],
-                    q2bins[binKey]['cutString'],
-                    cuts[-1],
-                )
-            )
-        )
-
-def customize(binKey, dumpBMassRegion = []):
-    customizeOne(dataReader, binKey, dumpBMassRegion)
-    customizeOne(sigMCReader, binKey, dumpBMassRegion)
-
-    customizedBuildAccXRecEffiHist = functools.partial(buildAccXRecEffiHist, **{'targetBinKey': binKey if binKey != 'test' else 'summary'})
-    global effiHistReader
-    effiHistReader = ObjProvider({
-        'name': "effiHistReader",
-        'obj': {
-            'effiHist': [customizedBuildAccXRecEffiHist,],
-        }
-    })
-
+effiHistReader = ObjProvider({
+    'name': "effiHistReader",
+    'obj': {
+        'effiHist': [buildAccXRecEffiHist,],
+    }
+})
 
 if __name__ == '__main__':
-    customize('test')
-    p = Process("testDataReaders", "testProcess")
+    processCfg.update({'binKey':"test",})
+    p = Process("testDataReaders", "testProcess", processCfg)
     p.logger.verbosityLevel = VerbosityLevels.DEBUG
-    # p.setSequence([dataReader])
-    p.setSequence([effiHistReader])
+    p.setSequence([dataReader])
+    # p.setSequence([effiHistReader])
     p.beginSeq()
     p.runSeq()
     print(p.sourcemanager)
-    p.endSeq()
+    # p.endSeq()

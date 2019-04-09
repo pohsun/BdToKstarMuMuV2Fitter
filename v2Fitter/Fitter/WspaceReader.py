@@ -20,10 +20,13 @@ class WspaceReader(Path):
     def __init__(self, cfg):
         """Init"""
         super(WspaceReader, self).__init__(cfg)
+        self.reset()
+        return
+
+    def reset(self):
+        super(WspaceReader, self).reset()
         self.ifile = None
         self.wspace = None
-        self.cfg['source'] = self.cfg.get('source', {})
-        return
 
     @classmethod
     def templateConfig(cls):
@@ -36,18 +39,6 @@ class WspaceReader(Path):
             ]),
         }
         return cfg
-
-    def readObjs(self):
-        """Read varaiables"""
-        for source_key, wspace_key in self.cfg['obj'].items():
-            if source_key in self.process.sourcemanager.keys():
-                self.cfg['source'][source_key] = self.process.sourcemanager.get(source_key)
-            else:
-                obj = self.wspace.obj(wspace_key)
-                if obj == None:
-                    self.logger.logWARNING("No Variable {0} is found.".format(wspace_key))
-                else:
-                    self.cfg['source'][source_key] = obj
 
     def _runPath(self):
         # Hook to registerd file
@@ -74,9 +65,18 @@ class WspaceReader(Path):
         else:
             self.logger.logINFO("RooWorkspace {0} found. Loading objects...".format(wspaceName))
             self.cfg['source'][wspaceName] = self.wspace
-            self.readObjs()
-
-        pass
+            def readObjs():
+                """Exactly define how to read varaiables"""
+                for source_key, wspace_key in self.cfg['obj'].items():
+                    if source_key in self.process.sourcemanager.keys():
+                        self.cfg['source'][source_key] = self.process.sourcemanager.get(source_key)
+                    else:
+                        obj = self.wspace.obj(wspace_key)
+                        if obj == None:
+                            self.logger.logWARNING("No Variable {0} is found.".format(wspace_key))
+                        else:
+                            self.cfg['source'][source_key] = obj
+            readObjs()
 
     def bookEndSeq(self):
         """Book to p.endSeq stack. Assign new order in case of multiple calls."""

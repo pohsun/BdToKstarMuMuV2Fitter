@@ -12,10 +12,6 @@ from collections import OrderedDict
 class ObjProvider(Path):
     """Book generic object to SourceManager if it is not defined"""
 
-    def __init__(self, cfg):
-        super(ObjProvider, self).__init__(cfg)
-        self.cfg['source'] = {}
-
     @classmethod
     def templateConfig(cls):
         cfg = {
@@ -32,7 +28,7 @@ class ObjProvider(Path):
             if not key in self.process.sourcemanager.keys():
                 for builder in builders:
                     builder(self)
-                    if key in self.cfg['source'].keys():
+                    if self.cfg['source'].has_key(key):
                         break
             else:
                 self.logger.logDEBUG("Skipped booked object {0}.".format(key))

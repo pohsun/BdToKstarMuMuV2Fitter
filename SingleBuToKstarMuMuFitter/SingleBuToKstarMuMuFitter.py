@@ -6,7 +6,8 @@
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
 from v2Fitter.Fitter.FitterCore import FitterCore
-import FitDBPlayer
+from anaSetup import q2bins
+from FitDBPlayer import FitDBPlayer
 
 import os
 import shutil
@@ -31,15 +32,18 @@ class SingleBuToKstarMuMuFitter(FitterCore):
             'createNLLOpt': [ROOT.RooFit.Extended(1),],
             'updateArgs': True,
             'systematics': [],
+            'argPattern':[r'^.+$',],
+            'argAliasInDB':{},
+            'plotters': None,
         })
         return cfg
 
     def _preFitSteps(self):
         """Initialize """
         args = self.pdf.getParameters(self.data)
-        FitDBPlayer.initFromDB(self.cfg.get('db', FitDBPlayer.outputfilename), args)
+        FitDBPlayer.initFromDB(self.cfg.get('db', FitDBPlayer.outputfilename), args, self.cfg['argAliasInDB'])
         self.ToggleConstVar(args, True)
-        self.ToggleConstVar(args, False, self.cfg.get('argPattern', [r'^.+$',]))
+        self.ToggleConstVar(args, False, self.cfg.get('argPattern'))
 
         # customization for systematics
         for syst in self.cfg['systematics']:
@@ -58,7 +62,11 @@ class SingleBuToKstarMuMuFitter(FitterCore):
             ofilename = "{0}_{1}.db".format(os.path.splitext(FitDBPlayer.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
             if not os.path.exists(ofilename) and self.process.cfg.has_key("db"):
                 shutil.copy(self.process.cfg["db"], ofilename)
-            FitDBPlayer.UpdateToDB(ofilename, args)
+            FitDBPlayer.UpdateToDB(ofilename, args, self.cfg['argAliasInDB'])
+        if self.cfg.get('plotters', False):
+            for plotter, kwargs in self.cfg['plotters']:
+                plotter(self, **kwargs)
+
 
 
     def _runFitSteps(self):

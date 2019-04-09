@@ -4,17 +4,11 @@
 
 # Description     : A single step to be run in a process
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 11 Mar 2019 20:06 21:48
 
 from __future__ import print_function
 
 import abc
 
-class PathModifier():
-    """To be called to modify a path"""
-    def customize(**kwargs):
-        """Customization"""
-        pass
 
 class Path():
     """Steps to be run in a Process"""
@@ -22,17 +16,27 @@ class Path():
     def __init__(self, cfg):
         self.cfg = cfg
         self.name = self.cfg['name'].replace('.', '_')
+        Path.reset(self)
+        pass
+
+    def reset(self):
+        """In case using the same `Path` in several `Process`"""
         self.process = None
         self.logger = None
-        pass
+        self.cfg['source'] = {}
 
     def __str__(self):
         return "Path[{0}]".format(self.name)
 
     # @abc.abstractclassmethod # python3
+    @classmethod
     def templateConfig(cls):
         """Return template configuration."""
         raise NotImplementedError
+
+    def customize(self):
+        """Customization"""
+        pass
 
     @abc.abstractmethod
     def _runPath(self):
@@ -41,7 +45,6 @@ class Path():
 
     def _addSource(self):
         """Add shared objects to the source pool."""
-        if 'source' in self.cfg.keys():
-            for key, val  in self.cfg['source'].items():
-                self.process.sourcemanager.update(key, val, addHist=self.name)
+        for key, val  in self.cfg['source'].items():
+            self.process.sourcemanager.update(key, val, addHist=self.name)
 

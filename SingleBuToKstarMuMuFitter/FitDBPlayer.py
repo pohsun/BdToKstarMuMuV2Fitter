@@ -23,7 +23,7 @@ class FitDBPlayer():
         if not mode in ["Overwrite", "Print", "Skip"]:
             print("Unknown mode for DB merging process. Take default mode.")
             mode = "Overwrite"
-        
+
         if not all([os.path.exists(f) for f in dblist]):
             return
 
@@ -48,7 +48,7 @@ class FitDBPlayer():
         pass
 
     @staticmethod
-    def UpdateToDB(dbfile, args):
+    def UpdateToDB(dbfile, args, aliasDict={}):
         """Update fit result to db file"""
         if not os.path.exists(dbfile):
             return
@@ -56,16 +56,17 @@ class FitDBPlayer():
         db = shelve.open(dbfile, writeback=True)
         def updateToDBImp(iArg):
             argName = iArg.GetName()
-            if argName not in db:
-                db[argName] = {}
+            aliasName = aliasDict.get(argName, argName)
+            if aliasName not in db:
+                db[aliasName] = {}
             for setter, getter in FitDBPlayer.funcPair:
-                db[argName][getter] = getattr(iArg, getter)()
+                db[aliasName][getter] = getattr(iArg, getter)()
         FitterCore.ArgLooper(args, updateToDBImp)
         db.close()
         pass
 
     @staticmethod
-    def initFromDB(dbfile, args):
+    def initFromDB(dbfile, args, aliasDict={}):
         """Parameter initialization from db file"""
         if not os.path.exists(dbfile):
             return
@@ -73,13 +74,14 @@ class FitDBPlayer():
         db = shelve.open(dbfile)
         def initFromDBImp(iArg):
             argName = iArg.GetName()
-            if argName in db:
+            aliasName = aliasDict.get(argName, argName)
+            if aliasName in db:
                 for setter, getter in FitDBPlayer.funcPair:
                     getattr(iArg, setter)(
                         *{
-                            'getErrorHi': (db[argName]['getErrorLo'], db[argName][getter]),
-                            'getErrorLo': (db[argName][getter], db[argName]['getErrorHi']),
-                        }.get(getter, (db[argName][getter],))
+                            'getErrorHi': (db[aliasName]['getErrorLo'], db[aliasName][getter]),
+                            'getErrorLo': (db[aliasName][getter], db[aliasName]['getErrorHi']),
+                        }.get(getter, (db[aliasName][getter],))
                     )
         FitterCore.ArgLooper(args, initFromDBImp)
         db.close()

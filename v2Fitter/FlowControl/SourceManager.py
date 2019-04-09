@@ -28,11 +28,11 @@ class SourceManager(Service):
         while len(self._sources) > 0:
             key, f = self._sources.popitem(last=True)
 
-    def __repr__(self):
+    def __str__(self):
         if self.logger.verbosityLevel == VerbosityLevels.DEBUG:
             for k, v in self._sources.items():
                 print(k, v)
-        return self._sources.__repr__()
+        return self._sources.__str__()
 
     def get(self, key, default=None, addHist=None):
         if key not in self._sources.keys():
@@ -69,11 +69,11 @@ class FileManager(Service):
         Service.__init__(self)
         self._files = OrderedDict()
 
-    def __repr__(self):
+    def __str__(self):
         if self.logger.verbosityLevel == VerbosityLevels.DEBUG:
             for k, v in self._files.items():
                 print(k, v)
-        return self._files.__repr__()
+        return self._files.__str__()
 
     def _endSeq(self):
         """Close files with LIFO order"""
