@@ -91,7 +91,7 @@ Bool_t plotMatchCandPreSelector::Process(Long64_t entry)
             Pippy_PreSel->at(matchedBindex),
             Pippz_PreSel->at(matchedBindex),
             0.13957);
-      Pip_4vec.SetXYZM(
+      Pim_4vec.SetXYZM(
             Pimpx_PreSel->at(matchedBindex),
             Pimpy_PreSel->at(matchedBindex),
             Pimpz_PreSel->at(matchedBindex),
@@ -102,7 +102,9 @@ Bool_t plotMatchCandPreSelector::Process(Long64_t entry)
       Mumumass_oTree = *Mumumass;
       Kshortmass_oTree = Kshort_4vec.M();
 
+      // Fill and reset index
       fOutputTree->Fill();
+      matchedBindex = -1;
    }
 
    return kTRUE;
@@ -146,7 +148,6 @@ void plotMatchCandPreSelector::matchNextPreSel()
         if (*Nb == 0 || *Nb != *Nb_PreSel){
             continue;
         }
-        matchedBindex = -1;
         for (int iB_PreSel = 0; iB_PreSel < *Nb_PreSel; iB_PreSel++) {
             if (fabs(*Bmass-Bmass_PreSel->at(iB_PreSel)) < epsilon &&
                 fabs(*Mumumass-Mumumass_PreSel->at(iB_PreSel)) < epsilon) {

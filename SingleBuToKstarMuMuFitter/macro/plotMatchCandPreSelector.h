@@ -56,7 +56,9 @@ public :
       Pippz_PreSel(fReader_PreSel, "pippz"),
       Pimpx_PreSel(fReader_PreSel, "pimpx"),
       Pimpy_PreSel(fReader_PreSel, "pimpy"),
-      Pimpz_PreSel(fReader_PreSel, "pimpz")
+      Pimpz_PreSel(fReader_PreSel, "pimpz"),
+      matchedEventNo(0),
+      matchedBindex(-1)
    {
    }
    virtual ~plotMatchCandPreSelector() { }
@@ -105,11 +107,9 @@ void plotMatchCandPreSelector::Init(TTree *tree)
    el = new TEntryList("el", "");
    fChain = tree;
    fChain->Draw(">>el", cutString, "entrylist");
-   printf("%lld selected events in total.\n", el->GetN());
    fChain->SetEntryList(el);
 
-   fReader.SetTree(tree); // Don't use SetTree(tree, el), unable to remove Tree changing warnings.
-   
+   fReader.SetTree(fChain); // Don't use SetTree(tree, el), unable to remove Tree changing warnings.
 
    fChain_PreSel = new TChain("tree");
    fChain_PreSel->Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*-v3p2-merged.root");
@@ -119,8 +119,6 @@ void plotMatchCandPreSelector::Init(TTree *tree)
    fChain_PreSel->LoadTree(0);
 
    fReader_PreSel.SetTree(fChain_PreSel);
-
-   matchedEventNo = 0;
 }
 
 Bool_t plotMatchCandPreSelector::Notify()
@@ -133,6 +131,5 @@ Bool_t plotMatchCandPreSelector::Notify()
 
    return kTRUE;
 }
-
 
 #endif // #ifdef plotMatchCandPreSelector_cxx
