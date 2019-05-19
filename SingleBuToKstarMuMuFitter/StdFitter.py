@@ -1,73 +1,72 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
+# vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
 # Description     : Fitter template without specification
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
-from v2Fitter.Fitter.FitterCore import FitterCore
-from anaSetup import q2bins
-from FitDBPlayer import FitDBPlayer
-
-import os
-import shutil
-import shelve
-import functools
-
 import ROOT
+import SingleBuToKstarMuMuFitter.cpp
 
-class SingleBuToKstarMuMuFitter(FitterCore):
+from v2Fitter.Fitter.FitterCore import FitterCore
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins
+from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
+
+class StdFitter(FitterCore):
     """Implementation to standard fitting procdeure to BuToKstarMuMu angular analysis"""
 
     @classmethod
     def templateConfig(cls):
         cfg = FitterCore.templateConfig()
         cfg.update({
-            'name': "SingleBuToKstarMuMuFitter",
+            'name': "StdFitter",
             'data': "dataReader.Fit",
-            'pdf' : "f",
-            'db'  : "fitResults.db",
-            'FitHesse':True,
+            'pdf': "f",
+            'FitHesse': True,
             'FitMinos': [True, ()],
-            'createNLLOpt': [ROOT.RooFit.Extended(1),],
-            'updateArgs': True,
-            'systematics': [],
-            'argPattern':[r'^.+$',],
-            'argAliasInDB':{},
-            'plotters': None,
+            'createNLLOpt': [ROOT.RooFit.Extended(1), ],
+            'argPattern': [r'^.+$', ],
+            'argAliasInDB': {},
         })
         return cfg
 
-    def _preFitSteps(self):
-        """Initialize """
-        args = self.pdf.getParameters(self.data)
-        FitDBPlayer.initFromDB(self.cfg.get('db', FitDBPlayer.outputfilename), args, self.cfg['argAliasInDB'])
-        self.ToggleConstVar(args, True)
-        self.ToggleConstVar(args, False, self.cfg.get('argPattern'))
+    def _bookMinimizer(self):
+        """"""
+        self.fitter = ROOT.StdFitter()
+        for opt in self.cfg.get("createNLLOpt", []):
+            self.fitter.addNLLOpt(opt)
+        self.minimizer = self.fitter.Init(self.pdf, self.data)
+        self._nll = self.fitter.GetNLL()
+        self.minimizer.setPrintLevel(0)
+        pass
 
-        # customization for systematics
-        for syst in self.cfg['systematics']:
-            if syst == "AltEfficiency":
-                hasXTerm = args.find("hasXTerm")
-                hasXTerm.setVal(0)
-            else:
-                self.logger.logERROR("Unknown source of systematic uncertainty.")
-                raise NotImplementedError
+    def _preFitSteps_initFromDB(self):
+        """Initialize from DB"""
+        self.args = self.pdf.getParameters(self.data)
+        FitDBPlayer.initFromDB(self.process.odbfilename, self.args, self.cfg['argAliasInDB'])
+        self.ToggleConstVar(self.args, True)
+        self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
+
+    def _preFitSteps_vetoSmallFs(self):
+        """ fs is usually negligible, set the fraction to 0"""
+        if "fs" in self.cfg.get('argPattern'):
+            fs = self.args.find("fs")
+            transAs = self.args.find("transAs")
+            fs.setVal(fs.getMin())
+            fs.setConstant(True)
+            transAs.setVal(0)
+            transAs.setConstant(True)
+
+    def _preFitSteps(self):
+        """Initialize to be customized"""
+        self._preFitSteps_initFromDB()
+        self._preFitSteps_vetoSmallFs()
 
     def _postFitSteps(self):
         """Post-processing"""
-        args = self.pdf.getParameters(self.data)
-        self.ToggleConstVar(args, True)
-        if self.cfg['updateArgs']:
-            ofilename = "{0}_{1}.db".format(os.path.splitext(FitDBPlayer.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
-            if not os.path.exists(ofilename) and self.process.cfg.has_key("db"):
-                shutil.copy(self.process.cfg["db"], ofilename)
-            FitDBPlayer.UpdateToDB(ofilename, args, self.cfg['argAliasInDB'])
-        if self.cfg.get('plotters', False):
-            for plotter, kwargs in self.cfg['plotters']:
-                plotter(self, **kwargs)
-
-
+        #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
+        self.ToggleConstVar(self.args, True)
+        FitDBPlayer.UpdateToDB(self.process.odbfilename, self.args, self.cfg['argAliasInDB'])
 
     def _runFitSteps(self):
         self.FitMigrad()
@@ -78,39 +77,25 @@ class SingleBuToKstarMuMuFitter(FitterCore):
 
     def FitMigrad(self):
         """Migrad"""
-        isMigradConverge=[-1,0]
-
-        maxMigradCall = 10
-        for iL in range(maxMigradCall):
-            isMigradConverge[0]=self.minimizer.migrad()
-            if isMigradConverge[0] == 0:
-                break
-        isMigradConverge[1] = self._nll.getVal()
-        return isMigradConverge
+        self.fitter.FitMigrad()
 
     def FitHesse(self):
         """Hesse"""
-        isHesseValid = self.minimizer.hesse()
-        return isHesseValid
+        self.fitter.FitHesse()
 
     def FitMinos(self):
         """Minos"""
-        isMinosValid = -1
-
         par = self.pdf.getParameters(self.data)
         if len(self.cfg['FitMinos']) > 1 and self.cfg['FitMinos'][1]:
-            iter = par.createIterator()
-            var = iter.Next()
-            while var:
-                if var.GetName() not in self.cfg['FitMinos'][1]:
-                    par.remove(var)
-                var = iter.Next()
-                par.Print()
+            FitterCore.ArgLooper(par, lambda var: par.remove(var), self.cfg['FitMinos'][1], True)
+        self.fitter.FitMinos(par)
 
-        maxMinosCall = 3
-        for iL in range(maxMinosCall):
-            isMinosValid = self.minimizer.minos(par)
-            if isMinosValid == 0:
-                break
-        return isMinosValid
+        # Dont' draw profiled likelihood scanning with 
+        # https://root.cern.ch/root/html/tutorials/roofit/rf605_profilell.C.html
+        # This build-in function doesn't handle variable transformation and unphysical region.
 
+def unboundFlToFl(unboundFl):
+    return 0.5 + ROOT.TMath.ATan(unboundFl) / ROOT.TMath.Pi()
+
+def unboundAfbToAfb(unboundAfb, fl):
+    return 1.5 * (1 - fl) * ROOT.TMath.ATan(unboundAfb) / ROOT.TMath.Pi()

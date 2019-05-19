@@ -27,7 +27,16 @@ void fcn_binnedChi2_2D(int &npar, double *gin, double &f, double *par, int iflag
             f += pow( (f2_fcn->Integral(xi,xf,yi,yf)/(xf-xi)/(yf-yi)-measure)/error,2);
         }
     }
+
     chi2Val = f;
+
+    // Prevent from negative function
+    double f2_minX, f2_minY;
+    f2_fcn->GetMinimumXY(f2_minX, f2_minY);
+    if (f2_fcn->Eval(f2_minX, f2_minY) < 0){
+        f += 100*h2_fcn->GetNbinsX()*h2_fcn->GetNbinsY();
+    }
+
 }//}}}
 
 class EfficiencyFitter{
