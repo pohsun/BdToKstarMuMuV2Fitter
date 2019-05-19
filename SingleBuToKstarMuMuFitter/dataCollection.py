@@ -1,31 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
+# vim: set sw=4 ts=4 fdm=indent foldnestmax=3 ft=python et:
 
 import re
 import types
 import functools
 import itertools
-from copy import copy
 from array import array
 import math
 
-from anaSetup import processCfg, q2bins, bMassRegions, cuts
-from varCollection import dataArgs, CosThetaL, CosThetaK
-from varCollection import dataArgsGEN
-
-from v2Fitter.Fitter.DataReader import DataReader
-from v2Fitter.Fitter.ObjProvider import ObjProvider
-
 import ROOT
-from ROOT import TFile, TChain
+from ROOT import TChain
 from ROOT import TEfficiency, TH2D
 from ROOT import RooArgList
 from ROOT import RooDataHist
 
+import SingleBuToKstarMuMuFitter.cpp
+
+from v2Fitter.Fitter.DataReader import DataReader
+from v2Fitter.Fitter.ObjProvider import ObjProvider
+from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, dataArgsGEN
+
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
-
+from SingleBuToKstarMuMuFitter.anaSetup import processCfg, q2bins, bMassRegions, cuts
 
 CFG = DataReader.templateConfig()
 CFG.update({
@@ -33,13 +31,14 @@ CFG.update({
 })
 
 # dataReader
-def customizeOne(self, targetBMassRegion = []):
+def customizeOne(self, targetBMassRegion=[]):
     """Define datasets with arguments."""
     if not self.process.cfg['binKey'] in q2bins.keys():
         print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
         raise AttributeError
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
+    self.cfg['dataset'] = []
     for key, val in bMassRegions.items():
         if any([re.match(pat, key) for pat in targetBMassRegion]):
             self.cfg['dataset'].append(
@@ -60,18 +59,18 @@ dataReaderCfg.update({
     'argset': dataArgs,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^test$', '^Fit$', '^SR$', '^.SB$'])
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'])
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
 sigMCReaderCfg = DataReader.templateConfig()
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*s0.root"],
     'argset': dataArgs,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
-customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^test$', '^Fit$'])
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 
 # sigMCGENReader
@@ -82,12 +81,14 @@ def customizeGEN(self):
         raise AttributeError
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
+    self.cfg['dataset'] = []
     self.cfg['dataset'].append(
         (
             "{0}.Fit".format(self.cfg['name']),
             re.sub("Mumumass", "sqrt(genQ2)", q2bins[self.process.cfg['binKey']]['cutString'])
         )
     )
+
 
 sigMCGENReaderCfg = DataReader.templateConfig()
 sigMCGENReaderCfg.update({
@@ -104,30 +105,30 @@ accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
     fin = self.process.filemanager.open("buildAccXRecEffiHist", "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/data/accXrecEffHists_Run2012.root", "UPDATE")
+
+    # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
     for binKey in q2bins.keys():
-        if binKey in ['jpsi', 'psi2s', 'peaks']: continue
-        if binKey == "test":
-            binKey == 'summary'
-        h2_accXrec = fin.Get("h2_accXrec_{0}".format(q2bins[binKey]['label']))
-
+        if binKey in ['jpsi', 'psi2s', 'peaks']:
+            continue
+        h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
         if h2_accXrec == None or forceRebuild:
-            h2_acc = fin.Get("h2_acc_{0}".format(q2bins[binKey]['label']))
-            h2_rec = fin.Get("h2_rec_{0}".format(q2bins[binKey]['label']))
+            h2_acc = fin.Get("h2_acc_{0}".format(binKey))
+            h2_rec = fin.Get("h2_rec_{0}".format(binKey))
 
             # Fill histograms
             setupEfficiencyBuildProcedure = {}
             setupEfficiencyBuildProcedure['acc'] = {
-                'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root",],
+                'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*s0.root", ],
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
                 'cutString': "fabs(genMupEta)<2.3 && fabs(genMumEta)<2.3 && genMupPt>2.8 && genMumPt>2.8",
-                'fillXY': "genCosThetaK:genCosThetaL" # Y:X
+                'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             setupEfficiencyBuildProcedure['rec'] = {
                 'ifiles': sigMCReader.cfg['ifile'],
                 'baseString': "{0}".format(setupEfficiencyBuildProcedure['acc']['baseString']),
                 'cutString': "Bmass > 0.5 && ({0})".format(cuts[-1]),
-                'fillXY': "genCosThetaK:genCosThetaL" # Y:X
+                'fillXY': "genCosThetaK:genCosThetaL"  # Y:X
             }
             for h2, label in (h2_acc, 'acc'), (h2_rec, 'rec'):
                 if h2 == None or forceRebuild:
@@ -141,11 +142,11 @@ def buildAccXRecEffiHist(self):
                     treein.Draw(">>accEvtList", setupEfficiencyBuildProcedure[label]['cutString'])
                     accEvtList = ROOT.gDirectory.Get("accEvtList")
 
-                    h2_total      = TH2D("h2_{0}_{1}_total".format(label, q2bins[binKey]['label']), "", len(accXEffThetaLBins)-1, accXEffThetaLBins, len(accXEffThetaKBins)-1, accXEffThetaKBins)
-                    h2_passed     = h2_total.Clone("h2_{0}_{1}_passed".format(label, q2bins[binKey]['label']))
+                    h2_total = TH2D("h2_{0}_{1}_total".format(label, binKey), "", len(accXEffThetaLBins) - 1, accXEffThetaLBins, len(accXEffThetaKBins) - 1, accXEffThetaKBins)
+                    h2_passed = h2_total.Clone("h2_{0}_{1}_passed".format(label, binKey))
 
-                    h2_fine_total = TH2D("h2_{0}_fine_{1}_total".format(label, q2bins[binKey]['label']), "", 20, -1, 1, 20, -1, 1)
-                    h2_fine_passed= h2_fine_total.Clone("h2_{0}_fine_{1}_passed".format(label, q2bins[binKey]['label']))
+                    h2_fine_total = TH2D("h2_{0}_fine_{1}_total".format(label, binKey), "", 20, -1, 1, 20, -1, 1)
+                    h2_fine_passed = h2_fine_total.Clone("h2_{0}_fine_{1}_passed".format(label, binKey))
 
                     treein.SetEventList(totEvtList)
                     for hist in h2_total, h2_fine_total:
@@ -160,29 +161,29 @@ def buildAccXRecEffiHist(self):
 
                     fin.cd()
                     for proj, var in [("ProjectionX", CosThetaL), ("ProjectionY", CosThetaK)]:
-                        proj_fine_total  = getattr(h2_fine_total, proj)(0,-1,"e")
-                        proj_fine_passed = getattr(h2_fine_passed, proj)(0,-1,"e")
+                        proj_fine_total = getattr(h2_fine_total, proj)("{0}_{1}".format(h2_fine_total.GetName(), proj), 0, -1, "e")
+                        proj_fine_passed = getattr(h2_fine_passed, proj)("{0}_{1}".format(h2_fine_passed.GetName(), proj), 0, -1, "e")
                         h_eff = TEfficiency(proj_fine_passed, proj_fine_total)
-                        h_eff.Write("h_{0}_fine_{1}_{2}".format(label, q2bins[binKey]['label'], proj), ROOT.TObject.kOverwrite)
+                        h_eff.Write("h_{0}_fine_{1}_{2}".format(label, binKey, proj), ROOT.TObject.kOverwrite)
 
-                    h2_eff.Write("h2_{0}_{1}".format(label, q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
-                    h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
+                    h2_eff.Write("h2_{0}_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
+                    h2_eff_fine.Write("h2_{0}_fine_{1}".format(label, binKey), ROOT.TObject.kOverwrite)
 
             # Merge acc and rec to accXrec
             fin.cd()
             for proj in ["ProjectionX", "ProjectionY"]:
-                h_acc_fine = fin.Get("h_acc_fine_{0}_{1}".format(q2bins[binKey]['label'], proj))
-                h_rec_fine = fin.Get("h_rec_fine_{0}_{1}".format(q2bins[binKey]['label'], proj))
-                h_accXrec_fine = h_acc_fine.GetPassedHistogram().Clone("h_accXrec_fine_{0}_{1}".format(q2bins[binKey]['label'], proj))
+                h_acc_fine = fin.Get("h_acc_fine_{0}_{1}".format(binKey, proj))
+                h_rec_fine = fin.Get("h_rec_fine_{0}_{1}".format(binKey, proj))
+                h_accXrec_fine = h_acc_fine.GetPassedHistogram().Clone("h_accXrec_fine_{0}_{1}".format(binKey, proj))
                 h_accXrec_fine.Reset("ICESM")
-                for b in range(1, h_accXrec_fine.GetNbinsX()+1):
-                    h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b)*h_rec_fine.GetEfficiency(b))
-                    h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b)*math.sqrt(1/h_acc_fine.GetTotalHistogram().GetBinContent(b)+1/h_acc_fine.GetPassedHistogram().GetBinContent(b)+1/h_rec_fine.GetTotalHistogram().GetBinContent(b)+1/h_rec_fine.GetPassedHistogram().GetBinContent(b)))
-                h_accXrec_fine.Write("h_accXrec_{0}_{1}".format(q2bins[binKey]['label'], proj), ROOT.TObject.kOverwrite)
+                for b in range(1, h_accXrec_fine.GetNbinsX() + 1):
+                    h_accXrec_fine.SetBinContent(b, h_acc_fine.GetEfficiency(b) * h_rec_fine.GetEfficiency(b))
+                    h_accXrec_fine.SetBinError(b, h_accXrec_fine.GetBinContent(b) * math.sqrt(1 / h_acc_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_acc_fine.GetPassedHistogram().GetBinContent(b) + 1 / h_rec_fine.GetTotalHistogram().GetBinContent(b) + 1 / h_rec_fine.GetPassedHistogram().GetBinContent(b)))
+                h_accXrec_fine.Write("h_accXrec_{0}_{1}".format(binKey, proj), ROOT.TObject.kOverwrite)
 
-            h2_acc = fin.Get("h2_acc_{0}".format(q2bins[binKey]['label']))
-            h2_rec = fin.Get("h2_rec_{0}".format(q2bins[binKey]['label']))
-            h2_accXrec = h2_acc.GetPassedHistogram().Clone("h2_accXrec_{0}".format(q2bins[binKey]['label']))
+            h2_acc = fin.Get("h2_acc_{0}".format(binKey))
+            h2_rec = fin.Get("h2_rec_{0}".format(binKey))
+            h2_accXrec = h2_acc.GetPassedHistogram().Clone("h2_accXrec_{0}".format(binKey))
             h2_accXrec.Reset("ICESM")
             for iL, iK in itertools.product(range(1, len(accXEffThetaLBins)), range(1, len(accXEffThetaKBins))):
                 if h2_rec.GetTotalHistogram().GetBinContent(iL, iK) == 0 or h2_rec.GetPassedHistogram().GetBinContent(iL, iK) == 0:
@@ -190,35 +191,34 @@ def buildAccXRecEffiHist(self):
                     h2_accXrec.SetBinError(iL, iK, 1)
                 else:
                     iLK = h2_acc.GetGlobalBin(iL, iK)
-                    h2_accXrec.SetBinContent(iL, iK, h2_acc.GetEfficiency(iLK)*h2_rec.GetEfficiency(iLK))
-                    h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK)*math.sqrt(1/h2_acc.GetTotalHistogram().GetBinContent(iLK)+1/h2_acc.GetPassedHistogram().GetBinContent(iLK)+1/h2_rec.GetTotalHistogram().GetBinContent(iLK)+1/h2_rec.GetPassedHistogram().GetBinContent(iLK)))
+                    h2_accXrec.SetBinContent(iL, iK, h2_acc.GetEfficiency(iLK) * h2_rec.GetEfficiency(iLK))
+                    h2_accXrec.SetBinError(iL, iK, h2_accXrec.GetBinContent(iL, iK) * math.sqrt(1 / h2_acc.GetTotalHistogram().GetBinContent(iLK) + 1 / h2_acc.GetPassedHistogram().GetBinContent(iLK) + 1 / h2_rec.GetTotalHistogram().GetBinContent(iLK) + 1 / h2_rec.GetPassedHistogram().GetBinContent(iLK)))
             h2_accXrec.SetXTitle("cos#theta_{l}")
             h2_accXrec.SetYTitle("cos#theta_{K}")
             h2_accXrec.SetZTitle("Overall efficiency")
 
-            h2_accXrec.Write("h2_accXrec_{0}".format(q2bins[binKey]['label']), ROOT.TObject.kOverwrite)
+            h2_accXrec.Write("h2_accXrec_{0}".format(binKey), ROOT.TObject.kOverwrite)
             self.logger.logINFO("Overall efficiency is built.")
 
-        if binKey == self.process.cfg['binKey']:
-            self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
-            self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
-            self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(q2bins[binKey]['label']))
-            self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(q2bins[binKey]['label']))
+    # Register the chosen one to sourcemanager
+    h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey']))
+    self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
+    self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(binKey))
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(binKey))
 
 effiHistReader = ObjProvider({
     'name': "effiHistReader",
     'obj': {
-        'effiHist': [buildAccXRecEffiHist,],
+        'effiHist': [buildAccXRecEffiHist, ],
     }
 })
 
 if __name__ == '__main__':
-    processCfg.update({'binKey':"test",})
     p = Process("testDataReaders", "testProcess", processCfg)
     p.logger.verbosityLevel = VerbosityLevels.DEBUG
     p.setSequence([dataReader])
     # p.setSequence([effiHistReader])
     p.beginSeq()
     p.runSeq()
-    print(p.sourcemanager)
-    # p.endSeq()
+    p.endSeq()

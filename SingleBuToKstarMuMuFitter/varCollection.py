@@ -7,11 +7,11 @@
 from ROOT import RooRealVar
 from ROOT import RooArgSet
 
-Bmass = RooRealVar("Bmass","m_{K^{*}#Mu#Mu} [GeV/c^2]", 4.76, 5.80)
+Bmass = RooRealVar("Bmass","m_{K^{*}#mu#mu} [GeV/c^{2}]", 4.76, 5.80)
 CosThetaK = RooRealVar("CosThetaK", "cos#theta_{K}", -1., 1.)
 CosThetaL = RooRealVar("CosThetaL", "cos#theta_{l}", -1., 1.)
-Mumumass = RooRealVar("Mumumass", "m^{#mu#mu} [GeV/c^{2}]", 0., 10.)
-Mumumasserr = RooRealVar("Mumumasserr", "Error of m^{#mu#mu} [GeV/c^{2}]", 0., 10.)
+Mumumass = RooRealVar("Mumumass", "m_{#mu#mu} [GeV/c^{2}]", 0., 10.)
+Mumumasserr = RooRealVar("Mumumasserr", "Error of m_{#mu#mu} [GeV/c^{2}]", 0., 10.)
 Kstarmass = RooRealVar("Kstarmass", "m_{K^{*}} [GeV/c^{2}]", 0, 1.5)
 Q2 = RooRealVar("Q2", "q^{2} [(GeV/c^{2})^{2}]", 0.5, 20.)
 Triggers = RooRealVar("Triggers", "", 0, 100)

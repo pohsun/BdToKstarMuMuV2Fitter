@@ -5,4 +5,10 @@ __pycache__/
 
 # C extensions
 *.so
+*.d
+*.pcm
 
+# Generated plots, logfile
+*.pdf
+*.png
+*.log
