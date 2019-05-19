@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
+# vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
 
 import types
-import shelve
-import itertools
 import functools
+import shelve
+import copy
 
 import ROOT
 
-from anaSetup import q2bins
-from v2Fitter.Fitter.FitterCore import FitterCore
-from v2Fitter.FlowControl.Path import Path
-from varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass
-
+import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.FlowControl.Process import Process
+from v2Fitter.FlowControl.Path import Path
 from v2Fitter.FlowControl.Logger import VerbosityLevels
+from v2Fitter.Fitter.FitterCore import FitterCore
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, processCfg, modulePath, bMassRegions
 
-from FitDBPlayer import FitDBPlayer
-import dataCollection
-import pdfCollection
+from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer, register_dbfile
+from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass
+import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
+import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
 def setStyle():
     ROOT.gROOT.SetBatch(1)
@@ -91,7 +91,7 @@ def setStyle():
     #      u = 1  number of underflows printed
     #      o = 1  number of overflows printed
     ROOT.gStyle.SetOptFile(0)
-    ROOT.gStyle.SetOptStat(0) #  To display the mean and RMS:   SetOptStat("mr");
+    ROOT.gStyle.SetOptStat(0)  # To display the mean and RMS:   SetOptStat("mr");
     ROOT.gStyle.SetStatColor(ROOT.kWhite)
     ROOT.gStyle.SetStatFont(42)
     ROOT.gStyle.SetStatFontSize(0.025)
@@ -111,7 +111,7 @@ def setStyle():
     ROOT.gStyle.SetPadRightMargin(0.05)
 
     #  For the Global title:
-    ROOT.gStyle.SetOptTitle(0)# 0:turn off the title
+    ROOT.gStyle.SetOptTitle(0)  # 0:turn off the title
     ROOT.gStyle.SetTitleFont(42)
     ROOT.gStyle.SetTitleColor(1)
     ROOT.gStyle.SetTitleTextColor(1)
@@ -145,7 +145,7 @@ def setStyle():
     ROOT.gStyle.SetStripDecimals(True)
     ROOT.gStyle.SetTickLength(0.03, "XYZ")
     ROOT.gStyle.SetNdivisions(510, "XYZ")
-    ROOT.gStyle.SetPadTickX(1)  #  To get tick marks on the opposite side of the frame
+    ROOT.gStyle.SetPadTickX(1)  # To get tick marks on the opposite side of the frame
     ROOT.gStyle.SetPadTickY(1)
 
     #  Change for log plots:
@@ -154,12 +154,12 @@ def setStyle():
     ROOT.gStyle.SetOptLogz(0)
 
     # My preferences:
-    ROOT.gStyle.SetPadTopMargin(0.10)        #  default:0.05, avoid to overlap with 10^n. No Title in paper.
-    ROOT.gStyle.SetPadBottomMargin(0.12)     #  default:0.13, avoid to overlap with label
-    ROOT.gStyle.SetPadLeftMargin(0.12)       #  default:0.05, avoid to overlap with label
-    ROOT.gStyle.SetPadRightMargin(0.05)      #  default:0.05
-    ROOT.gStyle.SetPalette(57)               #  default(0), rainbow palette is much prettier.
-    ROOT.gStyle.SetPaintTextFormat("5.2f")   #  precision if plotted with "TEXT"
+    ROOT.gStyle.SetPadTopMargin(0.10)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
+    ROOT.gStyle.SetPadBottomMargin(0.12)     # default:0.13, avoid to overlap with label
+    ROOT.gStyle.SetPadLeftMargin(0.12)       # default:0.05, avoid to overlap with label
+    ROOT.gStyle.SetPadRightMargin(0.05)      # default:0.05
+    ROOT.gStyle.SetPalette(57)               # default(0), rainbow palette is much prettier.
+    ROOT.gStyle.SetPaintTextFormat("5.2f")   # precision if plotted with "TEXT"
 
     ROOT.gStyle.SetOptTitle(0)               # turn off the title
     ROOT.gStyle.SetTitleSize(0.05)           # title of hist
@@ -168,7 +168,7 @@ def setStyle():
     ROOT.gStyle.SetTitleSize(0.05, "XYZ")    # title of axis
     ROOT.gStyle.SetTitleOffset(1.0, "X")
     ROOT.gStyle.SetTitleOffset(1.2, "YZ")
-    ROOT.gStyle.SetLabelOffset(0.01,"XYZ")   # label of axis
+    ROOT.gStyle.SetLabelOffset(0.01, "XYZ")  # label of axis
     ROOT.gStyle.SetLabelFont(62, "XYZ")
     ROOT.gStyle.SetLabelSize(0.04, "X")
     ROOT.gStyle.SetLabelSize(0.04, "YZ")
@@ -176,17 +176,17 @@ def setStyle():
 
     ROOT.gStyle.SetHistFillColor(0)
     ROOT.gStyle.SetHistLineWidth(2)
-    ROOT.gStyle.SetMarkerStyle(21)            # x(5),.(1),triangle(22),square(21)
+    ROOT.gStyle.SetMarkerStyle(21)           # x(5),.(1),triangle(22),square(21)
     ROOT.gStyle.SetMarkerSize(0.6)
 
     ROOT.gStyle.SetOptStat(0)
     ROOT.gStyle.SetStatFontSize(0.04)
 
-    ROOT.gStyle.SetOptFit(0)                 #  default:1
-    ROOT.gStyle.SetTextSize(0.05)            #  default:1, won't affect TLegend until ver5.34
+    ROOT.gStyle.SetOptFit(0)                 # default:1
+    ROOT.gStyle.SetTextSize(0.05)            # default:1, won't affect TLegend until ver5.34
     ROOT.gStyle.SetFuncWidth(2)
 
-    ROOT.gStyle.SetLegendBorderSize(0)              #  default:4
+    ROOT.gStyle.SetLegendBorderSize(0)       # default:4
     ROOT.gStyle.SetLegendFillColor(ROOT.kWhite)
 
     ROOT.gStyle.cd()
@@ -197,73 +197,106 @@ class Plotter(Path):
     setStyle()
     canvas = ROOT.TCanvas()
 
-    @staticmethod
-    def canvasPrint(name):
-        canvas.Update()
-        canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
+    def canvasPrint(self, name):
+        Plotter.canvas.Update()
+        Plotter.canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
 
-    latex  = ROOT.TLatex()
-    latexCMSMark = staticmethod(lambda x=0.01, y=0.95: latex.DrawLatexNDC(x,y,"#font[22]{CMS} Preliminary"))
-    latexCMSSim  = staticmethod(lambda x=0.01, y=0.95: latex.DrawLatexNDC(x,y,"#font[22]{CMS} Simulation"))
-    latexLumi    = staticmethod(lambda x=0.88, y=0.95: latex.DrawLatexNDC(x,y,"#font[32]{L} = 19.98 fb^{-1}"))
+    latex = ROOT.TLatex()
+    latexCMSMark = staticmethod(lambda x=0.01, y=0.95: Plotter.latex.DrawLatexNDC(x, y, "CMS #font[22]{Preliminary}"))
+    latexCMSSim = staticmethod(lambda x=0.01, y=0.95: Plotter.latex.DrawLatexNDC(x, y, "CMS #font[22]{Simulation}"))
+    latexLumi = staticmethod(lambda x=0.78, y=0.95: Plotter.latex.DrawLatexNDC(x, y, "#font[32]{L_{int}} = 19.98 fb^{-1}"))
 
     frameB = Bmass.frame()
     frameB.SetMinimum(0)
     frameB.SetTitle("")
-    frameB_binning = 20
+    frameB_binning = 15
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
     frameK.SetTitle("")
-    frameK_binning = 20
+    frameK_binning = 10
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
-    frameL_binning = 20
+    frameL_binning = 10
 
     @staticmethod
-    def plotFrame(data,  pdf,  fname, frame, binning, dataPlots=[(),], pdfPlots=[(),], marks=[]):
-        for p in dataPlots:
-            data.plotOn(frame, ROOT.RooFit.Binning(binning), *p)
-        for p in pdfPlots:
-            pdf.plotOn(frame, ROOT.RooFit.Binning(binning), *p)
-        frame.Draw()
-        Plotter.latexCMSMark()
-        if 'sim' in marks: Plotter.latexCMSSim()
-        Plotter.canvasPrint(fname)
-    
-    plotFrameB = staticmethod(functools.partial(plotFrame.__func__, {'frame': frameB, 'binning': frameB_binning}))
-    plotFrameK = staticmethod(functools.partial(plotFrame.__func__, {'frame': frameK, 'binning': frameK_binning}))
-    plotFrameL = staticmethod(functools.partial(plotFrame.__func__, {'frame': frameL, 'binning': frameL_binning}))
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None):
+        """
+            xxxPlots = [[obj, (options for plotOn)], ]
+        """
+        cloned_frame = frame.emptyClone("cloned_frame")
+        marks = [] if marks is None else marks
+        dataPlots = [] if dataPlots is None else dataPlots
+        pdfPlots = [] if pdfPlots is None else pdfPlots
+        for p, pOption in dataPlots:
+            p.plotOn(cloned_frame, ROOT.RooFit.Binning(binning), *pOption)
+        for p, pOption in pdfPlots:
+            p.plotOn(cloned_frame, *pOption)
+        cloned_frame.Draw()
+        if 'sim' not in marks:
+            Plotter.latexCMSMark()
+            Plotter.latexLumi()
+        else:
+            Plotter.latexCMSSim()
+
+    plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
+    plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
+    plotFrameL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))
 
     @classmethod
     def templateConfig(cls):
         cfg = Path.templateConfig()
         cfg.update({
             'db': "fitResults.db",
-            'plotFuncs':[], # (function, kwargs)
+            'plotFuncs': [],  # (function, kwargs)
         })
         return cfg
 
     def _runPath(self):
         """"""
-        # TODO: NLL plots for afb and fl, https://root.cern.ch/root/html/tutorials/roofit/rf606_nllerrorhandling.C.html
-        # https://root.cern.ch/root/html/tutorials/roofit/rf605_profilell.C.html
-        for plotter, kwargs in self.cfg['plotFuncs']:
-            self._localPlotter = plotter
-            self._localPlotter(**kwargs)
+        for pltName, pCfg in self.cfg['plots'].items():
+            if pltName not in self.cfg['switchPlots']:
+                continue
+            for func in pCfg['func']:
+                func(self, **pCfg['kwargs'])
 
-def plotEfficiency(self):
-    data_name = "effiHistReader.accXrec"
-    pdf_name = "effi_sigA"
-    data= self.process.sourcemanager.get(data_name)
+
+def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
+    for p in dataPlots:
+        if isinstance(p[0], str):
+            p[0] = self.process.sourcemanager.get(p[0])
+    for p in pdfPlots:
+        if isinstance(p[0], str):
+            p[0] = self.process.sourcemanager.get(p[0])
+            args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass))
+            FitDBPlayer.initFromDB(self.process.odbfilename, args)
+
+    plotFuncs = {
+        'B': {'func': Plotter.plotFrameB, 'tag': ""},
+        'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
+        'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
+    }
+
+    for frame in frames:
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        self.canvasPrint(pltName + plotFuncs[frame]['tag'])
+types.MethodType(plotSimpleBLK, None, Plotter)
+
+
+def plotEfficiency(self, data_name, pdf_name):
+    pltName = "effi"
+    data = self.process.sourcemanager.get(data_name)
     pdf = self.process.sourcemanager.get(pdf_name)
+    if data == None or pdf == None:
+        self.logger.logWARNING("Skip plotEfficiency. pdf or data not found")
+        return
     args = pdf.getParameters(data)
-    FitDBPlayer.initFromDB(self.cfg.get('db', "fitResults.db"), args)
+    FitDBPlayer.initFromDB(self.process.odbfilename, args)
 
-    binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins)-1, dataCollection.accXEffThetaLBins)
-    binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins)-1, dataCollection.accXEffThetaKBins)
+    binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
+    binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
@@ -273,55 +306,169 @@ def plotEfficiency(self):
     data_accXrec.Draw("LEGO2")
     h2_effi_sigA_fine.SetLineColor(2)
     h2_effi_sigA_fine.Draw("SURF SAME")
-    latexCMSMark()
-    canvasPrint("effi_2D")
+    Plotter.latexCMSSim()
+    self.canvasPrint(pltName + "_2D")
 
+    cloned_frameL = Plotter.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
-    data_accXrec_fine_ProjectionX.plotOn(frameL)
+    data_accXrec_fine_ProjectionX.plotOn(cloned_frameL)
     pdfL = self.process.sourcemanager.get("effi_cosl")
-    pdfL.plotOn(frameL, ROOT.RooFit.LineColor(2))
-    frameL.Draw()
-    latexCMSMark()
-    latexCMSSim()
-    latex.DrawLatexNDC(.82, .85, "#chi^{{2}}={0:.2f}".format(frameL.chiSquare()))
-    canvasPrint("effi_cosl")
+    pdfL.plotOn(cloned_frameL, ROOT.RooFit.LineColor(2))
+    cloned_frameL.Draw()
+    Plotter.latexCMSSim()
+    Plotter.latex.DrawLatexNDC(.80, .85, "#chi^{{2}}={0:.2f}".format(Plotter.frameL.chiSquare()))
+    self.canvasPrint(pltName + "_cosl")
 
+    cloned_frameK = Plotter.emptyClone("cloned_frameK")
     h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
-    data_accXrec_fine_ProjectionY.plotOn(frameK)
+    data_accXrec_fine_ProjectionY.plotOn(cloned_frameK)
     pdfK = self.process.sourcemanager.get("effi_cosK")
-    pdfK.plotOn(frameK, ROOT.RooFit.LineColor(2))
-    frameK.Draw()
-    latexCMSMark()
-    latexCMSSim()
-    latex.DrawLatexNDC(.82, .85, "#chi^{{2}}={0:.2f}".format(frameK.chiSquare()))
-    canvasPrint("effi_cosK")
+    pdfK.plotOn(cloned_frameK, ROOT.RooFit.LineColor(2))
+    cloned_frameK.Draw()
+    Plotter.latexCMSSim()
+    Plotter.latex.DrawLatexNDC(.80, .85, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
+    self.canvasPrint(pltName + "_cosK")
+types.MethodType(plotEfficiency, None, Plotter)
 
-plotter = Plotter({
+
+def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
+    """Specification of plotSimpleBLK for post-fit plots"""
+    for p in pdfPlots:
+        if isinstance(p[0], str):
+            p[0] = self.process.sourcemanager.get(p[0])
+            args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
+            FitDBPlayer.initFromDB(self.process.odbfilename, args)
+    try:
+        inputdb = shelve.open(self.process.odbfilename)
+        nSigDB = inputdb['nSig']['getVal']
+        nBkgCombDB = inputdb['nBkgComb']['getVal']
+    finally:
+        inputdb.close()
+
+    if nSigDB < 0 or nBkgCombDB < 0:
+        raise ValueError("Non-positive yields. nSig={0}, nBkgComb={1}".format(nSigDB, nBkgCombDB))
+
+    # Calculate normalization and then draw
+    args = pdfPlots[0][0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
+    sigFrac = {}
+    bkgCombFrac = {}
+    for regionName in ["Fit", "SR", "LSB", "USB"]:
+        dataPlots = [[self.process.sourcemanager.get("{0}.{1}".format(dataReader, regionName)), ()], ]
+
+        # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
+        obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        sigFrac[regionName] = pdfPlots[1][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+
+        obs = pdfPlots[2][0].getObservables(dataPlots[0][0])
+        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
+        bkgCombFrac[regionName] = pdfPlots[2][0].createIntegral(
+            obs,
+            ROOT.RooFit.NormSet(obs),
+            ROOT.RooFit.Range(regionName)).getVal()
+        nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
+
+        # Correct the shape of f_final
+        args.find("nSig").setVal(nSigDB * sigFrac[regionName])
+        args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
+
+        modified_pdfPlots = [
+            [pdfPlots[0][0], pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),)],
+            [pdfPlots[0][0], pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName()))],
+            [pdfPlots[0][0], pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName()))],
+        ]
+
+        plotFuncs = {
+            'B': {'func': Plotter.plotFrameB, 'tag': ""},
+            'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
+            'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
+        }
+
+        for frame in 'BLK':
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+            self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
+types.MethodType(plotPostfitBLK, None, Plotter)
+
+plotterCfg = {
     'name': "plotter",
-})
+    'switchPlots': [],
+}
+plotterCfg_allStyle = (ROOT.RooFit.LineColor(1),)
+plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4),)
+plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
+plotterCfg['plots'] = {
+    'effi': {
+        'func': [plotEfficiency],
+        'kwargs': {
+            'data_name': "effiHistReader.accXrec",
+            'pdf_name': "effi_sigA"}
+    },
+    'angular3D_sigM': {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_sigA",
+            'dataPlots': [["sigMCReader.Fit", ()], ],
+            'pdfPlots': [["f_sigM", plotterCfg_sigStyle],
+                        ],
+            'marks': ['sim']}
+    },
+    'angular3D_sig2D': {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_sig2D",
+            'dataPlots': [["sigMCReader.Fit", ()], ],
+            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle],
+                        ],
+            'marks': []}
+    },
+    'angular3D_bkgCombA': {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_bkgCombA",
+            'dataPlots': [["dataReader.SB", ()], ],
+            'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle],
+                         #  ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9))]
+                        ],
+            'marks': []}
+    },
+    'angular3D_final': {
+        'func': [plotPostfitBLK],
+        'kwargs': {
+            'pltName': "angular3D_final",
+            'dataReader': "dataReader",
+            'pdfPlots': [["f_final", plotterCfg_allStyle],
+                         ["f_sig3D", plotterCfg_sigStyle],
+                         ["f_bkgComb", plotterCfg_bkgStyle],
+                        ],
+            }
+    },
+}
+#  plotterCfg['switchPlots'].append("effi")
+#  plotterCfg['switchPlots'].append("angular3D_sigM")
+#  plotterCfg['switchPlots'].append("angular3D_bkgCombA")
+plotterCfg['switchPlots'].append("angular3D_final")
 
-plots = [
-    ("effi_sigA", "effiHistReader.accXrec"),
-    ("f_sigM", "sigMCReader.Fit"),
-    ("f_sigA", "sigMCGENReader.Fit"),
-    ("f_sig2D", "sigMCReader.Fit"),
-    ("f_bkgCombA", "dataReader.SB"),
-    ("f_final", "dataReader.Fit"),
-]
 
+plotter = Plotter(plotterCfg)
+customized_register_dbfile = functools.partial(register_dbfile, inputDir="{0}/input/selected/".format(modulePath))  # Copy from fitCollection
 def customize(self):
-    self.cfg['db'] = "fitResults_{0}.db".format(q2bins[self.process.cfg['binKey']]['label'])
+    customized_register_dbfile(self)
 plotter.customize = types.MethodType(customize, plotter)
 
 if __name__ == '__main__':
-    p = Process("testFitCollection", "testProcess")
+    p = Process("testFitCollection", "testProcess", processCfg)
+    #  p.cfg['binKey'] = "belowJpsi"
+    #  p.cfg['binKey'] = "betweenPeaks"
+    #  p.cfg['binKey'] = "abovePsi2s"
     p.logger.verbosityLevel = VerbosityLevels.DEBUG
-    p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, plotter])
-    # p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])
-    # p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sig2DFitter])
-    # p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, bkgCombAFitter])
+    #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, plotter])
+    #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, plotter])
+    p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
     p.endSeq()

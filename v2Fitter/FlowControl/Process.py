@@ -5,7 +5,6 @@
 from __future__ import print_function
 
 import os
-import types
 from collections import OrderedDict
 from v2Fitter.FlowControl.Logger import Logger
 from v2Fitter.FlowControl.SourceManager import SourceManager, FileManager
@@ -18,7 +17,7 @@ class Process:
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         self.cwd = os.getcwd()
-        self.cfg = cfg if not cfg is None else Process.templateConfig()
+        self.cfg = cfg if cfg is not None else Process.templateConfig()
 
         # Register services
         self._services = OrderedDict()
@@ -57,10 +56,10 @@ class Process:
         """Get object from the dictionary of services."""
         try:
             return self._services[name]
-        except KeyError as e:
+        except KeyError:
             self.logger.logERROR("No service labelled with {0} is found.".format(name))
 
-    def beginSeq(self):
+    def beginSeq_registerServices(self):
         """Initialize all services."""
         os.chdir(self.work_dir)
         for key, s in self._services.items():
@@ -69,9 +68,12 @@ class Process:
                 setattr(s, "logger", self.logger)
             s._beginSeq()
 
+    def beginSeq(self):
+        """Initialize all services."""
+        self.beginSeq_registerServices()
+
     def runSeq(self):
         """Run all path."""
-
         for p in self._sequence:
             self.logger.logDEBUG("Entering Path: {0}".format(p.cfg['name']))
             p.customize()
@@ -87,4 +89,3 @@ class Process:
             self.logger.logDEBUG("Entering endSeq: {0}".format(key))
             s._endSeq()
         os.chdir(self.cwd)
-

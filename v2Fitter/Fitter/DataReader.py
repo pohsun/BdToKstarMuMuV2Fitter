@@ -9,7 +9,7 @@
 from v2Fitter.FlowControl.Path import Path
 
 from ROOT import TChain
-from ROOT import TObjArray, TIter
+from ROOT import TIter
 from ROOT import RooDataSet
 
 class DataReader(Path):
@@ -20,9 +20,13 @@ class DataReader(Path):
         self.ch = TChain("tree")
         for f in cfg['ifile']:
             self.ch.Add(f)
-        self.dataset = {}
         self.argset = cfg['argset']
+        self.reset()
         return
+
+    def reset(self):
+        super(DataReader, self).reset()
+        self.dataset = {}
 
     def __str__(self):
         list_of_files = self.ch.GetListOfFiles()
@@ -68,10 +72,12 @@ class DataReader(Path):
 
     def _addSource(self):
         """Add dataset and arguments to source pool"""
-        if not 'source' in self.cfg.keys(): self.cfg['source'] = {}
+        if not 'source' in self.cfg.keys():
+            self.cfg['source'] = {}
         self.cfg['source']['{0}.tree'.format(self.name)] = self.ch
         self.cfg['source']['{0}.argset'.format(self.name)] = self.argset
         for dname, d in self.dataset.items():
             self.cfg['source'][dname] = d
+            self.logger.logINFO("{0} events in {1}.".format(d.sumEntries(), dname))
         super(DataReader, self)._addSource()
 

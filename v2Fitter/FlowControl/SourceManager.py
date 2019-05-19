@@ -18,7 +18,6 @@ from ROOT import TFile
 
 class SourceManager(Service):
     """Source manager"""
-
     def __init__(self):
         Service.__init__(self)
         self._sources = OrderedDict()
@@ -34,13 +33,18 @@ class SourceManager(Service):
                 print(k, v)
         return self._sources.__str__()
 
+    def __contains__(self, item):
+        """See https://docs.python.org/3.7/reference/datamodel.html#emulating-container-types"""
+        return item in self._sources
+
+
     def get(self, key, default=None, addHist=None):
         if key not in self._sources.keys():
             self.logger.logWARNING("No source labeled with {0} is booked.".format(key))
             return default
 
         # Decorators
-        if not addHist is None:
+        if addHist is not None:
             self._sources[key]['history'].append(addHist)
 
         return self._sources[key]['obj']
@@ -57,7 +61,7 @@ class SourceManager(Service):
                 'history':[],
             }
 
-        if not addHist is None:
+        if addHist is not None:
             self._sources[key]['history'].append(addHist)
 
     def keys(self):
