@@ -28,7 +28,7 @@ Following functions to be overloaded to customize the full procedure...
         elif len(self.cfg['data']) <= 1:
             self.data = self.process.sourcemanager.get(self.cfg['data'][0])
         else:
-            # Merge list of input data/toy
+            # Alternative way to merge list of input data/toy
             for data in self.cfg['data']:
                 if self.data is not None:
                     self.data.append(self.process.sourcemanager.get(data))
@@ -48,15 +48,14 @@ Following functions to be overloaded to customize the full procedure...
 
     def _preFitSteps(self):
         """Abstract: Do something before main fit loop"""
-        args = self.pdf.getParameters(self.data)
-        self.ToggleConstVar(args, True)
-        self.ToggleConstVar(args, False, self.cfg['argPattern'])
+        self.args = self.pdf.getParameters(self.data)
+        self.ToggleConstVar(self.args, True)
+        self.ToggleConstVar(self.args, False, self.cfg['argPattern'])
         pass
 
     def _postFitSteps(self):
         """Abstract: Do something after main fit loop"""
-        args = self.pdf.getParameters(self.data)
-        self.ToggleConstVar(args, True)
+        self.ToggleConstVar(self.args, True)
         pass
 
     def _runFitSteps(self):
@@ -67,21 +66,23 @@ Following functions to be overloaded to customize the full procedure...
         self.minimizer.minos()
 
     @staticmethod
-    def ArgLooper(iArgs, func, targetArgs=[], inverseSel=False):
-        """Loop through RooArgSet. Select all args by default."""
+    def ArgLooper(iArgs, func, targetArgs=None, inverseSel=False):
+        """Loop through RooArgSet. Select all args by default.
+        targetArgs: A list of name to specify the target."""
+        if targetArgs is None:
+            targetArgs = []
         args_it = iArgs.createIterator()
         arg = args_it.Next()
         while arg:
             if not targetArgs or \
-                inverseSel != any([re.match(pat, arg.GetName()) for pat in targetArgs]):
+                    inverseSel != any([re.match(pat, arg.GetName()) for pat in targetArgs]):
                 func(arg)
             arg = args_it.Next()
 
     @staticmethod
     def ToggleConstVar(iArgs, isConst, targetArgs=[], inverseSel=False):
         """Loop through RooDataSet and set variables to (non)const"""
-        toggle = lambda arg: arg.setConstant(isConst)
-        FitterCore.ArgLooper(iArgs, toggle, targetArgs, inverseSel)
+        FitterCore.ArgLooper(iArgs, lambda arg: arg.setConstant(isConst), targetArgs, inverseSel)
 
     @classmethod
     def templateConfig(cls):
@@ -101,4 +102,3 @@ Following functions to be overloaded to customize the full procedure...
         self._preFitSteps()
         self._runFitSteps()
         self._postFitSteps()
-

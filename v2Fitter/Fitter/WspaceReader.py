@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
+# vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
 # Description     : Read pdf and var from RooWorkspace
-# Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
-# Last Modified   : 24 Feb 2019 19:01 17:36
 
 from v2Fitter.FlowControl.Path import Path
+from v2Fitter.Fitter.FitterCore import FitterCore
 
 import os
 from collections import OrderedDict
@@ -66,7 +65,7 @@ class WspaceReader(Path):
             self.logger.logINFO("RooWorkspace {0} found. Loading objects...".format(wspaceName))
             self.cfg['source'][wspaceName] = self.wspace
             def readObjs():
-                """Exactly define how to read varaiables"""
+                """Exactly define how to read varaiables, read `wspace_key` from wspace and book as `source_key`"""
                 for source_key, wspace_key in self.cfg['obj'].items():
                     if source_key in self.process.sourcemanager.keys():
                         self.cfg['source'][source_key] = self.process.sourcemanager.get(source_key)
@@ -76,7 +75,21 @@ class WspaceReader(Path):
                             self.logger.logWARNING("No Variable {0} is found.".format(wspace_key))
                         else:
                             self.cfg['source'][source_key] = obj
-            readObjs()
+            
+            def readAll(iArgs):
+                def bookOne(arg):
+                    argName = arg.GetName()
+                    if argName in self.process.sourcemanager:
+                        self.cfg['source'][argName] = self.process.sourcemanager.get(argName)
+                    else:
+                        self.cfg['source'][argName] = arg
+                FitterCore.ArgLooper(iArgs, bookOne)
+
+            if self.cfg['obj']:
+                readObjs()
+            else:
+                readAll(self.wspace.allFunctions())
+                readAll(self.wspace.allPdfs())
 
     def bookEndSeq(self):
         """Book to p.endSeq stack. Assign new order in case of multiple calls."""
