@@ -110,7 +110,7 @@ setupFinalFitter.update({
     'pdf': "f_final",
     'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'fs', 'transAs', 'nBkgComb', r'bkgCombM_c[\d]+'],
     'createNLLOpt': [ROOT.RooFit.Extended(), ],
-    #  'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
+    'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
 })
 finalFitter = StdFitter(setupFinalFitter)
 

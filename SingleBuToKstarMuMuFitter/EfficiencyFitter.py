@@ -3,15 +3,14 @@
 # vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
 
 from v2Fitter.Fitter.FitterCore import FitterCore
+
 import SingleBuToKstarMuMuFitter.cpp
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins
 from SingleBuToKstarMuMuFitter.varCollection import CosThetaL, CosThetaK
 from SingleBuToKstarMuMuFitter.plotCollection import setStyle
 
-import os
 import re
-import shutil
 import itertools
 
 import ROOT
