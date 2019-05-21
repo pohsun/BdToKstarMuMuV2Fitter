@@ -81,6 +81,7 @@ cuts = [
     cut_antiRadiation,
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
+cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_kstarMassWindow)
 
 # Developers Area
 ## Unit test
