@@ -5,7 +5,6 @@
 import types
 import functools
 import shelve
-import copy
 
 import ROOT
 
@@ -22,12 +21,13 @@ import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
 def setStyle():
+    """ Ref: https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines """
     ROOT.gROOT.SetBatch(1)
 
     ROOT.gStyle.SetCanvasBorderMode(0)
     ROOT.gStyle.SetCanvasColor(ROOT.kWhite)
-    ROOT.gStyle.SetCanvasDefH(500)   # Height of canvas
-    ROOT.gStyle.SetCanvasDefW(700)   # Width of canvas
+    ROOT.gStyle.SetCanvasDefH(600)   # Height of canvas
+    ROOT.gStyle.SetCanvasDefW(600)   # Width of canvas
     ROOT.gStyle.SetCanvasDefX(0)     # Position on screen
     ROOT.gStyle.SetCanvasDefY(0)     # default:0
 
@@ -50,7 +50,7 @@ def setStyle():
     ROOT.gStyle.SetFrameLineWidth(1)
 
     #  For the histo:
-    #  ROOT.gStyle.SetHistFillColor(63)# pchen modified
+    #  ROOT.gStyle.SetHistFillColor(1)
     #  ROOT.gStyle.SetHistFillStyle(0)
     ROOT.gStyle.SetHistLineColor(1)
     ROOT.gStyle.SetHistLineStyle(0)
@@ -58,9 +58,9 @@ def setStyle():
     #  ROOT.gStyle.SetLegoInnerR(Float_t rad = 0.5)
     #  ROOT.gStyle.SetNumberContours(Int_t number = 20)
 
-    #  ROOT.gStyle.SetEndErrorSize(0)
-    ROOT.gStyle.SetErrorX(0.)
+    ROOT.gStyle.SetEndErrorSize(2)
     #  ROOT.gStyle.SetErrorMarker(20)
+    #  ROOT.gStyle.SetErrorX(0.)
 
     ROOT.gStyle.SetMarkerStyle(20)
 
@@ -77,9 +77,8 @@ def setStyle():
 
     #  the date:
     ROOT.gStyle.SetOptDate(0)
-    #  ROOT.gStyle.SetDateX(Float_t x = 0.01)
-    #  ROOT.gStyle.SetDateY(Float_t y = 0.01)
-
+    #  ROOT.gStyle.SetDateX(Float_t x=0.01)
+    #  ROOT.gStyle.SetDateY(Float_t y=0.01)
 
     #  For the statistics box:
 
@@ -106,9 +105,9 @@ def setStyle():
 
     #  Margins:
     ROOT.gStyle.SetPadTopMargin(0.05)
-    ROOT.gStyle.SetPadBottomMargin(0.05)
-    ROOT.gStyle.SetPadLeftMargin(0.13)
-    ROOT.gStyle.SetPadRightMargin(0.05)
+    ROOT.gStyle.SetPadBottomMargin(0.13)
+    ROOT.gStyle.SetPadLeftMargin(0.16)
+    ROOT.gStyle.SetPadRightMargin(0.02)
 
     #  For the Global title:
     ROOT.gStyle.SetOptTitle(0)  # 0:turn off the title
@@ -130,8 +129,8 @@ def setStyle():
     ROOT.gStyle.SetTitleSize(0.06, "XYZ")
     #  ROOT.gStyle.SetTitleXSize(Float_t size = 0.02) #  Another way to set the size?
     #  ROOT.gStyle.SetTitleYSize(Float_t size = 0.02)
-    ROOT.gStyle.SetTitleXOffset(1.8)
-    ROOT.gStyle.SetTitleYOffset(1.8)
+    ROOT.gStyle.SetTitleXOffset(0.9)
+    ROOT.gStyle.SetTitleYOffset(1.25)
     #  ROOT.gStyle.SetTitleOffset(1.1, "Y") #  Another way to set the Offset
 
     #  For the axis labels:
@@ -153,37 +152,42 @@ def setStyle():
     ROOT.gStyle.SetOptLogy(0)
     ROOT.gStyle.SetOptLogz(0)
 
+    #  Postscript options
+    ROOT.gStyle.SetPaperSize(20., 20.)
+
+    ROOT.gStyle.SetHatchesLineWidth(5)
+    ROOT.gStyle.SetHatchesSpacing(0.05)
+
     # My preferences:
-    ROOT.gStyle.SetPadTopMargin(0.10)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
-    ROOT.gStyle.SetPadBottomMargin(0.12)     # default:0.13, avoid to overlap with label
-    ROOT.gStyle.SetPadLeftMargin(0.12)       # default:0.05, avoid to overlap with label
-    ROOT.gStyle.SetPadRightMargin(0.05)      # default:0.05
+    ROOT.gStyle.SetCanvasDefH(600)           # Height of canvas
+    ROOT.gStyle.SetCanvasDefW(800)           # Width of canvas
+    ROOT.gStyle.SetPadTopMargin(0.05)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
+    ROOT.gStyle.SetPadBottomMargin(0.13)     # default:0.13, avoid to overlap with label
+    ROOT.gStyle.SetPadLeftMargin(0.16)       # default:0.16, avoid to overlap with label
+    ROOT.gStyle.SetPadRightMargin(0.02)      # default:0.02
     ROOT.gStyle.SetPalette(57)               # default(0), rainbow palette is much prettier.
     ROOT.gStyle.SetPaintTextFormat("5.2f")   # precision if plotted with "TEXT"
 
     ROOT.gStyle.SetOptTitle(0)               # turn off the title
-    ROOT.gStyle.SetTitleSize(0.05)           # title of hist
-    ROOT.gStyle.SetTitleFontSize(0.05)
 
     ROOT.gStyle.SetTitleSize(0.05, "XYZ")    # title of axis
     ROOT.gStyle.SetTitleOffset(1.0, "X")
     ROOT.gStyle.SetTitleOffset(1.2, "YZ")
     ROOT.gStyle.SetLabelOffset(0.01, "XYZ")  # label of axis
-    ROOT.gStyle.SetLabelFont(62, "XYZ")
     ROOT.gStyle.SetLabelSize(0.04, "X")
     ROOT.gStyle.SetLabelSize(0.04, "YZ")
     ROOT.gStyle.SetNdivisions(505, "X")
 
     ROOT.gStyle.SetHistFillColor(0)
     ROOT.gStyle.SetHistLineWidth(2)
-    ROOT.gStyle.SetMarkerStyle(21)           # x(5),.(1),triangle(22),square(21)
+    ROOT.gStyle.SetMarkerStyle(21)           # x(5),.(1),triangle(22),square(21),circle(20)
     ROOT.gStyle.SetMarkerSize(0.6)
 
     ROOT.gStyle.SetOptStat(0)
     ROOT.gStyle.SetStatFontSize(0.04)
 
     ROOT.gStyle.SetOptFit(0)                 # default:1
-    ROOT.gStyle.SetTextSize(0.05)            # default:1, won't affect TLegend until ver5.34
+    ROOT.gStyle.SetTextSize(0.05)            # default:1, won't affect TLegend until ROOT 5.34
     ROOT.gStyle.SetFuncWidth(2)
 
     ROOT.gStyle.SetLegendBorderSize(0)       # default:4
@@ -202,9 +206,10 @@ class Plotter(Path):
         Plotter.canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
 
     latex = ROOT.TLatex()
-    latexCMSMark = staticmethod(lambda x=0.01, y=0.95: Plotter.latex.DrawLatexNDC(x, y, "CMS #font[22]{Preliminary}"))
-    latexCMSSim = staticmethod(lambda x=0.01, y=0.95: Plotter.latex.DrawLatexNDC(x, y, "CMS #font[22]{Simulation}"))
-    latexLumi = staticmethod(lambda x=0.78, y=0.95: Plotter.latex.DrawLatexNDC(x, y, "#font[32]{L_{int}} = 19.98 fb^{-1}"))
+    latexCMSMark = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
+    latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
+    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
+    latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
 
     frameB = Bmass.frame()
     frameB.SetMinimum(0)
@@ -222,7 +227,7 @@ class Plotter(Path):
     frameL_binning = 10
 
     @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None):
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, scaleYaxis=1.5):
         """
             xxxPlots = [[obj, (options for plotOn)], ]
         """
@@ -234,12 +239,15 @@ class Plotter(Path):
             p.plotOn(cloned_frame, ROOT.RooFit.Binning(binning), *pOption)
         for p, pOption in pdfPlots:
             p.plotOn(cloned_frame, *pOption)
+        cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
         cloned_frame.Draw()
         if 'sim' not in marks:
             Plotter.latexCMSMark()
             Plotter.latexLumi()
+            Plotter.latexCMSExtra()
         else:
             Plotter.latexCMSSim()
+            Plotter.latexCMSExtra()
 
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
     plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
@@ -263,6 +271,29 @@ class Plotter(Path):
                 func(self, **pCfg['kwargs'])
 
 
+def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
+    """ Assuming len(dataPlots) == 1, fit to the data. """
+    for p in dataPlots:
+        if isinstance(p[0], str):
+            p[0] = self.process.sourcemanager.get(p[0])
+    wspace = ROOT.RooWorkspace("wspace")
+    getattr(wspace, 'import')(Bmass)
+    wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.05])")
+    wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.05,0.40])")
+    wspace.factory("SUM::sigM(sigFrac[0.8,0,1]*gauss1,gauss2)")
+    wspace.factory("c1[-5.6,-20,20]")
+    wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
+    wspace.factory("SUM::model(tmp_nSig[1,1e5]*sigM,tmp_nBkg[20,1e5]*bkgCombM)")
+    pdfPlots = [
+        [wspace.pdf('model'), plotterCfg_allStyle],
+        [wspace.pdf('model'), (ROOT.RooFit.Components('sigM'),) + plotterCfg_sigStyle],
+        [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle],
+    ]
+
+    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
+    Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+    self.canvasPrint(pltName)
+
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
     for p in dataPlots:
         if isinstance(p[0], str):
@@ -284,7 +315,6 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
 
-
 def plotEfficiency(self, data_name, pdf_name):
     pltName = "effi"
     data = self.process.sourcemanager.get(data_name)
@@ -298,6 +328,7 @@ def plotEfficiency(self, data_name, pdf_name):
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
+    # TODO: Some optimization for 2D plot
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
     data_accXrec.SetMinimum(0)
@@ -307,28 +338,33 @@ def plotEfficiency(self, data_name, pdf_name):
     h2_effi_sigA_fine.SetLineColor(2)
     h2_effi_sigA_fine.Draw("SURF SAME")
     Plotter.latexCMSSim()
+    Plotter.latexCMSExtra()
     self.canvasPrint(pltName + "_2D")
 
-    cloned_frameL = Plotter.emptyClone("cloned_frameL")
+    cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
     data_accXrec_fine_ProjectionX.plotOn(cloned_frameL)
     pdfL = self.process.sourcemanager.get("effi_cosl")
-    pdfL.plotOn(cloned_frameL, ROOT.RooFit.LineColor(2))
+    pdfL.plotOn(cloned_frameL, *plotterCfg_sigStyle)
+    cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
     cloned_frameL.Draw()
     Plotter.latexCMSSim()
-    Plotter.latex.DrawLatexNDC(.80, .85, "#chi^{{2}}={0:.2f}".format(Plotter.frameL.chiSquare()))
+    Plotter.latexCMSExtra()
+    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
-    cloned_frameK = Plotter.emptyClone("cloned_frameK")
+    cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
     h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
     data_accXrec_fine_ProjectionY.plotOn(cloned_frameK)
     pdfK = self.process.sourcemanager.get("effi_cosK")
-    pdfK.plotOn(cloned_frameK, ROOT.RooFit.LineColor(2))
+    pdfK.plotOn(cloned_frameK, *plotterCfg_sigStyle)
+    cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
     cloned_frameK.Draw()
     Plotter.latexCMSSim()
-    Plotter.latex.DrawLatexNDC(.80, .85, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
+    Plotter.latexCMSExtra()
+    Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
 types.MethodType(plotEfficiency, None, Plotter)
 
@@ -402,6 +438,13 @@ plotterCfg_allStyle = (ROOT.RooFit.LineColor(1),)
 plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4),)
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 plotterCfg['plots'] = {
+    'simpleSpectrum': {
+        'func': [plotSpectrumWithSimpleFit],
+        'kwargs': {
+            'pltName': "h_Bmass",
+            'dataPlots': [["dataReader.Fit", ()], ],
+            'marks': []}
+    },
     'effi': {
         'func': [plotEfficiency],
         'kwargs': {
@@ -448,10 +491,11 @@ plotterCfg['plots'] = {
             }
     },
 }
-#  plotterCfg['switchPlots'].append("effi")
-#  plotterCfg['switchPlots'].append("angular3D_sigM")
-#  plotterCfg['switchPlots'].append("angular3D_bkgCombA")
-plotterCfg['switchPlots'].append("angular3D_final")
+plotterCfg['switchPlots'].append('simpleSpectrum')
+#  plotterCfg['switchPlots'].append('effi')
+#  plotterCfg['switchPlots'].append('angular3D_sigM')
+#  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
+#  plotterCfg['switchPlots'].append('angular3D_final')
 
 
 plotter = Plotter(plotterCfg)
@@ -465,6 +509,9 @@ if __name__ == '__main__':
     #  p.cfg['binKey'] = "belowJpsi"
     #  p.cfg['binKey'] = "betweenPeaks"
     #  p.cfg['binKey'] = "abovePsi2s"
+    #  p.cfg['binKey'] = "summary"
+    #  p.cfg['binKey'] = "jpsi"
+    #  p.cfg['binKey'] = "psi2s"
     p.logger.verbosityLevel = VerbosityLevels.DEBUG
     #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, plotter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, plotter])

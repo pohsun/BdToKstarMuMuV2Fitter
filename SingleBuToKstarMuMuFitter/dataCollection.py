@@ -23,7 +23,7 @@ from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, 
 
 from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Logger import VerbosityLevels
-from SingleBuToKstarMuMuFitter.anaSetup import processCfg, q2bins, bMassRegions, cuts
+from SingleBuToKstarMuMuFitter.anaSetup import processCfg, q2bins, bMassRegions, cuts, cuts_noResVeto
 
 CFG = DataReader.templateConfig()
 CFG.update({
@@ -47,7 +47,7 @@ def customizeOne(self, targetBMassRegion=[]):
                     "({0}) && ({1}) && ({2})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
-                        cuts[-1],
+                        cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
                     )
                 )
             )

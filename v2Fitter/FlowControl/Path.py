@@ -35,7 +35,7 @@ class Path():
         raise NotImplementedError
 
     def customize(self):
-        """Customization"""
+        """Runtime Customization"""
         pass
 
     @abc.abstractmethod
@@ -45,6 +45,5 @@ class Path():
 
     def _addSource(self):
         """Add shared objects to the source pool."""
-        for key, val  in self.cfg['source'].items():
+        for key, val in self.cfg['source'].items():
             self.process.sourcemanager.update(key, val, addHist=self.name)
-

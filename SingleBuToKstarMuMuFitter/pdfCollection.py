@@ -145,7 +145,6 @@ def buildSigA(self):
 
     self.cfg['source']['f_sigA'] = f_sigA
 
-
 def buildSig(self):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
@@ -169,25 +168,22 @@ setupBuildBkgCombM = {
     'objName': "f_bkgCombM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "bkgCombM_c1[0,-0.5,0.5]",
-        "bkgCombM_c2[0,20]",
-        "bkgCombM_c3[-5,-20,0]",
-        "EXPR::f_bkgCombM('1+bkgCombM_c1*(Bmass-5)+bkgCombM_c2*exp(bkgCombM_c3*(Bmass-5))',{Bmass,bkgCombM_c1,bkgCombM_c2,bkgCombM_c3})",
+        "bkgCombM_c1[-5,-20,0]",
+        "EXPR::f_bkgCombM('exp(bkgCombM_c1*Bmass)',{Bmass,bkgCombM_c1})",
     ],
 }
 buildBkgCombM = functools.partial(buildGenericObj, **setupBuildBkgCombM)
 
-setupBuildBkgCombAltM = {
-    'objName': "f_bkgCombAltM",
+setupBuildBkgCombMAltM = {
+    'objName': "f_bkgCombMAltM",
     'varNames': ["Bmass"],
     'factoryCmd': [
-        "bkgCombAltM_c1[0,-20,20]",
-        "bkgCombAltM_c2[0,-20,20]",
-        "bkgCombAltM_c3[0,-20,20]",
-        "EXPR::f_bkgCombAltM('1+bkgCombAltM_c1*(Bmass-5)+bkgCombAltM_c2*pow(Bmass-5,2)+bkgCombAltM_c3*(Bmass-5,3)',{Bmass,bkgCombAltM_c1,bkgCombAltM_c2,bkgCombAltM_c3})",
+        "bkgCombMAltM_c1[0.1,1e-5,10]",
+        "bkgCombMAltM_c2[-5.6,-20,-4]",
+        "EXPR::f_bkgCombMAltM('bkgCombMAltM_c1+pow(Bmass+bkgCombMAltM_c2,2)',{Bmass,bkgCombMAltM_c1,bkgCombMAltM_c2})",
     ],
 }
-buildBkgCombAltM = functools.partial(buildGenericObj, **setupBuildBkgCombAltM)
+buildBkgCombMAltM = functools.partial(buildGenericObj, **setupBuildBkgCombMAltM)
 
 f_analyticBkgCombA_format = {}
 
@@ -258,46 +254,46 @@ def buildSmoothBkgCombA(self):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
 
-    f_bkgCombAltA = wspace.pdf("f_bkgCombAltA")
-    if f_bkgCombAltA == None:
-        f_bkgCombAltKUp = RooKeysPdf("f_bkgCombAltKUp",
-                                     "f_bkgCombAltKUp",
-                                     CosThetaK,
-                                     self.process.sourcemanager.get('dataReader.USB'),
-                                     RooKeysPdf.MirrorBoth, 1.0)
-        f_bkgCombAltKLo = RooKeysPdf("f_bkgCombAltKLo",
-                                     "f_bkgCombAltKLo",
-                                     CosThetaK,
-                                     self.process.sourcemanager.get('dataReader.LSB'),
-                                     RooKeysPdf.MirrorBoth, 1.0)
-        f_bkgCombAltLUp = RooKeysPdf("f_bkgCombAltLUp",
-                                     "f_bkgCombAltLUp",
-                                     CosThetaL,
-                                     self.process.sourcemanager.get('dataReader.USB'),
-                                     RooKeysPdf.MirrorBoth, 1.0)
-        f_bkgCombAltLLo = RooKeysPdf("f_bkgCombAltLLo",
-                                     "f_bkgCombAltLLo",
-                                     CosThetaL,
-                                     self.process.sourcemanager.get('dataReader.LSB'),
-                                     RooKeysPdf.MirrorBoth, 1.0)
-        for f in f_bkgCombAltKLo, f_bkgCombAltKUp, f_bkgCombAltLLo, f_bkgCombAltLUp:
+    f_bkgCombAAltA = wspace.pdf("f_bkgCombAAltA")
+    if f_bkgCombAAltA == None:
+        f_bkgCombAAltKUp = RooKeysPdf("f_bkgCombAAltKUp",
+                                      "f_bkgCombAAltKUp",
+                                      CosThetaK,
+                                      self.process.sourcemanager.get('dataReader.USB'),
+                                      RooKeysPdf.MirrorBoth, 1.0)
+        f_bkgCombAAltKLo = RooKeysPdf("f_bkgCombAAltKLo",
+                                      "f_bkgCombAAltKLo",
+                                      CosThetaK,
+                                      self.process.sourcemanager.get('dataReader.LSB'),
+                                      RooKeysPdf.MirrorBoth, 1.0)
+        f_bkgCombAAltLUp = RooKeysPdf("f_bkgCombAAltLUp",
+                                      "f_bkgCombAAltLUp",
+                                      CosThetaL,
+                                      self.process.sourcemanager.get('dataReader.USB'),
+                                      RooKeysPdf.MirrorBoth, 1.0)
+        f_bkgCombAAltLLo = RooKeysPdf("f_bkgCombAAltLLo",
+                                      "f_bkgCombAAltLLo",
+                                      CosThetaL,
+                                      self.process.sourcemanager.get('dataReader.LSB'),
+                                      RooKeysPdf.MirrorBoth, 1.0)
+        for f in f_bkgCombAAltKLo, f_bkgCombAAltKUp, f_bkgCombAAltLLo, f_bkgCombAAltLUp:
             getattr(wspace, 'import')(f)
-        wspace.factory("PROD::f_bkgCombAltAUp(f_bkgCombAltKUp, f_bkgCombAltLUp)")
-        wspace.factory("PROD::f_bkgCombAltALo(f_bkgCombAltKLo, f_bkgCombAltLLo)")
-        wspace.factory("SUM::f_bkgCombAltA(frac_bkgCombAltA[0.5,0,1]*f_bkgCombAltALo, f_bkgCombAltAUp)")
-        f_bkgCombAltA = wspace.pdf("f_bkgCombAltA")
-        frac_bkgCombAltA = wspace.var("frac_bkgCombAltA")
+        wspace.factory("PROD::f_bkgCombAAltAUp(f_bkgCombAAltKUp, f_bkgCombAAltLUp)")
+        wspace.factory("PROD::f_bkgCombAAltALo(f_bkgCombAAltKLo, f_bkgCombAAltLLo)")
+        wspace.factory("SUM::f_bkgCombAAltA(frac_bkgCombAAltA[0.5,0,1]*f_bkgCombAAltALo, f_bkgCombAAltAUp)")
+        f_bkgCombAAltA = wspace.pdf("f_bkgCombAAltA")
+        frac_bkgCombAAltA = wspace.var("frac_bkgCombAAltA")
 
-    self.cfg['source']['frac_bkgCombAltA'] = frac_bkgCombAltA
-    self.cfg['source']['f_bkgCombAltA'] = f_bkgCombAltA
+    self.cfg['source']['frac_bkgCombAAltA'] = frac_bkgCombAAltA
+    self.cfg['source']['f_bkgCombAAltA'] = f_bkgCombAAltA
 
 def buildBkgComb(self):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
 
     variations = [("f_bkgComb", "f_bkgCombM", "f_bkgCombA"),
-                  ("f_bkgCombAltA", "f_bkgCombM", "f_bkgCombAltA"),
-                  ("f_bkgCombAltM", "f_bkgCombAltM", "f_bkgCombA")]
+                  ("f_bkgCombAltA", "f_bkgCombM", "f_bkgCombAAltA"),
+                  ("f_bkgCombAltM", "f_bkgCombMAltM", "f_bkgCombA")]
     for p, pM, pA in variations:
         f_bkgComb = wspace.pdf(p)
         if f_bkgComb == None:
@@ -313,9 +309,12 @@ def buildFinal(self):
     """Combination of signal and background components."""
     wspace = self.getWspace()
 
+    # Keep also mass spectrum only for prefit
     variations = [("f_final", "f_sig3D", "f_bkgComb"),
                   ("f_finalAltBkgCombA", "f_sig3D", "f_bkgCombAltA"),
-                  ("f_finalAltBkgCombM", "f_sig3D", "f_bkgCombAltM")]
+                  ("f_finalAltBkgCombM", "f_sig3D", "f_bkgCombAltM"),
+                  ("f_finalM", "f_sigM", "f_bkgCombM"),
+                  ("f_finalMAltBkgCombM", "f_sigM", "f_bkgCombMAltM")]
     for p, pM, pA in variations:
         f_final = wspace.obj(p)
         if f_final == None:
@@ -357,10 +356,10 @@ def customizePDFBuilder(self):
             ('f_sigM', [buildSigM]),
             ('f_sig3D', [buildSig]),  # Include f_sig2D
             ('f_bkgCombA', [buildAnalyticBkgCombA]),
-            ('f_bkgCombAltA', [buildSmoothBkgCombA]),
+            ('f_bkgCombAAltA', [buildSmoothBkgCombA]),
             ('f_bkgCombM', [buildBkgCombM]),
-            ('f_bkgCombAltM', [buildBkgCombAltM]),
-            ('f_bkgComb', [buildBkgComb]),  # Include variations
+            ('f_bkgCombMAltM', [buildBkgCombMAltM]),
+            ('f_bkgComb', [buildBkgComb]),  # Include all variations
             ('f_final', [buildFinal]),  # Include all variations
         ])
     })

@@ -8,8 +8,10 @@
 
 from v2Fitter.FlowControl.Service import Service
 
+import os
 from enum import IntEnum
 from functools import partial
+from datetime import datetime
 
 class VerbosityLevels(IntEnum):
     """Verbosity levels for message logger."""
@@ -33,9 +35,9 @@ class Logger(Service):
     def __init__(self, logfilename=None, verbosityLevel=VerbosityLevels.DEFAULT):
         Service.__init__(self)
         if logfilename is None:
-            self._logmethod = self._logPrint
+            self._logmethod = self.logPrint
         else:
-            self._logmethod = self._logWrite
+            self._logmethod = self.logWrite
             self._logfilename = logfilename
         self.verbosityLevel = verbosityLevel
 
@@ -45,16 +47,27 @@ class Logger(Service):
 
     def _compileMsg(self, msg, lv):
         """Compose message"""
-        return "{0}\t: {1}\n".format(lv.name, msg)
+        return "{time} {vlevel}\t: {msg}\n".format(time=datetime.utcnow().strftime("UTC %Y%m%d %H:%M:%S"), vlevel=lv.name, msg=msg)
 
-    def _logPrint(self, msg, lv):
+    def setAbsLogfileDir(self, dirname):
+        """ In case you want to specify the directory """
+        if os.path.isabs(dirname):
+            self.dirname = dirname
+
+    def logPrint(self, msg, lv):
         """Print to stdout"""
         print(self._compileMsg(msg, lv))
 
-    def _logWrite(self, msg, lv):
+    def logWrite(self, msg, lv):
         """Write down a log"""
         if not hasattr(self, "_logfile"):
-            self._logfile = open(self._logfilename, "w")
+            if hasattr(self, 'filedir'):
+                if not os.path.isdir(self.filedir):
+                    os.mkdir(self.filedir)
+                self._logfile = open(os.path.join(self.filedir, self._logfilename), 'w+')
+            else:
+                self._logfile = open(self._logfilename, 'w+')
+            self._logfile.write(self._compileMsg("New process spawned.", lv))
         self._logfile.write(self._compileMsg(msg, lv))
 
     def _logDefine(self, msg, lv):
@@ -66,4 +79,3 @@ class Logger(Service):
     logWARNING = partialmethod(_logDefine, lv=VerbosityLevels.WARNING)
     logERROR = partialmethod(_logDefine, lv=VerbosityLevels.ERROR)
     logDEBUG = partialmethod(_logDefine, lv=VerbosityLevels.DEBUG)
-
