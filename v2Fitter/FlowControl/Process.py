@@ -11,11 +11,9 @@ from v2Fitter.FlowControl.SourceManager import SourceManager, FileManager
 
 class Process:
     """A unit of a run-able job."""
-    def __init__(self, name, work_dir, cfg=None):
+    def __init__(self, name="myProcess", work_dir="testProcess", cfg=None):
         self.name = name
         self.work_dir = work_dir
-        if not os.path.exists(self.work_dir):
-            os.makedirs(self.work_dir)
         self.cwd = os.getcwd()
         self.cfg = cfg if cfg is not None else Process.templateConfig()
 
@@ -61,7 +59,6 @@ class Process:
 
     def beginSeq_registerServices(self):
         """Initialize all services."""
-        os.chdir(self.work_dir)
         for key, s in self._services.items():
             setattr(s, "process", self)
             if s.logger is None:
@@ -69,7 +66,10 @@ class Process:
             s._beginSeq()
 
     def beginSeq(self):
-        """Initialize all services."""
+        """Initialize all services. Start logging."""
+        if not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+        os.chdir(self.work_dir)
         self.beginSeq_registerServices()
 
     def runSeq(self):
