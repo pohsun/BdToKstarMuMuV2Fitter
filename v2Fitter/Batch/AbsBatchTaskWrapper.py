@@ -39,7 +39,7 @@ class AbsBatchTaskWrapper:
     @classmethod
     def templateCfg(cls):
         cfg = {
-            'nJobs': 500,
+            'nJobs': 1,
             'queue': batchConfig.BATCH_QUEUE,
         }
         return cfg

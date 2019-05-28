@@ -42,6 +42,7 @@ class Logger(Service):
         self.verbosityLevel = verbosityLevel
 
     def __del__(self):
+        self.logDEBUG("Close logger service.")
         if hasattr(self, "_logfile"):
             self._logfile.close()
 
@@ -67,7 +68,6 @@ class Logger(Service):
                 self._logfile = open(os.path.join(self.filedir, self._logfilename), 'w+')
             else:
                 self._logfile = open(self._logfilename, 'w+')
-            self._logfile.write(self._compileMsg("New process spawned.", lv))
         self._logfile.write(self._compileMsg(msg, lv))
 
     def _logDefine(self, msg, lv):

@@ -208,6 +208,8 @@ class Plotter(Path):
     latex = ROOT.TLatex()
     latexCMSMark = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
     latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
+    latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
+    latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
     latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
 
@@ -241,12 +243,18 @@ class Plotter(Path):
             p.plotOn(cloned_frame, *pOption)
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
         cloned_frame.Draw()
-        if 'sim' not in marks:
-            Plotter.latexCMSMark()
-            Plotter.latexLumi()
+        if 'sim' in marks:
+            Plotter.latexCMSSim()
+            Plotter.latexCMSExtra()
+        elif 'toy' in marks:
+            Plotter.latexCMSToy()
+            Plotter.latexCMSExtra()
+        elif 'mix' in marks:
+            Plotter.latexCMSMix()
             Plotter.latexCMSExtra()
         else:
-            Plotter.latexCMSSim()
+            Plotter.latexCMSMark()
+            Plotter.latexLumi()
             Plotter.latexCMSExtra()
 
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
@@ -478,6 +486,15 @@ plotterCfg['plots'] = {
                          #  ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9))]
                         ],
             'marks': []}
+    },
+    'simpleBLK': {  # Most general case, to be customized by user
+        'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+        'kwargs': {
+            'pltName': "simpleBLK",
+            'dataPlots': [["ToyGenerator.mixedToy", ()], ],
+            'pdfPlots': [["f_sigM", plotterCfg_sigStyle],
+                        ],
+            'marks': ['sim']}
     },
     'angular3D_final': {
         'func': [plotPostfitBLK],

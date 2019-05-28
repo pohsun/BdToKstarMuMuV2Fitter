@@ -8,6 +8,7 @@ from v2Fitter.FlowControl.Logger import VerbosityLevels
 from SingleBuToKstarMuMuFitter.anaSetup import processCfg
 import SingleBuToKstarMuMuFitter.cpp
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
+import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
 #  import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
@@ -16,6 +17,7 @@ predefined_sequence = {}
 predefined_sequence['loadData'] = [dataCollection.dataReader]
 predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
 predefined_sequence['buildEfficiecyHist'] = [dataCollection.effiHistReader]
+
 predefined_sequence['fitEfficiency'] = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter]
 predefined_sequence['fitSigM'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sigMFitter]
 predefined_sequence['fitBkgCombA'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
@@ -28,10 +30,7 @@ predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollecti
 # For systematics
 
 p = Process("testSeqCollection", "testProcess", processCfg)
-#  p.cfg['binKey'] = "belowJpsi"
-#  p.cfg['binKey'] = "betweenPeaks"
-#  p.cfg['binKey'] = "abovePsi2s"
-p.logger.verbosityLevel = VerbosityLevels.DEBUG
+#  p.logger.verbosityLevel = VerbosityLevels.DEBUG
 
 #  p.setSequence(predefined_sequence['loadData'])
 
@@ -47,6 +46,9 @@ p.setSequence(predefined_sequence['fitEfficiency'])
 #  p.setSequence(predefined_sequence['fitSig2D'])  # With efficiency correction
 
 if __name__ == '__main__':
+    #  p.cfg['binKey'] = "belowJpsi"
+    #  p.cfg['binKey'] = "betweenPeaks"
+    #  p.cfg['binKey'] = "abovePsi2s"
     try:
         p.beginSeq()
         p.runSeq()

@@ -9,6 +9,8 @@ from collections import OrderedDict
 from v2Fitter.FlowControl.Logger import Logger
 from v2Fitter.FlowControl.SourceManager import SourceManager, FileManager
 
+import ROOT
+
 class Process:
     """A unit of a run-able job."""
     def __init__(self, name="myProcess", work_dir="testProcess", cfg=None):
@@ -71,6 +73,8 @@ class Process:
             os.makedirs(self.work_dir)
         os.chdir(self.work_dir)
         self.beginSeq_registerServices()
+        ROOT.gRandom.SetSeed(0)
+        self.logger.logINFO("New process initialized with random seed {0}".format(ROOT.gRandom.GetSeed()))
 
     def runSeq(self):
         """Run all path."""
