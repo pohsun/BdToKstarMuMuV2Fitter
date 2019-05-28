@@ -20,17 +20,21 @@ from argparse import ArgumentParser
 
 class AbsBatchTaskWrapper:
     """"""
-    def __init__(self, name="myBatchTask", task_dir="testBatchTask", cfg=None):
+    def __init__(self, name="myBatchTask", task_dir=None, cfg=None):
         """Create process from """
         self.name = name
-        self.task_dir = task_dir
-        if not os.path.exists(self.task_dir):
-            os.makedirs(self.task_dir)
-        self.cwd = os.getcwd()
+        if os.path.isabs(task_dir):
+            # Since relative path differs on local and cluster.
+            # Ensure absolute or there will be no output.
+            self.task_dir = task_dir
+        else:
+            raise ValueError("ERROR: task_dir must be an absolute path")
+        if not os.path.exists(self.task_dir + "/log"):
+            os.makedirs(self.task_dir + "/log")
         self.cfg = cfg if cfg is not None else self.templateCfg()
 
         self.logger = Logger("task.log")
-        self.logger.setAbsLogfileDir(os.path.abspath(self.task_dir))
+        self.logger.setAbsLogfileDir(self.task_dir)
 
     @classmethod
     def templateCfg(cls):
@@ -40,26 +44,28 @@ class AbsBatchTaskWrapper:
         }
         return cfg
 
-    def createSubScriptBase(self):
-        """ Base of submit script to be futher decorated in makeSubScript """
+    def createJdlBase(self):
+        """ Base of jdl script to be futher decorated in createJdl """
         """"""
-        templateSubScritpt = """
+        templateJdl = """
 getenv      = True
-log         = condor.log
-output      = condor.out
-error       = condor.err
+log         = log/log.$(Process)
+output      = log/out.$(Process)
+error       = log/err.$(Process)
 +JobFlavour = {JobFlavour}
 
-initialdir           = {initialdir}
-executable           = {executable}
+initialdir  = {initialdir}
+executable  = {executable}
+#  when_to_transfer_output = ON_EXIT
+#  transfer_output_files = job$(Process),job$(Process).tar.gz
 """.format(initialdir=self.task_dir,
             JobFlavour=self.cfg['queue'],
             executable=os.path.abspath(__main__.__file__),)
-        return templateSubScritpt
+        return templateJdl
 
     @abc.abstractmethod
-    def makeSubScript(self, parser_args):
-        """ To be customized by users. Start from createSubScriptBase. """
+    def createJdl(self, parser_args):
+        """ To be customized by users. Start from createJdlBase. """
         raise NotImplementedError
 
     def getWrappedProcess(self, process, jobId, **kwargs):
@@ -71,13 +77,16 @@ executable           = {executable}
         if wrapper_kwargs is None:
             wrapper_kwargs = {}
         p = self.getWrappedProcess(process, jobId, **wrapper_kwargs)
-        p.work_dir = os.path.join(self.task_dir, "job{0:04d}".format(int(jobId)))
+        p.work_dir = os.path.join(self.task_dir, "job{jobId}".format(jobId=jobId))
         try:
             p.beginSeq()
             p.runSeq()
         finally:
             p.endSeq()
 
+            # HTCondor does not transfer output directory but only file
+            os.chdir(self.task_dir)
+            #  call("tar zcf job{jobId}.tar.gz job{jobId}".format(jobId=jobId), shell=True)
 
 # Followings are pre-defined procedure to reduce routine
 
@@ -117,15 +126,15 @@ def submitTask(args):
         args.wrapper.cfg['queue'] = args.queue
     if args.nJobs:
         args.wrapper.cfg['nJobs'] = args.nJobs
-    subScript = args.wrapper.makeSubScript(parser_args=args)
+    jdl = args.wrapper.createJdl(parser_args=args)
 
     if args.doSubmit:
         with tempfile.NamedTemporaryFile() as tmp:
-            tmp.write(subScript)
+            tmp.write(jdl)
             tmp.flush()
             call("condor_submit {0}".format(tmp.name), shell=True)
     else:
-        print(subScript)
+        print(jdl)
 
 BatchTaskSubparserSubmit.set_defaults(func=submitTask)
 
