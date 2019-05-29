@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
-from v2Fitter.FlowControl.Process import Process
-from v2Fitter.FlowControl.Logger import VerbosityLevels
-
-from SingleBuToKstarMuMuFitter.anaSetup import processCfg
 import SingleBuToKstarMuMuFitter.cpp
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-#  import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
+import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 
+from SingleBuToKstarMuMuFitter.StdProcess import p
+
+# Standard fitting procedures
 predefined_sequence = {}
 predefined_sequence['loadData'] = [dataCollection.dataReader]
 predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
@@ -29,26 +28,11 @@ predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollecti
 
 # For systematics
 
-p = Process("testSeqCollection", "testProcess", processCfg)
-#  p.logger.verbosityLevel = VerbosityLevels.DEBUG
-
-#  p.setSequence(predefined_sequence['loadData'])
-
-#  p.setSequence(predefined_sequence['buildEfficiecyHist'])
-#  p.setSequence(predefined_sequence['buildAllPdfs'])
-
-p.setSequence(predefined_sequence['fitEfficiency'])
-#  p.setSequence(predefined_sequence['fitSigM'])
-#  p.setSequence(predefined_sequence['fitBkgCombA'])
-#  p.setSequence(predefined_sequence['fitFinal3D'])
-
-#  p.setSequence(predefined_sequence['fitSigMCGEN'])  # Without efficiency correction
-#  p.setSequence(predefined_sequence['fitSig2D'])  # With efficiency correction
-
 if __name__ == '__main__':
     #  p.cfg['binKey'] = "belowJpsi"
     #  p.cfg['binKey'] = "betweenPeaks"
     #  p.cfg['binKey'] = "abovePsi2s"
+    p.setSequence(predefined_sequence['fitEfficiency'])
     try:
         p.beginSeq()
         p.runSeq()

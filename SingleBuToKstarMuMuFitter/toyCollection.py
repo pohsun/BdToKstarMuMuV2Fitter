@@ -7,7 +7,7 @@ from copy import deepcopy
 import functools
 import shelve
 
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, processCfg
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath
 from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaL, CosThetaK
 
 from v2Fitter.Fitter.ToyGenerator import ToyGenerator
@@ -17,8 +17,7 @@ from SingleBuToKstarMuMuFitter.fitCollection import setupSigAFitter
 
 import ROOT
 
-from v2Fitter.FlowControl.Process import Process
-from v2Fitter.FlowControl.Logger import VerbosityLevels
+from SingleBuToKstarMuMuFitter.StdProcess import p
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
 CFG = deepcopy(ToyGenerator.templateConfig())
@@ -128,8 +127,6 @@ sigAToyGenerator.customize = types.MethodType(sigAToyGenerator_customize, sigATo
 
 if __name__ == '__main__':
     try:
-        p = Process("testDataReaders", "testProcess", processCfg)
-        p.logger.verbosityLevel = VerbosityLevels.DEBUG
         p.setSequence([pdfCollection.stdWspaceReader, bkgCombToyGenerator])
         p.beginSeq()
         p.runSeq()

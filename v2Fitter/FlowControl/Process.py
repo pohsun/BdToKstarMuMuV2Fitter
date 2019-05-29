@@ -22,12 +22,9 @@ class Process:
         # Register services
         self._services = OrderedDict()
 
-        self.logger = Logger("runtime.log")
-        self._services["logger"] = self.logger
-        self.filemanager = FileManager()
-        self._services["filemanager"] = self.filemanager
-        self.sourcemanager = SourceManager()
-        self._services["sourcemanager"] = self.sourcemanager
+        self.addService('logger', Logger("runtime.log"))
+        self.addService('filemanager', FileManager())
+        self.addService('sourcemanager', SourceManager())
 
     def __str__(self):
         return self._sequence.__str__()
@@ -49,7 +46,8 @@ class Process:
     def addService(self, name, obj):
         """Put object to the dictionary of services."""
         if name in self._services.keys():
-            self.logger.logWARNING("Overwritting service with key={0}".format(name))
+            print("WARNING\t: Overwritting service with key={0}".format(name))
+        setattr(self, name, obj)
         self._services[name] = obj
 
     def getService(self, name):

@@ -9,21 +9,20 @@ import itertools
 from array import array
 import math
 
+import SingleBuToKstarMuMuFitter.cpp
+
+from v2Fitter.Fitter.DataReader import DataReader
+from v2Fitter.Fitter.ObjProvider import ObjProvider
+from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, dataArgsGEN
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto
+
 import ROOT
 from ROOT import TChain
 from ROOT import TEfficiency, TH2D
 from ROOT import RooArgList
 from ROOT import RooDataHist
 
-import SingleBuToKstarMuMuFitter.cpp
-
-from v2Fitter.Fitter.DataReader import DataReader
-from v2Fitter.Fitter.ObjProvider import ObjProvider
-from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, dataArgsGEN
-
-from v2Fitter.FlowControl.Process import Process
-from v2Fitter.FlowControl.Logger import VerbosityLevels
-from SingleBuToKstarMuMuFitter.anaSetup import processCfg, q2bins, bMassRegions, cuts, cuts_noResVeto
+from SingleBuToKstarMuMuFitter.StdProcess import p
 
 CFG = DataReader.templateConfig()
 CFG.update({
@@ -35,7 +34,7 @@ def customizeOne(self, targetBMassRegion=[]):
     """Define datasets with arguments."""
     if not self.process.cfg['binKey'] in q2bins.keys():
         print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
-        raise AttributeError
+        raise ValueError
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
@@ -215,8 +214,6 @@ effiHistReader = ObjProvider({
 })
 
 if __name__ == '__main__':
-    p = Process("testDataReaders", "testProcess", processCfg)
-    p.logger.verbosityLevel = VerbosityLevels.DEBUG
     p.setSequence([dataReader])
     # p.setSequence([effiHistReader])
     p.beginSeq()

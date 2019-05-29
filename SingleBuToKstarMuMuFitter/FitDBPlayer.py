@@ -8,10 +8,11 @@ import shutil
 import shelve
 
 import ROOT
+from v2Fitter.FlowControl.Service import Service
 from v2Fitter.Fitter.FitterCore import FitterCore
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath
 
-class FitDBPlayer(object):
+class FitDBPlayer(Service):
     "Play with the database generated with shelve"
     funcPair = [
         ('setVal', 'getVal'),
@@ -22,6 +23,12 @@ class FitDBPlayer(object):
         ('setMax', 'getMax'),
         ('setMin', 'getMin')]
     outputfilename = "fitResults.db"
+
+    def __init__(self, inputDir):
+        self.process = None
+        self.logger = None
+        self.inputDir = inputDir
+        self.odbfilename = None
 
     @staticmethod
     def MergeDB(dblist, mode="Overwrite", outputName="MergedDB.db"):
@@ -127,10 +134,9 @@ class FitDBPlayer(object):
         finally:
             db.close()
 
-def register_dbfile(self, inputDir="{0}/input/selected".format(modulePath)):
-    # All fitting steps MUST share the same input db file to ensure consistency of output db file.
-    baseDBFile = "{0}/{1}_{2}.db".format(inputDir, os.path.splitext(FitDBPlayer.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
-    if not hasattr(self.process, 'odbfilename'):
-        self.process.odbfilename = "{0}".format(os.path.basename(baseDBFile))
-    if not os.path.exists(self.process.odbfilename) and os.path.exists(baseDBFile):
-        shutil.copy(baseDBFile, self.process.odbfilename)
+    def _beginSeq(self):
+        # All fitting steps MUST share the same input db file to ensure consistency of output db file.
+        baseDBFile = "{0}/{1}_{2}.db".format(self.inputDir, os.path.splitext(self.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
+        self.odbfile = "{0}".format(os.path.basename(baseDBFile))
+        if not os.path.exists(self.odbfile) and os.path.exists(baseDBFile):
+            shutil.copy(baseDBFile, self.odbfile)

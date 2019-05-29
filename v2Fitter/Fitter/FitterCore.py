@@ -16,6 +16,10 @@ Following functions to be overloaded to customize the full procedure...
 """
     def __init__(self, cfg):
         super(FitterCore, self).__init__(cfg)
+        self.reset()
+
+    def reset(self):
+        super(FitterCore, self).reset()
         self.pdf = None
         self.data = None
         self._nll = None

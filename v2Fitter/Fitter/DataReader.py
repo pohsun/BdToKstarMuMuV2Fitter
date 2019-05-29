@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
+# vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
 # Description     : Creating RooDataSet for fitting
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)

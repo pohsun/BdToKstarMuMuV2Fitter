@@ -6,8 +6,7 @@ import sys
 from copy import deepcopy
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 
-from v2Fitter.FlowControl.Process import Process
-from SingleBuToKstarMuMuFitter.anaSetup import processCfg
+from SingleBuToKstarMuMuFitter.StdProcess import p
 import ROOT
 import SingleBuToKstarMuMuFitter.cpp
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
@@ -17,7 +16,6 @@ import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 
 # Define Process
-p = Process("myProcess", "dummyDir", cfg=processCfg)
 fitCollection.finalFitter.cfg['data'] = "ToyGenerator.mixedToy"
 plotCollection.plotter.cfg['plots']['simpleBLK']['kwargs'].update({
     'pltName': "angular3D_final",

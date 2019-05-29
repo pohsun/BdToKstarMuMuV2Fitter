@@ -9,14 +9,14 @@ import shelve
 import ROOT
 
 import SingleBuToKstarMuMuFitter.cpp
-from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Path import Path
-from v2Fitter.FlowControl.Logger import VerbosityLevels
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, processCfg, modulePath, bMassRegions
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer, register_dbfile
+from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass
+
+from SingleBuToKstarMuMuFitter.StdProcess import p
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
@@ -310,7 +310,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         if isinstance(p[0], str):
             p[0] = self.process.sourcemanager.get(p[0])
             args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass))
-            FitDBPlayer.initFromDB(self.process.odbfilename, args)
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
 
     plotFuncs = {
         'B': {'func': Plotter.plotFrameB, 'tag': ""},
@@ -331,7 +331,7 @@ def plotEfficiency(self, data_name, pdf_name):
         self.logger.logWARNING("Skip plotEfficiency. pdf or data not found")
         return
     args = pdf.getParameters(data)
-    FitDBPlayer.initFromDB(self.process.odbfilename, args)
+    FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
 
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
@@ -383,7 +383,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
         if isinstance(p[0], str):
             p[0] = self.process.sourcemanager.get(p[0])
             args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
-            FitDBPlayer.initFromDB(self.process.odbfilename, args)
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
     try:
         inputdb = shelve.open(self.process.odbfilename)
         nSigDB = inputdb['nSig']['getVal']
@@ -508,28 +508,15 @@ plotterCfg['plots'] = {
             }
     },
 }
-plotterCfg['switchPlots'].append('simpleSpectrum')
+#  plotterCfg['switchPlots'].append('simpleSpectrum')
 #  plotterCfg['switchPlots'].append('effi')
 #  plotterCfg['switchPlots'].append('angular3D_sigM')
 #  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
 #  plotterCfg['switchPlots'].append('angular3D_final')
 
-
 plotter = Plotter(plotterCfg)
-customized_register_dbfile = functools.partial(register_dbfile, inputDir="{0}/input/selected/".format(modulePath))  # Copy from fitCollection
-def customize(self):
-    customized_register_dbfile(self)
-plotter.customize = types.MethodType(customize, plotter)
 
 if __name__ == '__main__':
-    p = Process("testFitCollection", "testProcess", processCfg)
-    #  p.cfg['binKey'] = "belowJpsi"
-    #  p.cfg['binKey'] = "betweenPeaks"
-    #  p.cfg['binKey'] = "abovePsi2s"
-    #  p.cfg['binKey'] = "summary"
-    #  p.cfg['binKey'] = "jpsi"
-    #  p.cfg['binKey'] = "psi2s"
-    p.logger.verbosityLevel = VerbosityLevels.DEBUG
     #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, plotter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, plotter])
     p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

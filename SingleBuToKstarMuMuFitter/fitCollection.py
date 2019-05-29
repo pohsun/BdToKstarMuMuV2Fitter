@@ -3,7 +3,6 @@
 # vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
 
 import types
-import functools
 from copy import deepcopy
 
 import ROOT
@@ -12,12 +11,8 @@ import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.Fitter.FitterCore import FitterCore
 from SingleBuToKstarMuMuFitter.StdFitter import StdFitter
 from SingleBuToKstarMuMuFitter.EfficiencyFitter import EfficiencyFitter
-from SingleBuToKstarMuMuFitter.FitDBPlayer import register_dbfile
 
-from v2Fitter.FlowControl.Process import Process
-from v2Fitter.FlowControl.Logger import VerbosityLevels
-
-from SingleBuToKstarMuMuFitter.anaSetup import processCfg, modulePath
+from SingleBuToKstarMuMuFitter.StdProcess import p
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
@@ -114,20 +109,11 @@ setupFinalFitter.update({
 })
 finalFitter = StdFitter(setupFinalFitter)
 
-customized_register_dbfile = functools.partial(register_dbfile, inputDir="{0}/input/selected/".format(modulePath))
-def customize(self):
-    customized_register_dbfile(self)
-for fitter in [effiFitter, sigMFitter, sigAFitter, sig2DFitter, bkgCombAFitter, bkgCombMFitter, finalFitter]:
-    fitter.customize = types.MethodType(customize, fitter)
-
 if __name__ == '__main__':
-    p = Process("testFitCollection", "testProcess", processCfg)
-    p.logger.verbosityLevel = VerbosityLevels.DEBUG
-    #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
+    p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sig2DFitter])
     #  p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, bkgCombAFitter])
-    p.setSequence([])
     p.beginSeq()
     p.runSeq()
     p.endSeq()
