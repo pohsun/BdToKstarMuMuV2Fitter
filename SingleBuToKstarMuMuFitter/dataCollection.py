@@ -7,6 +7,7 @@ import types
 import functools
 import itertools
 from array import array
+from copy import copy
 import math
 
 import SingleBuToKstarMuMuFitter.cpp
@@ -27,6 +28,7 @@ from SingleBuToKstarMuMuFitter.StdProcess import p
 CFG = DataReader.templateConfig()
 CFG.update({
     'argset': dataArgs,
+    'lumi': -1,  # Keep a record, useful for mixing simulations samples
 })
 
 # dataReader
@@ -51,22 +53,22 @@ def customizeOne(self, targetBMassRegion=[]):
                 )
             )
 
-dataReaderCfg = DataReader.templateConfig()
+dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"],
-    'argset': dataArgs,
+    'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
 customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'])
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
-sigMCReaderCfg = DataReader.templateConfig()
+sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*s0.root"],
-    'argset': dataArgs,
+    'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
 customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
@@ -89,7 +91,7 @@ def customizeGEN(self):
     )
 
 
-sigMCGENReaderCfg = DataReader.templateConfig()
+sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*s0.root"],
