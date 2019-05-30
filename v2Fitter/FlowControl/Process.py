@@ -38,10 +38,7 @@ class Process:
         """Define a sequence of path to be run."""
         self._sequence = seq
         for p in self._sequence:
-            setattr(p, "process", self)
-            if p.logger is None:
-                setattr(p, "logger", self.logger)
-        pass
+            p.hookProcess(self)
 
     def addService(self, name, obj):
         """Put object to the dictionary of services."""

@@ -25,6 +25,11 @@ class Path():
         self.logger = None
         self.cfg['source'] = {}
 
+    def hookProcess(self, process):
+        """ Hook this path to process """
+        self.process = process
+        self.logger = process.logger
+
     def __str__(self):
         return "Path[{0}]".format(self.name)
 

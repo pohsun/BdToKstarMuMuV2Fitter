@@ -69,6 +69,7 @@ class Logger(Service):
             else:
                 self._logfile = open(self._logfilename, 'w+')
         self._logfile.write(self._compileMsg(msg, lv))
+        self._logfile.flush()
 
     def _logDefine(self, msg, lv):
         """Define a function to keep a log at given level"""
