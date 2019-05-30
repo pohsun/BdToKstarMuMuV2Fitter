@@ -7,7 +7,15 @@ import types
 import functools
 import itertools
 from array import array
+from copy import copy
 import math
+
+import SingleBuToKstarMuMuFitter.cpp
+
+from v2Fitter.Fitter.DataReader import DataReader
+from v2Fitter.Fitter.ObjProvider import ObjProvider
+from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, dataArgsGEN
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto
 
 import ROOT
 from ROOT import TChain
@@ -15,19 +23,12 @@ from ROOT import TEfficiency, TH2D
 from ROOT import RooArgList
 from ROOT import RooDataHist
 
-import SingleBuToKstarMuMuFitter.cpp
-
-from v2Fitter.Fitter.DataReader import DataReader
-from v2Fitter.Fitter.ObjProvider import ObjProvider
-from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, dataArgsGEN
-
-from v2Fitter.FlowControl.Process import Process
-from v2Fitter.FlowControl.Logger import VerbosityLevels
-from SingleBuToKstarMuMuFitter.anaSetup import processCfg, q2bins, bMassRegions, cuts, cuts_noResVeto
+from SingleBuToKstarMuMuFitter.StdProcess import p
 
 CFG = DataReader.templateConfig()
 CFG.update({
     'argset': dataArgs,
+    'lumi': -1,  # Keep a record, useful for mixing simulations samples
 })
 
 # dataReader
@@ -35,7 +36,7 @@ def customizeOne(self, targetBMassRegion=[]):
     """Define datasets with arguments."""
     if not self.process.cfg['binKey'] in q2bins.keys():
         print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
-        raise AttributeError
+        raise ValueError
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
@@ -52,22 +53,22 @@ def customizeOne(self, targetBMassRegion=[]):
                 )
             )
 
-dataReaderCfg = DataReader.templateConfig()
+dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"],
-    'argset': dataArgs,
+    'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
 customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'])
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
-sigMCReaderCfg = DataReader.templateConfig()
+sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*s0.root"],
-    'argset': dataArgs,
+    'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
 customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
@@ -90,7 +91,7 @@ def customizeGEN(self):
     )
 
 
-sigMCGENReaderCfg = DataReader.templateConfig()
+sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*s0.root"],
@@ -215,8 +216,6 @@ effiHistReader = ObjProvider({
 })
 
 if __name__ == '__main__':
-    p = Process("testDataReaders", "testProcess", processCfg)
-    p.logger.verbosityLevel = VerbosityLevels.DEBUG
     p.setSequence([dataReader])
     # p.setSequence([effiHistReader])
     p.beginSeq()

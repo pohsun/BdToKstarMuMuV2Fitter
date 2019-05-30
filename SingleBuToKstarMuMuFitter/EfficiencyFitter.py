@@ -41,7 +41,7 @@ class EfficiencyFitter(FitterCore):
     def _preFitSteps(self):
         """Prefit uncorrelated term"""
         args = self.pdf.getParameters(self.data)
-        FitDBPlayer.initFromDB(self.process.odbfilename, args)
+        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
         self.ToggleConstVar(args, isConst=True)
 
         # Disable xTerm correction and fit to 1-D
@@ -70,7 +70,7 @@ class EfficiencyFitter(FitterCore):
         """Post-processing"""
         args = self.pdf.getParameters(self.data)
         self.ToggleConstVar(args, True)
-        FitDBPlayer.UpdateToDB(self.process.odbfilename, args)
+        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args)
 
     def _runFitSteps(self):
         h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")

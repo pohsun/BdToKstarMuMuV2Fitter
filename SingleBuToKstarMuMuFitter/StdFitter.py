@@ -9,7 +9,6 @@ import ROOT
 import SingleBuToKstarMuMuFitter.cpp
 
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 
 class StdFitter(FitterCore):
@@ -43,9 +42,15 @@ class StdFitter(FitterCore):
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
         self.args = self.pdf.getParameters(self.data)
-        FitDBPlayer.initFromDB(self.process.odbfilename, self.args, self.cfg['argAliasInDB'])
+        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
+
+    # TODO
+    def _preFitSteps_preFit(self):
+        """ Standard prefit steps """
+        comp = self.pdf.getComponents()
+        comp.Print()
 
     def _preFitSteps_vetoSmallFs(self):
         """ fs is usually negligible, set the fraction to 0"""
@@ -58,15 +63,16 @@ class StdFitter(FitterCore):
             transAs.setConstant(True)
 
     def _preFitSteps(self):
-        """Initialize to be customized"""
+        """ Prefit steps """
         self._preFitSteps_initFromDB()
         self._preFitSteps_vetoSmallFs()
+        self._preFitSteps_preFit()
 
     def _postFitSteps(self):
         """Post-processing"""
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
-        FitDBPlayer.UpdateToDB(self.process.odbfilename, self.args, self.cfg['argAliasInDB'])
+        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
 
     def _runFitSteps(self):
         self.FitMigrad()

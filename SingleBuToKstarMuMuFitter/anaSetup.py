@@ -7,19 +7,10 @@
 
 from __future__ import print_function, division
 import os
-import ROOT
 from math import sqrt
 
 # Shared global settings
-isDEBUG = True
-modulePath = os.path.dirname(__file__)
-ROOT.gROOT.SetBatch(True)
-
-# default configuration for Process
-processCfg = {
-    'isBatchJob': False,
-    'binKey': None,
-}
+modulePath = os.path.abspath(os.path.dirname(__file__))
 
 # q2 bins
 q2bins = {}
@@ -82,9 +73,3 @@ cuts = [
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
 cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_kstarMassWindow)
-
-# Developers Area
-## Unit test
-if isDEBUG:
-    processCfg['binKey'] = "summary"
-    bMassRegions['test'] = bMassRegions['Fit']

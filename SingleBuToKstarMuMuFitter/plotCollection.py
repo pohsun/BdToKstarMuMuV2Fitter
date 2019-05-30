@@ -9,14 +9,14 @@ import shelve
 import ROOT
 
 import SingleBuToKstarMuMuFitter.cpp
-from v2Fitter.FlowControl.Process import Process
 from v2Fitter.FlowControl.Path import Path
-from v2Fitter.FlowControl.Logger import VerbosityLevels
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, processCfg, modulePath, bMassRegions
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer, register_dbfile
+from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass
+
+from SingleBuToKstarMuMuFitter.StdProcess import p
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
@@ -208,6 +208,8 @@ class Plotter(Path):
     latex = ROOT.TLatex()
     latexCMSMark = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
     latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
+    latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
+    latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
     latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
 
@@ -241,12 +243,18 @@ class Plotter(Path):
             p.plotOn(cloned_frame, *pOption)
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
         cloned_frame.Draw()
-        if 'sim' not in marks:
-            Plotter.latexCMSMark()
-            Plotter.latexLumi()
+        if 'sim' in marks:
+            Plotter.latexCMSSim()
+            Plotter.latexCMSExtra()
+        elif 'toy' in marks:
+            Plotter.latexCMSToy()
+            Plotter.latexCMSExtra()
+        elif 'mix' in marks:
+            Plotter.latexCMSMix()
             Plotter.latexCMSExtra()
         else:
-            Plotter.latexCMSSim()
+            Plotter.latexCMSMark()
+            Plotter.latexLumi()
             Plotter.latexCMSExtra()
 
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
@@ -302,7 +310,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
         if isinstance(p[0], str):
             p[0] = self.process.sourcemanager.get(p[0])
             args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass))
-            FitDBPlayer.initFromDB(self.process.odbfilename, args)
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
 
     plotFuncs = {
         'B': {'func': Plotter.plotFrameB, 'tag': ""},
@@ -323,7 +331,7 @@ def plotEfficiency(self, data_name, pdf_name):
         self.logger.logWARNING("Skip plotEfficiency. pdf or data not found")
         return
     args = pdf.getParameters(data)
-    FitDBPlayer.initFromDB(self.process.odbfilename, args)
+    FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
 
     binningL = ROOT.RooBinning(len(dataCollection.accXEffThetaLBins) - 1, dataCollection.accXEffThetaLBins)
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
@@ -375,7 +383,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
         if isinstance(p[0], str):
             p[0] = self.process.sourcemanager.get(p[0])
             args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
-            FitDBPlayer.initFromDB(self.process.odbfilename, args)
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
     try:
         inputdb = shelve.open(self.process.odbfilename)
         nSigDB = inputdb['nSig']['getVal']
@@ -479,6 +487,15 @@ plotterCfg['plots'] = {
                         ],
             'marks': []}
     },
+    'simpleBLK': {  # Most general case, to be customized by user
+        'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+        'kwargs': {
+            'pltName': "simpleBLK",
+            'dataPlots': [["ToyGenerator.mixedToy", ()], ],
+            'pdfPlots': [["f_sigM", plotterCfg_sigStyle],
+                        ],
+            'marks': ['sim']}
+    },
     'angular3D_final': {
         'func': [plotPostfitBLK],
         'kwargs': {
@@ -491,28 +508,15 @@ plotterCfg['plots'] = {
             }
     },
 }
-plotterCfg['switchPlots'].append('simpleSpectrum')
+#  plotterCfg['switchPlots'].append('simpleSpectrum')
 #  plotterCfg['switchPlots'].append('effi')
 #  plotterCfg['switchPlots'].append('angular3D_sigM')
 #  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
 #  plotterCfg['switchPlots'].append('angular3D_final')
 
-
 plotter = Plotter(plotterCfg)
-customized_register_dbfile = functools.partial(register_dbfile, inputDir="{0}/input/selected/".format(modulePath))  # Copy from fitCollection
-def customize(self):
-    customized_register_dbfile(self)
-plotter.customize = types.MethodType(customize, plotter)
 
 if __name__ == '__main__':
-    p = Process("testFitCollection", "testProcess", processCfg)
-    #  p.cfg['binKey'] = "belowJpsi"
-    #  p.cfg['binKey'] = "betweenPeaks"
-    #  p.cfg['binKey'] = "abovePsi2s"
-    #  p.cfg['binKey'] = "summary"
-    #  p.cfg['binKey'] = "jpsi"
-    #  p.cfg['binKey'] = "psi2s"
-    p.logger.verbosityLevel = VerbosityLevels.DEBUG
     #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, plotter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, plotter])
     p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])

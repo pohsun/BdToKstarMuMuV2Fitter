@@ -18,12 +18,11 @@ import functools
 from copy import copy
 from collections import OrderedDict
 
-from v2Fitter.FlowControl.Process import Process
-from v2Fitter.FlowControl.Logger import VerbosityLevels
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.WspaceReader import WspaceReader
 
-from SingleBuToKstarMuMuFitter.anaSetup import modulePath, processCfg, q2bins, isDEBUG
+from SingleBuToKstarMuMuFitter.StdProcess import isDEBUG
+from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins
 from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL
 import SingleBuToKstarMuMuFitter.cpp
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
@@ -33,6 +32,7 @@ from ROOT import RooWorkspace
 from ROOT import RooEffProd
 from ROOT import RooKeysPdf
 
+from SingleBuToKstarMuMuFitter.StdProcess import p
 
 def getWspace(self):
     """Read workspace"""
@@ -369,9 +369,7 @@ if __name__ == '__main__':
     binKey = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
     #  binKey = ['summary']
     for b in binKey:
-        p = Process("testPdfCollection", "testProcess", processCfg)
         p.cfg['binKey'] = b
-        p.logger.verbosityLevel = VerbosityLevels.DEBUG
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
         p.beginSeq()
         p.runSeq()
