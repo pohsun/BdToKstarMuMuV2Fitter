@@ -17,6 +17,13 @@ from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 # Shared global settings
 isDEBUG = True
 
+# RooMsgService settings
+# Suppress all message below error during minimization to keep short log file.
+msgService = ROOT.RooMsgService.instance()
+msgService.getStream(0).removeTopic(2)
+msgService.getStream(1).removeTopic(2)
+msgService.addStream(4, ROOT.RooFit.Topic(2))
+
 # default configuration for Process
 processCfg = {
     'isBatchJob': False,
@@ -24,7 +31,7 @@ processCfg = {
 }
 p = Process("myProcess", "testProcess", processCfg)
 
-dbplayer = FitDBPlayer(inputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
+dbplayer = FitDBPlayer(absInputDir=os.path.join(anaSetup.modulePath, "input", "selected"))
 p.addService("dbplayer", dbplayer)
 
 # Developers Area
