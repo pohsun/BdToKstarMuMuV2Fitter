@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # vim: set sw=4 ts=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
+import os
+
 import abc
 import ROOT
 
@@ -54,12 +56,18 @@ Decide the number of entries of this subset.
         raise NotImplementedError
 
     @abc.abstractmethod
+    def _preRunFitSteps(self, setIndex):
+        """ Run at the begining of each loop """
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def _postRunFitSteps(self, setIndex):
+        """ Run at the end of each loop (only before the fitter reset)"""
         raise NotImplementedError
 
     def _runSetsLoop(self):
         for iSet in range(self.cfg['nSetOfToys']):
-            self.process.dbplayer.resetDB(True)
+            self._preRunFitSteps(iSet)
 
             self.fitter.hookProcess(self.process)
             self.fitter.customize()
