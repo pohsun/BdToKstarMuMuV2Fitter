@@ -29,6 +29,7 @@ CFG = DataReader.templateConfig()
 CFG.update({
     'argset': dataArgs,
     'lumi': -1,  # Keep a record, useful for mixing simulations samples
+    'ifriendIndex': ["Bmass", "Mumumass"],
 })
 
 # dataReader
@@ -57,6 +58,7 @@ dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
     'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"],
+    'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/script/plotMatchCandPreSelector.root"],
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
@@ -67,7 +69,7 @@ dataReader.customize = types.MethodType(customizeData, dataReader)
 sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*s0.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*.root"],
     'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
@@ -94,7 +96,7 @@ def customizeGEN(self):
 sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*s0.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root"],
     'argset': dataArgsGEN,
 })
 sigMCGENReader = DataReader(sigMCGENReaderCfg)
@@ -120,7 +122,7 @@ def buildAccXRecEffiHist(self):
             # Fill histograms
             setupEfficiencyBuildProcedure = {}
             setupEfficiencyBuildProcedure['acc'] = {
-                'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*s0.root", ],
+                'ifiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root", ],
                 'baseString': re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']),
                 'cutString': "fabs(genMupEta)<2.3 && fabs(genMumEta)<2.3 && genMupPt>2.8 && genMumPt>2.8",
                 'fillXY': "genCosThetaK:genCosThetaL"  # Y:X

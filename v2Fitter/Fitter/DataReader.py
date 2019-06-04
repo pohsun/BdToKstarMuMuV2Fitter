@@ -20,6 +20,12 @@ class DataReader(Path):
         self.ch = TChain("tree")
         for f in cfg['ifile']:
             self.ch.Add(f)
+        if len(self.cfg['ifriend']) > 0:
+            self.friend = TChain("tree")
+            for f in self.cfg['ifriend']:
+                self.friend.Add(f)
+            self.friend.BuildIndex(*cfg['ifriendIndex'])
+            self.ch.AddFriend(self.friend)
         self.argset = cfg['argset']
         self.reset()
         return
@@ -42,6 +48,8 @@ class DataReader(Path):
         cfg = {
             'name': "DataReader",
             'ifile': [],
+            'ifriend': [],
+            'ifriendIndex': ["Run", "Event"],
             'argset': [],
             'dataset': [],
         }
@@ -76,8 +84,9 @@ class DataReader(Path):
             self.cfg['source'] = {}
         self.cfg['source']['{0}.tree'.format(self.name)] = self.ch
         self.cfg['source']['{0}.argset'.format(self.name)] = self.argset
+        if len(self.cfg['ifriend']) > 0:
+            self.cfg['source']['{0}.friend'.format(self.name)] = self.friend
         for dname, d in self.dataset.items():
             self.cfg['source'][dname] = d
             self.logger.logINFO("{0} events in {1}.".format(d.sumEntries(), dname))
         super(DataReader, self)._addSource()
-
