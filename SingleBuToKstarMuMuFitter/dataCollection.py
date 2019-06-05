@@ -14,8 +14,8 @@ import SingleBuToKstarMuMuFitter.cpp
 
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
-from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, dataArgsGEN
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto
+from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Kshortmass, dataArgsGEN
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cut_kshortWindow, modulePath
 
 import ROOT
 from ROOT import TChain
@@ -33,10 +33,12 @@ CFG.update({
 })
 
 # dataReader
-def customizeOne(self, targetBMassRegion=[]):
+def customizeOne(self, targetBMassRegion=None, extraCuts=None):
     """Define datasets with arguments."""
+    if targetBMassRegion is None:
+        targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
-        print("ERROR\t: Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
+        self.logger.logERROR("Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
         raise ValueError
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
@@ -46,34 +48,41 @@ def customizeOne(self, targetBMassRegion=[]):
             self.cfg['dataset'].append(
                 (
                     "{0}.{1}".format(self.cfg['name'], key),
-                    "({0}) && ({1}) && ({2})".format(
+                    "({0}) && ({1}) && ({2}) && ({3})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
+                        "1" if not extraCuts else extraCuts,
                     )
                 )
             )
 
+    # Customize preload TFile
+    if self.cfg['preloadFile']:
+        self.cfg['preloadFile'] = self.cfg['preloadFile'].format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
+
 dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
     'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/script/plotMatchCandPreSelector.root"],
+    'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'])
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=cut_kshortWindow)
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
 sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
+    'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
-customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])  # Assuming cut_kshortWindow makes no impact
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 
 # sigMCGENReader
@@ -92,11 +101,15 @@ def customizeGEN(self):
         )
     )
 
+    # Customize preload TFile
+    if self.cfg['preloadFile']:
+        self.cfg['preloadFile'] = self.cfg['preloadFile'].format(binLabel=q2bins[self.process.cfg['binKey']]['label'])
 
 sigMCGENReaderCfg = copy(CFG)
 sigMCGENReaderCfg.update({
     'name': "sigMCGENReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredSIG_genonly/sel_*.root"],
+    'preloadFile': modulePath + "/data/preload_sigMCGENReader_{binLabel}.root",
     'argset': dataArgsGEN,
 })
 sigMCGENReader = DataReader(sigMCGENReaderCfg)
@@ -218,7 +231,8 @@ effiHistReader = ObjProvider({
 })
 
 if __name__ == '__main__':
-    p.setSequence([dataReader])
+    #  p.setSequence([dataReader])
+    p.setSequence([sigMCReader])
     # p.setSequence([effiHistReader])
     p.beginSeq()
     p.runSeq()

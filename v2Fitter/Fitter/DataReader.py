@@ -8,6 +8,8 @@
 
 from v2Fitter.FlowControl.Path import Path
 
+import os
+import ROOT
 from ROOT import TChain
 from ROOT import TIter
 from ROOT import RooDataSet
@@ -17,21 +19,14 @@ class DataReader(Path):
     def __init__(self, cfg):
         """Init"""
         super(DataReader, self).__init__(cfg)
-        self.ch = TChain("tree")
-        for f in cfg['ifile']:
-            self.ch.Add(f)
-        if len(self.cfg['ifriend']) > 0:
-            self.friend = TChain("tree")
-            for f in self.cfg['ifriend']:
-                self.friend.Add(f)
-            self.friend.BuildIndex(*cfg['ifriendIndex'])
-            self.ch.AddFriend(self.friend)
         self.argset = cfg['argset']
         self.reset()
         return
 
     def reset(self):
         super(DataReader, self).reset()
+        self.ch = None
+        self.friend = None
         self.dataset = {}
 
     def __str__(self):
@@ -52,6 +47,7 @@ class DataReader(Path):
             'ifriendIndex': ["Run", "Event"],
             'argset': [],
             'dataset': [],
+            'preloadFile': None,
         }
         return cfg
 
@@ -71,15 +67,36 @@ class DataReader(Path):
     def createDataSets(self, cfg):
         """Create named dataset"""
         for name, cut in cfg:
+            if self.cfg['preloadFile'] and os.path.exists(self.cfg['preloadFile']):
+                file_preload = ROOT.TFile(self.cfg['preloadFile'])
+                data = file_preload.Get(name)
+                if not data == None:
+                    self.dataset[name] = data
+                file_preload.Close()
             self.createDataSet(name, cut)
         return self.dataset
 
     def _runPath(self):
+        self.ch = TChain("tree")
+        for f in self.cfg['ifile']:
+            self.ch.Add(f)
+        if len(self.cfg['ifriend']) > 0:
+            self.friend = TChain("tree")
+            for f in self.cfg['ifriend']:
+                self.friend.Add(f)
+            self.friend.BuildIndex(*self.cfg['ifriendIndex'])
+            self.ch.AddFriend(self.friend)
         self.createDataSets(self.cfg['dataset'])
         pass
 
     def _addSource(self):
         """Add dataset and arguments to source pool"""
+        if self.cfg['preloadFile'] and not os.path.exists(self.cfg['preloadFile']):
+            file_preload = ROOT.TFile(self.cfg['preloadFile'], 'RECREATE')
+            for dname, d in self.dataset.items():
+                d.Write()
+            file_preload.Close()
+
         if not 'source' in self.cfg.keys():
             self.cfg['source'] = {}
         self.cfg['source']['{0}.tree'.format(self.name)] = self.ch
