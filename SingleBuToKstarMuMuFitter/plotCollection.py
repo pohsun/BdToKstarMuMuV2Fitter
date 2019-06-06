@@ -5,196 +5,23 @@
 import types
 import functools
 import shelve
+from array import array
 
 import ROOT
 
 import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.FlowControl.Path import Path
 from v2Fitter.Fitter.FitterCore import FitterCore
+from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass
+from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass
 
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
-
-def setStyle():
-    """ Ref: https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines """
-    ROOT.gROOT.SetBatch(1)
-
-    ROOT.gStyle.SetCanvasBorderMode(0)
-    ROOT.gStyle.SetCanvasColor(ROOT.kWhite)
-    ROOT.gStyle.SetCanvasDefH(600)   # Height of canvas
-    ROOT.gStyle.SetCanvasDefW(600)   # Width of canvas
-    ROOT.gStyle.SetCanvasDefX(0)     # Position on screen
-    ROOT.gStyle.SetCanvasDefY(0)     # default:0
-
-    #  For the Pad:
-    ROOT.gStyle.SetPadBorderMode(0)
-    ROOT.gStyle.SetPadColor(ROOT.kWhite)
-    ROOT.gStyle.SetPadGridX(False)
-    ROOT.gStyle.SetPadGridY(False)
-    ROOT.gStyle.SetGridColor(0)
-    ROOT.gStyle.SetGridStyle(3)
-    ROOT.gStyle.SetGridWidth(1)
-
-    #  For the frame:
-    ROOT.gStyle.SetFrameBorderMode(0)
-    ROOT.gStyle.SetFrameBorderSize(1)
-    ROOT.gStyle.SetFrameFillColor(0)
-    ROOT.gStyle.SetFrameFillStyle(0)
-    ROOT.gStyle.SetFrameLineColor(1)
-    ROOT.gStyle.SetFrameLineStyle(1)
-    ROOT.gStyle.SetFrameLineWidth(1)
-
-    #  For the histo:
-    #  ROOT.gStyle.SetHistFillColor(1)
-    #  ROOT.gStyle.SetHistFillStyle(0)
-    ROOT.gStyle.SetHistLineColor(1)
-    ROOT.gStyle.SetHistLineStyle(0)
-    ROOT.gStyle.SetHistLineWidth(1)
-    #  ROOT.gStyle.SetLegoInnerR(Float_t rad = 0.5)
-    #  ROOT.gStyle.SetNumberContours(Int_t number = 20)
-
-    ROOT.gStyle.SetEndErrorSize(2)
-    #  ROOT.gStyle.SetErrorMarker(20)
-    #  ROOT.gStyle.SetErrorX(0.)
-
-    ROOT.gStyle.SetMarkerStyle(20)
-
-    #  For the fit/function:
-    #      v = 1  print name/values of parameters
-    #      e = 1  print errors (if e=1, v must be 1)
-    #      c = 1  print Chisquare/Number of degress of freedom
-    #      p = 1  print Probability
-    ROOT.gStyle.SetOptFit(1)
-    ROOT.gStyle.SetFitFormat("5.4g")
-    ROOT.gStyle.SetFuncColor(2)
-    ROOT.gStyle.SetFuncStyle(1)
-    ROOT.gStyle.SetFuncWidth(1)
-
-    #  the date:
-    ROOT.gStyle.SetOptDate(0)
-    #  ROOT.gStyle.SetDateX(Float_t x=0.01)
-    #  ROOT.gStyle.SetDateY(Float_t y=0.01)
-
-    #  For the statistics box:
-
-    # See TStyle
-    #      n = 1  name of histogram is printed
-    #      e = 1  number of entries printed
-    #      m = 1  mean value printed
-    #      r = 1  rms printed
-    #      u = 1  number of underflows printed
-    #      o = 1  number of overflows printed
-    ROOT.gStyle.SetOptFile(0)
-    ROOT.gStyle.SetOptStat(0)  # To display the mean and RMS:   SetOptStat("mr");
-    ROOT.gStyle.SetStatColor(ROOT.kWhite)
-    ROOT.gStyle.SetStatFont(42)
-    ROOT.gStyle.SetStatFontSize(0.025)
-    ROOT.gStyle.SetStatTextColor(1)
-    ROOT.gStyle.SetStatFormat("6.4g")
-    ROOT.gStyle.SetStatBorderSize(1)
-    ROOT.gStyle.SetStatH(0.1)
-    ROOT.gStyle.SetStatW(0.15)
-    #   ROOT.gStyle.SetStatStyle(Style_t style = 1001)
-    #   ROOT.gStyle.SetStatX(Float_t x = 0)
-    #   ROOT.gStyle.SetStatY(Float_t y = 0)
-
-    #  Margins:
-    ROOT.gStyle.SetPadTopMargin(0.05)
-    ROOT.gStyle.SetPadBottomMargin(0.13)
-    ROOT.gStyle.SetPadLeftMargin(0.16)
-    ROOT.gStyle.SetPadRightMargin(0.02)
-
-    #  For the Global title:
-    ROOT.gStyle.SetOptTitle(0)  # 0:turn off the title
-    ROOT.gStyle.SetTitleFont(42)
-    ROOT.gStyle.SetTitleColor(1)
-    ROOT.gStyle.SetTitleTextColor(1)
-    ROOT.gStyle.SetTitleFillColor(10)
-    ROOT.gStyle.SetTitleFontSize(0.05)
-    #  ROOT.gStyle.SetTitleH(0) #  Set the height of the title box
-    #  ROOT.gStyle.SetTitleW(0) #  Set the width of the title box
-    #  ROOT.gStyle.SetTitleX(0) #  Set the position of the title box
-    #  ROOT.gStyle.SetTitleY(0.985) #  Set the position of the title box
-    #  ROOT.gStyle.SetTitleStyle(Style_t style = 1001)
-    #  ROOT.gStyle.SetTitleBorderSize(2)
-
-    #  For the axis titles:
-    ROOT.gStyle.SetTitleColor(1, "XYZ")
-    ROOT.gStyle.SetTitleFont(42, "XYZ")
-    ROOT.gStyle.SetTitleSize(0.06, "XYZ")
-    #  ROOT.gStyle.SetTitleXSize(Float_t size = 0.02) #  Another way to set the size?
-    #  ROOT.gStyle.SetTitleYSize(Float_t size = 0.02)
-    ROOT.gStyle.SetTitleXOffset(0.9)
-    ROOT.gStyle.SetTitleYOffset(1.25)
-    #  ROOT.gStyle.SetTitleOffset(1.1, "Y") #  Another way to set the Offset
-
-    #  For the axis labels:
-    ROOT.gStyle.SetLabelColor(1, "XYZ")
-    ROOT.gStyle.SetLabelFont(42, "XYZ")
-    ROOT.gStyle.SetLabelOffset(0.007, "XYZ")
-    ROOT.gStyle.SetLabelSize(0.05, "XYZ")
-
-    #  For the axis:
-    ROOT.gStyle.SetAxisColor(1, "XYZ")
-    ROOT.gStyle.SetStripDecimals(True)
-    ROOT.gStyle.SetTickLength(0.03, "XYZ")
-    ROOT.gStyle.SetNdivisions(510, "XYZ")
-    ROOT.gStyle.SetPadTickX(1)  # To get tick marks on the opposite side of the frame
-    ROOT.gStyle.SetPadTickY(1)
-
-    #  Change for log plots:
-    ROOT.gStyle.SetOptLogx(0)
-    ROOT.gStyle.SetOptLogy(0)
-    ROOT.gStyle.SetOptLogz(0)
-
-    #  Postscript options
-    ROOT.gStyle.SetPaperSize(20., 20.)
-
-    ROOT.gStyle.SetHatchesLineWidth(5)
-    ROOT.gStyle.SetHatchesSpacing(0.05)
-
-    # My preferences:
-    ROOT.gStyle.SetCanvasDefH(600)           # Height of canvas
-    ROOT.gStyle.SetCanvasDefW(800)           # Width of canvas
-    ROOT.gStyle.SetPadTopMargin(0.05)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
-    ROOT.gStyle.SetPadBottomMargin(0.13)     # default:0.13, avoid to overlap with label
-    ROOT.gStyle.SetPadLeftMargin(0.16)       # default:0.16, avoid to overlap with label
-    ROOT.gStyle.SetPadRightMargin(0.02)      # default:0.02
-    ROOT.gStyle.SetPalette(57)               # default(0), rainbow palette is much prettier.
-    ROOT.gStyle.SetPaintTextFormat("5.2f")   # precision if plotted with "TEXT"
-
-    ROOT.gStyle.SetOptTitle(0)               # turn off the title
-
-    ROOT.gStyle.SetTitleSize(0.05, "XYZ")    # title of axis
-    ROOT.gStyle.SetTitleOffset(1.0, "X")
-    ROOT.gStyle.SetTitleOffset(1.2, "YZ")
-    ROOT.gStyle.SetLabelOffset(0.01, "XYZ")  # label of axis
-    ROOT.gStyle.SetLabelSize(0.04, "X")
-    ROOT.gStyle.SetLabelSize(0.04, "YZ")
-    ROOT.gStyle.SetNdivisions(505, "X")
-
-    ROOT.gStyle.SetHistFillColor(0)
-    ROOT.gStyle.SetHistLineWidth(2)
-    ROOT.gStyle.SetMarkerStyle(21)           # x(5),.(1),triangle(22),square(21),circle(20)
-    ROOT.gStyle.SetMarkerSize(0.6)
-
-    ROOT.gStyle.SetOptStat(0)
-    ROOT.gStyle.SetStatFontSize(0.04)
-
-    ROOT.gStyle.SetOptFit(0)                 # default:1
-    ROOT.gStyle.SetTextSize(0.05)            # default:1, won't affect TLegend until ROOT 5.34
-    ROOT.gStyle.SetFuncWidth(2)
-
-    ROOT.gStyle.SetLegendBorderSize(0)       # default:4
-    ROOT.gStyle.SetLegendFillColor(ROOT.kWhite)
-
-    ROOT.gStyle.cd()
-    pass
+import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
 
 class Plotter(Path):
     """The plotter"""
@@ -228,19 +55,43 @@ class Plotter(Path):
     frameL.SetTitle("")
     frameL_binning = 10
 
+    def initPdfPlotCfg(self, p):
+        pdfPlotTemplate = ["", plotterCfg_allStyle, None]
+        p = p + pdfPlotTemplate[len(p):]
+        if isinstance(p[0], str):
+            self.logger.logDEBUG("Initialize pdfPlot {0}".format(p[0]))
+            p[0] = self.process.sourcemanager.get(p[0])
+            if p[0] == None:
+                self.logger.logERROR("pdfPlot not found in source manager.")
+                raise RuntimeError
+        args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass))
+        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+        return p
+
+    def initDataPlotCfg(self, p):
+        dataPlotTemplate = ["", plotterCfg_dataStyle]
+        p = p + dataPlotTemplate[len(p):]
+        if isinstance(p[0], str):
+            self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
+            p[0] = self.process.sourcemanager.get(p[0])
+            if p[0] == None:
+                self.logger.logERROR("dataPlot not found in source manager.")
+                raise RuntimeError
+        return p
+
     @staticmethod
     def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, scaleYaxis=1.5):
         """
-            xxxPlots = [[obj, (options for plotOn)], ]
+            Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """
         cloned_frame = frame.emptyClone("cloned_frame")
         marks = [] if marks is None else marks
         dataPlots = [] if dataPlots is None else dataPlots
         pdfPlots = [] if pdfPlots is None else pdfPlots
-        for p, pOption in dataPlots:
-            p.plotOn(cloned_frame, ROOT.RooFit.Binning(binning), *pOption)
-        for p, pOption in pdfPlots:
-            p.plotOn(cloned_frame, *pOption)
+        for p in dataPlots:
+            p[0].plotOn(cloned_frame, ROOT.RooFit.Binning(binning), *p[1])
+        for p in pdfPlots:
+            p[0].plotOn(cloned_frame, *p[1])
         cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
         cloned_frame.Draw()
         if 'sim' in marks:
@@ -260,6 +111,9 @@ class Plotter(Path):
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
     plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
     plotFrameL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))
+    plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning * 2}))
+    plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning * 2}))
+    plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning * 2}))
 
     @classmethod
     def templateConfig(cls):
@@ -281,9 +135,8 @@ class Plotter(Path):
 
 def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     """ Assuming len(dataPlots) == 1, fit to the data. """
-    for p in dataPlots:
-        if isinstance(p[0], str):
-            p[0] = self.process.sourcemanager.get(p[0])
+    for pIdx, plt in enumerate(dataPlots):
+        dataPlots[pIdx] = self.initDataPlotCfg(plt)
     wspace = ROOT.RooWorkspace("wspace")
     getattr(wspace, 'import')(Bmass)
     wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.05])")
@@ -303,17 +156,13 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     self.canvasPrint(pltName)
 
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
-    for p in dataPlots:
-        if isinstance(p[0], str):
-            p[0] = self.process.sourcemanager.get(p[0])
-    for p in pdfPlots:
-        if isinstance(p[0], str):
-            p[0] = self.process.sourcemanager.get(p[0])
-            args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass))
-            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+    for pIdx, plt in enumerate(dataPlots):
+        dataPlots[pIdx] = self.initDataPlotCfg(plt)
+    for pIdx, plt in enumerate(pdfPlots):
+        pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
     plotFuncs = {
-        'B': {'func': Plotter.plotFrameB, 'tag': ""},
+        'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
         'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
         'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
     }
@@ -376,16 +225,12 @@ def plotEfficiency(self, data_name, pdf_name):
     self.canvasPrint(pltName + "_cosK")
 types.MethodType(plotEfficiency, None, Plotter)
 
-
 def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     """Specification of plotSimpleBLK for post-fit plots"""
-    for p in pdfPlots:
-        if isinstance(p[0], str):
-            p[0] = self.process.sourcemanager.get(p[0])
-            args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL))
-            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
+    for pIdx, plt in enumerate(pdfPlots):
+        pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
     try:
-        inputdb = shelve.open(self.process.odbfilename)
+        inputdb = shelve.open(self.process.dbplayer.odbfile)
         nSigDB = inputdb['nSig']['getVal']
         nBkgCombDB = inputdb['nBkgComb']['getVal']
     finally:
@@ -399,7 +244,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     sigFrac = {}
     bkgCombFrac = {}
     for regionName in ["Fit", "SR", "LSB", "USB"]:
-        dataPlots = [[self.process.sourcemanager.get("{0}.{1}".format(dataReader, regionName)), ()], ]
+        dataPlots = [[self.process.sourcemanager.get("{0}.{1}".format(dataReader, regionName)), plotterCfg_dataStyle], ]
 
         # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
         obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
@@ -438,10 +283,42 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
 types.MethodType(plotPostfitBLK, None, Plotter)
 
+# TODO
+def plotSummaryAfbFl(self, pltName, dbSetup):
+    """ 'dbSetup': [["name", "/path/fitResults_{0}.db", drawSystError, drawOpt, argAliasInDB],] """
+    binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s']
+
+    xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
+    xxErr = array('d', map(lambda t: (t[1]-t[0])/2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
+
+    grs = []
+    for name, pat, drawSystError, drawOpt, argAliasInDB in dbSetup:
+        yy = array('d')
+        yyErrHi = array('d')
+        yyErrLo = array('d')
+        yySyst = array('d')
+        for binKey in binKeys:
+            try:
+                  db = shelve.open(pat.format(binLabel=q2bins[binKey]['label']))
+                  unboundAfb = db[argAliasInDB.get("unboundAfb", "unboundAfb")]
+                  unboundFl = db[argAliasInDB.get("unboundFl", "unboundFl")]
+            finally:
+                  db.close()
+            pass
+        gr = ROOT.TGraphAsymmErrors(name, "", xx, xxErr, xxErr, yy, yyErrLo, yyErrLo)
+        grs.append(gr)
+
+    for gr in grs:
+        pass
+types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
+
+
 plotterCfg = {
     'name': "plotter",
     'switchPlots': [],
 }
+plotterCfg_dataStyle = ()
+plotterCfg_mcStyle = ()
 plotterCfg_allStyle = (ROOT.RooFit.LineColor(1),)
 plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4),)
 plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
@@ -450,7 +327,7 @@ plotterCfg['plots'] = {
         'func': [plotSpectrumWithSimpleFit],
         'kwargs': {
             'pltName': "h_Bmass",
-            'dataPlots': [["dataReader.Fit", ()], ],
+            'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle], ],
             'marks': []}
     },
     'effi': {
@@ -462,9 +339,9 @@ plotterCfg['plots'] = {
     'angular3D_sigM': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
         'kwargs': {
-            'pltName': "angular3D_sigA",
-            'dataPlots': [["sigMCReader.Fit", ()], ],
-            'pdfPlots': [["f_sigM", plotterCfg_sigStyle],
+            'pltName': "angular3D_sigM",
+            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle], ],
+            'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB']],
                         ],
             'marks': ['sim']}
     },
@@ -472,8 +349,8 @@ plotterCfg['plots'] = {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {
             'pltName': "angular3D_sig2D",
-            'dataPlots': [["sigMCReader.Fit", ()], ],
-            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle],
+            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle], ],
+            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB']],
                         ],
             'marks': []}
     },
@@ -481,7 +358,7 @@ plotterCfg['plots'] = {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
         'kwargs': {
             'pltName': "angular3D_bkgCombA",
-            'dataPlots': [["dataReader.SB", ()], ],
+            'dataPlots': [["dataReader.SB", plotterCfg_dataStyle], ],
             'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle],
                          #  ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9))]
                         ],
@@ -491,7 +368,7 @@ plotterCfg['plots'] = {
         'func': [functools.partial(plotSimpleBLK, frames='BLK')],
         'kwargs': {
             'pltName': "simpleBLK",
-            'dataPlots': [["ToyGenerator.mixedToy", ()], ],
+            'dataPlots': [["ToyGenerator.mixedToy", plotterCfg_mcStyle], ],
             'pdfPlots': [["f_sigM", plotterCfg_sigStyle],
                         ],
             'marks': ['sim']}
@@ -507,6 +384,16 @@ plotterCfg['plots'] = {
                         ],
             }
     },
+    'angular3D_summary': {
+        'func': [plotSummaryAfbFl],
+        'kwargs': {
+            'pltName': "angular3D_final",
+            'pdfPlots': [["f_final", plotterCfg_allStyle],
+                         ["f_sig3D", plotterCfg_sigStyle],
+                         ["f_bkgComb", plotterCfg_bkgStyle],
+                        ],
+            }
+    }
 }
 #  plotterCfg['switchPlots'].append('simpleSpectrum')
 #  plotterCfg['switchPlots'].append('effi')
@@ -517,9 +404,13 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, plotter])
-    #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, plotter])
-    p.setSequence([dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+    #  p.cfg['binKey'] = "abovePsi2s"
+    #  plotter.cfg['switchPlots'].append('simpleSpectrum')
+    plotter.cfg['switchPlots'].append('effi')
+    plotter.cfg['switchPlots'].append('angular3D_sigM')
+    plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+    plotter.cfg['switchPlots'].append('angular3D_final')
+    p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
     p.endSeq()

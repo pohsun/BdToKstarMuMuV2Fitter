@@ -41,6 +41,7 @@ class AbsBatchTaskWrapper:
         cfg = {
             'nJobs': 1,
             'queue': batchConfig.BATCH_QUEUE,
+            'work_dir': None
         }
         return cfg
 
@@ -77,7 +78,7 @@ executable  = {executable}
         if wrapper_kwargs is None:
             wrapper_kwargs = {}
         p = self.getWrappedProcess(process, jobId, **wrapper_kwargs)
-        p.work_dir = os.path.join(self.task_dir, "job{jobId}".format(jobId=jobId))
+        p.work_dir = os.path.join(self.task_dir, "job{jobId:04d}".format(jobId=jobId) if self.cfg['work_dir'] is None else self.cfg['work_dir'][jobId])
         try:
             p.beginSeq()
             p.runSeq()
@@ -86,7 +87,6 @@ executable  = {executable}
 
             # HTCondor does not transfer output directory but only file
             os.chdir(self.task_dir)
-            #  call("tar zcf job{jobId}.tar.gz job{jobId}".format(jobId=jobId), shell=True)
 
 # Followings are pre-defined procedure to reduce routine
 
@@ -104,7 +104,7 @@ Optional customization:
     * Customize and hook a run function with BatchTaskSubparserRun.set_defaults(func=?)
 """)
 
-BatchTaskSubparsers = BatchTaskParser.add_subparsers(help='Functions')
+BatchTaskSubparsers = BatchTaskParser.add_subparsers(help='Functions', dest='Function_name')
 BatchTaskSubparserSubmit = BatchTaskSubparsers.add_parser('submit')
 BatchTaskSubparserSubmit.add_argument(
     "-q", "--queue",
@@ -113,6 +113,7 @@ BatchTaskSubparserSubmit.add_argument(
 BatchTaskSubparserSubmit.add_argument(
     "-n", "--nJobs",
     dest="nJobs",
+    type=int,
     help="Number of jobs.")
 BatchTaskSubparserSubmit.add_argument(
     "-s", "--submit",
@@ -141,6 +142,7 @@ BatchTaskSubparserSubmit.set_defaults(func=submitTask)
 BatchTaskSubparserRun = BatchTaskSubparsers.add_parser('run')
 BatchTaskSubparserRun.add_argument(
     dest="jobId",
+    type=int,
     help="JobId is used to specify which work_dir to go."
 )
 

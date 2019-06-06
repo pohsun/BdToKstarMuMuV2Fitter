@@ -56,12 +56,6 @@ def sigAFitter_bookPdfData(self):
     self.data.changeObservableName("genCosThetaK", "CosThetaK")
     self.data.changeObservableName("genCosThetaL", "CosThetaL")
 sigAFitter._bookPdfData = types.MethodType(sigAFitter_bookPdfData, sigAFitter)
-def sigAFitter_preFitSteps(self):
-    self._preFitSteps_initFromDB()
-    FitterCore.ArgLooper(self.args, lambda arg: arg.setVal(0), ["fs", "transAs"])
-    FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
-    FitterCore.ToggleConstVar(self.args, True, ["fs", "transAs"])
-sigAFitter._preFitSteps = types.MethodType(sigAFitter_preFitSteps, sigAFitter)
 
 setupSig2DFitter = deepcopy(setupTemplateFitter)
 setupSig2DFitter.update({
@@ -81,7 +75,7 @@ setupBkgCombAFitter.update({
     'pdf': "f_bkgCombA",
     'argPattern': [r'bkgComb[KL]_c[\d]+', ],
     'FitHesse': False,
-    'FitMinos': [False, ()],
+    'FitMinos': [True, ()],
     'createNLLOpt': [],
 })
 bkgCombAFitter = StdFitter(setupBkgCombAFitter)
@@ -104,8 +98,10 @@ setupFinalFitter.update({
     'data': "dataReader.Fit",
     'pdf': "f_final",
     'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'fs', 'transAs', 'nBkgComb', r'bkgCombM_c[\d]+'],
-    'createNLLOpt': [ROOT.RooFit.Extended(), ],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
+    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
+    'argAliasSaveToDB': False,
 })
 finalFitter = StdFitter(setupFinalFitter)
 
