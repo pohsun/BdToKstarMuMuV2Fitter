@@ -220,20 +220,20 @@ def buildAccXRecEffiHist(self):
     h2_accXrec = fin.Get("h2_accXrec_{0}".format(self.process.cfg['binKey']))
     self.cfg['source']['effiHistReader.h2_accXrec'] = h2_accXrec
     self.cfg['source']['effiHistReader.accXrec'] = RooDataHist("accXrec", "", RooArgList(CosThetaL, CosThetaK), ROOT.RooFit.Import(h2_accXrec))
-    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(binKey))
-    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(binKey))
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionX'] = fin.Get("h_accXrec_{0}_ProjectionX".format(self.process.cfg['binKey']))
+    self.cfg['source']['effiHistReader.h_accXrec_fine_ProjectionY'] = fin.Get("h_accXrec_{0}_ProjectionY".format(self.process.cfg['binKey']))
 
 effiHistReader = ObjProvider({
     'name': "effiHistReader",
     'obj': {
-        'effiHist': [buildAccXRecEffiHist, ],
+        'effiHistReader.h2_accXrec': [buildAccXRecEffiHist, ],
     }
 })
 
 if __name__ == '__main__':
     #  p.setSequence([dataReader])
-    p.setSequence([sigMCReader])
-    # p.setSequence([effiHistReader])
+    #  p.setSequence([sigMCReader])
+    p.setSequence([effiHistReader])
     p.beginSeq()
     p.runSeq()
     p.endSeq()
