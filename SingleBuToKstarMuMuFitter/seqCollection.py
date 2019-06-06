@@ -7,7 +7,6 @@ import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 
 from SingleBuToKstarMuMuFitter.StdProcess import p
 
@@ -22,6 +21,8 @@ predefined_sequence['fitSigM'] = [dataCollection.sigMCReader, pdfCollection.stdW
 predefined_sequence['fitBkgCombA'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
 predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
 
+predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, fitCollection.finalFitter]
+
 # For fitter validation
 predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
@@ -32,7 +33,10 @@ if __name__ == '__main__':
     #  p.cfg['binKey'] = "belowJpsi"
     #  p.cfg['binKey'] = "betweenPeaks"
     #  p.cfg['binKey'] = "abovePsi2s"
-    p.setSequence(predefined_sequence['fitEfficiency'])
+    #  p.setSequence(predefined_sequence['fitEfficiency'])
+    #  p.setSequence(predefined_sequence['fitBkgCombA'])
+    #  p.setSequence(predefined_sequence['fitFinal3D'])
+    p.setSequence(predefined_sequence['stdFit'])
     try:
         p.beginSeq()
         p.runSeq()

@@ -6,6 +6,7 @@ import math
 import itertools
 import ROOT
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
+from SingleBuToKstarMuMuFitter.StdProcess import setStyle
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 import SingleBuToKstarMuMuFitter.varCollection as varCollection
 
@@ -42,7 +43,7 @@ def create_histo():
 
 
 def plot_histo(fname="h2_MumumassVsBmass.root"):
-    plotCollection.setStyle()
+    setStyle()
     canvas = ROOT.TCanvas()
 
     fin = ROOT.TFile(fname)

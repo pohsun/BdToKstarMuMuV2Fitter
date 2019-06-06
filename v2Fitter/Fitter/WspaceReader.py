@@ -75,7 +75,7 @@ class WspaceReader(Path):
                             self.logger.logWARNING("No Variable {0} is found.".format(wspace_key))
                         else:
                             self.cfg['source'][source_key] = obj
-            
+
             def readAll(iArgs):
                 def bookOne(arg):
                     argName = arg.GetName()
@@ -90,6 +90,7 @@ class WspaceReader(Path):
             else:
                 readAll(self.wspace.allFunctions())
                 readAll(self.wspace.allPdfs())
+                readAll(self.wspace.allVars())
 
     def bookEndSeq(self):
         """Book to p.endSeq stack. Assign new order in case of multiple calls."""

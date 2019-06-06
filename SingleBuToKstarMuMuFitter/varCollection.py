@@ -13,6 +13,7 @@ CosThetaL = RooRealVar("CosThetaL", "cos#theta_{l}", -1., 1.)
 Mumumass = RooRealVar("Mumumass", "m_{#mu#mu} [GeV/c^{2}]", 0., 10.)
 Mumumasserr = RooRealVar("Mumumasserr", "Error of m_{#mu#mu} [GeV/c^{2}]", 0., 10.)
 Kstarmass = RooRealVar("Kstarmass", "m_{K^{*}} [GeV/c^{2}]", 0, 1.5)
+Kshortmass = RooRealVar("Kshortmass", "m_{K_S [GeV/c^{2}]", 0.427, 0.577)
 Q2 = RooRealVar("Q2", "q^{2} [(GeV/c^{2})^{2}]", 0.5, 20.)
 Triggers = RooRealVar("Triggers", "", 0, 100)
 dataArgs = RooArgSet(
@@ -22,6 +23,7 @@ dataArgs = RooArgSet(
     Mumumass,
     Mumumasserr,
     Kstarmass,
+    Kshortmass,
     Q2,
     Triggers)
 
