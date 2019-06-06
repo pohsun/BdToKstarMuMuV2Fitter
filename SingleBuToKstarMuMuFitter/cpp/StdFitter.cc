@@ -7,6 +7,7 @@
 #include "RooDataHist.h"
 
 #include "RooMinuit.h"
+#include "RooFitResult.h"
 #include "RooLinkedList.h"
 #include "RooArgSet.h"
 
@@ -41,6 +42,7 @@ StdFitter::~StdFitter(){
 }
 
 void StdFitter::addNLLOpt(RooCmdArg *cmd){
+    cmd->Print();
     this->createNLLOpt.Add(cmd);
 }
 
@@ -58,9 +60,11 @@ RooMinuit* StdFitter::Init(RooAbsReal* pdf, RooDataHist* data){
 
 void StdFitter::FitMigrad(){
     int isMigradConverge{-1};
+    RooFitResult *res = 0;
     for (int iL = 0; iL < 10; iL++) {
         isMigradConverge = this->minuit->migrad();
-        if (isMigradConverge == 0){
+        res = this->minuit->save();
+        if (isMigradConverge == 0 && res->minNll() < 1e20){
             break;
         }
     }
@@ -73,10 +77,11 @@ void StdFitter::FitHesse(){
 
 void StdFitter::FitMinos(RooArgSet& args){
     int isMinosValid{-1};
-
+    RooFitResult *res = 0;
     for (int iL = 0; iL < 3; iL++) {
         isMinosValid = this->minuit->minos(args);
-        if (isMinosValid == 0){
+        res = this->minuit->save();
+        if (isMinosValid == 0 && res->minNll() < 1e20){
             break;
         }
     }
