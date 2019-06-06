@@ -5,10 +5,10 @@
 from v2Fitter.Fitter.FitterCore import FitterCore
 
 import SingleBuToKstarMuMuFitter.cpp
-from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins
+from SingleBuToKstarMuMuFitter.StdProcess import setStyle
 from SingleBuToKstarMuMuFitter.varCollection import CosThetaL, CosThetaK
-from SingleBuToKstarMuMuFitter.plotCollection import setStyle
+from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 
 import re
 import itertools
@@ -118,14 +118,14 @@ class EfficiencyFitter(FitterCore):
         setStyle()
         canvas = ROOT.TCanvas()
         latex = ROOT.TLatex()
-        h2_effi_sigA_comp = h2_accXrec.Clone("h2_effi_sigA_comp")
-        h2_effi_sigA_comp.Reset("ICESM")
-        for lBin, KBin in itertools.product(list(range(1, h2_effi_sigA_comp.GetNbinsX() + 1)), list(range(1, h2_effi_sigA_comp.GetNbinsY() + 1))):
-            h2_effi_sigA_comp.SetBinContent(lBin, KBin, f2_effi_sigA.Eval(h2_accXrec.GetXaxis().GetBinCenter(lBin), h2_accXrec.GetYaxis().GetBinCenter(KBin)) / h2_accXrec.GetBinContent(lBin, KBin))
-        h2_effi_sigA_comp.SetMinimum(0)
-        h2_effi_sigA_comp.SetMaximum(1.5)
-        h2_effi_sigA_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
-        h2_effi_sigA_comp.Draw("LEGO2")
+        h2_effi_2D_comp = h2_accXrec.Clone("h2_effi_2D_comp")
+        h2_effi_2D_comp.Reset("ICESM")
+        for lBin, KBin in itertools.product(list(range(1, h2_effi_2D_comp.GetNbinsX() + 1)), list(range(1, h2_effi_2D_comp.GetNbinsY() + 1))):
+            h2_effi_2D_comp.SetBinContent(lBin, KBin, f2_effi_sigA.Eval(h2_accXrec.GetXaxis().GetBinCenter(lBin), h2_accXrec.GetYaxis().GetBinCenter(KBin)) / h2_accXrec.GetBinContent(lBin, KBin))
+        h2_effi_2D_comp.SetMinimum(0)
+        h2_effi_2D_comp.SetMaximum(1.5)
+        h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
+        h2_effi_2D_comp.Draw("LEGO2")
         latex.DrawLatexNDC(.05, .9, "CMS Simulation")
         latex.DrawLatexNDC(.85, .9, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
-        canvas.Print("h2_effi_sigA_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+        canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
