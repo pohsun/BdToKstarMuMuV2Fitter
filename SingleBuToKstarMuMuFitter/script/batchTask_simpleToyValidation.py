@@ -19,7 +19,7 @@ import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 fitCollection.finalFitter.cfg['data'] = "ToyGenerator.mixedToy"
 plotCollection.plotter.cfg['plots']['simpleBLK']['kwargs'].update({
     'pltName': "angular3D_final",
-    'dataPlots': [["ToyGenerator.mixedToy", ()], ],
+    'dataPlots': [["ToyGenerator.mixedToy", plotCollection.plotterCfg_dataStyle], ],
     'pdfPlots': [
         ["f_final", plotCollection.plotterCfg_allStyle],
         ["f_final", (ROOT.RooFit.Components('f_sig3D'),) + plotCollection.plotterCfg_sigStyle],

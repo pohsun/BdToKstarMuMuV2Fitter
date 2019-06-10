@@ -120,7 +120,7 @@ accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
 accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
-    fin = self.process.filemanager.open("buildAccXRecEffiHist", "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/data/accXrecEffHists_Run2012.root", "UPDATE")
+    fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2012.root", "UPDATE")
 
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
