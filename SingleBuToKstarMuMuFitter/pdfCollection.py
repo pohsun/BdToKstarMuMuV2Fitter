@@ -134,10 +134,10 @@ def buildSigA(self):
         wspace.factory("fs[0.00001,0.00001,0.2]")
         wspace.factory("unboundFl[0,-1e2,1e2]")
         wspace.factory("unboundAfb[0,-1e2,1e2]")
-        wspace.factory("transAs[0,-1e2,1e2]")
+        wspace.factory("transAs[0,-1e5,1e5]")
         wspace.factory("expr::fl('0.5+TMath::ATan(unboundFl)/TMath::Pi()',{unboundFl})")
         wspace.factory("expr::afb('1.5*(1-fl)*TMath::ATan(unboundAfb)/TMath::Pi()',{unboundAfb,fl})")
-        wspace.factory("expr::as('1.78*TMath::Sqrt(3*fs*(1-fs)*unboundFl)*transAs',{fs,unboundFl,transAs})")
+        wspace.factory("expr::as('1.78*TMath::Sqrt(3*fs*(1-fs)*fl)*transAs',{fs,fl,transAs})")
         wspace.factory("EXPR::f_sigA_original('0.5625*((0.666667*fs+1.333333*as*CosThetaK)*(1-pow(CosThetaL,2))+(1-fs)*(2*fl*pow(CosThetaK,2)*(1-pow(CosThetaL,2))+0.5*(1-fl)*(1-pow(CosThetaK,2))*(1.+pow(CosThetaL,2))+1.333333*afb*(1-pow(CosThetaK,2))*CosThetaL))', {CosThetaK, CosThetaL, fl, afb, fs, as})")
         f_sigA = ROOT.RooBtosllModel("f_sigA", "", CosThetaL, CosThetaK, wspace.var('unboundAfb'), wspace.var('unboundFl'), wspace.var('fs'), wspace.var('transAs'))
         getattr(wspace, 'import')(f_sigA)
@@ -367,7 +367,7 @@ stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
 
 if __name__ == '__main__':
     #  binKey = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
-    binKey = ['belowJpsi']
+    binKey = ['abovePsi2s']
     for b in binKey:
         p.cfg['binKey'] = b
         p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
@@ -375,6 +375,7 @@ if __name__ == '__main__':
         p.runSeq()
         p.endSeq()
 
+        #  p.reset()
         dataCollection.dataReader.reset()
         stdWspaceReader.reset()
         stdPDFBuilder.reset()
