@@ -53,7 +53,7 @@ getenv      = True
 log         = log/log.$(Process)
 output      = log/out.$(Process)
 error       = log/err.$(Process)
-+JobFlavour = {JobFlavour}
++JobFlavour = "{JobFlavour}"
 
 initialdir  = {initialdir}
 executable  = {executable}

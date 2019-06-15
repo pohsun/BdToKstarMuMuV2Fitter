@@ -113,8 +113,8 @@ def getSubData_random(self, checkCollision=True):
                     outputBits.SetBitNumber(rnd)
                     break
 
-            if checkCollision and rnd_collisions * 20 > self.currentSubDataEntries:
-                self.logger.logWARNING("Rate of random number collision may over 5%, please use larger input")
+            if checkCollision and rnd_collisions * 5 > self.currentSubDataEntries:
+                self.logger.logWARNING("Rate of random number collision may over 20%, please consider use larger input")
 
         # Sequential reading is highly recommanded by ROOT author
         output = self.data.emptyClone("{0}Subset".format(self.data.GetName()))

@@ -34,7 +34,7 @@ def decorator_initParameters(func):
     @functools.wraps(func)
     def wrapped_f(self):
         self.pdf = self.process.sourcemanager.get(self.cfg['pdf'])
-        self.argset = self.argset = self.cfg['argset']
+        self.argset = self.cfg['argset']
         self.params = self.pdf.getParameters(self.argset)
         FitDBPlayer.initFromDB(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']), self.params, self.cfg.get('argAliasInDB', []))
 
@@ -88,6 +88,7 @@ setupSigToyGenerator = deepcopy(CFG)
 setupSigToyGenerator.update({
     'name': "sigToyGenerator",
     'pdf': "f_sig3D",
+    'saveAs': "sigToyGenerator.root",
 })
 sigToyGenerator = ToyGenerator(setupSigToyGenerator)
 @decorator_setExpectedEvents(["nSig"])
@@ -101,6 +102,7 @@ setupBkgCombToyGenerator = deepcopy(CFG)
 setupBkgCombToyGenerator.update({
     'name': "bkgCombGenerator",
     'pdf': "f_bkgComb",
+    'saveAs': "bkgCombToyGenerator.root",
 })
 bkgCombToyGenerator = ToyGenerator(setupBkgCombToyGenerator)
 @decorator_setExpectedEvents(["nBkgComb"])
@@ -117,6 +119,7 @@ setupSigAToyGenerator.update({
     'name': "sigAToyGenerator",
     'pdf': "f_sigA",
     'argAliasInDB': setupSigAFitter['argAliasInDB'],
+    'saveAs': "sigAToyGenerator.root",
 })
 sigAToyGenerator = ToyGenerator(setupSigAToyGenerator)
 @decorator_setExpectedEvents(["nSig"])
@@ -127,10 +130,10 @@ sigAToyGenerator.customize = types.MethodType(sigAToyGenerator_customize, sigATo
 
 if __name__ == '__main__':
     try:
-        p.setSequence([pdfCollection.stdWspaceReader, bkgCombToyGenerator])
+        p.setSequence([pdfCollection.stdWspaceReader, sigToyGenerator])
+        #  p.setSequence([pdfCollection.stdWspaceReader, bkgCombToyGenerator])
         p.beginSeq()
         p.runSeq()
-        print(p.sourcemanager)
         p.sourcemanager.get('ToyGenerator.mixedToy').Print()
     finally:
         p.endSeq()
