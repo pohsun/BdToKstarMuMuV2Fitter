@@ -23,9 +23,9 @@ public:
     void addNLLOpt(RooCmdArg*);
     RooMinuit* Init(RooAbsPdf*, RooDataSet*);
     RooMinuit* Init(RooAbsReal*, RooDataHist*);
-    void FitMigrad();
+    RooFitResult* FitMigrad();
     void FitHesse();
-    void FitMinos(RooArgSet&);
+    RooFitResult* FitMinos(RooArgSet&);
 
     RooAbsReal* GetNLL(){return nll;}
     RooMinuit* GetMinuit(){return minuit;}
@@ -58,32 +58,33 @@ RooMinuit* StdFitter::Init(RooAbsReal* pdf, RooDataHist* data){
     return minuit;
 }
 
-void StdFitter::FitMigrad(){
+RooFitResult* StdFitter::FitMigrad(){
     int isMigradConverge{-1};
     RooFitResult *res = 0;
     for (int iL = 0; iL < 10; iL++) {
         isMigradConverge = this->minuit->migrad();
         res = this->minuit->save();
-        if (isMigradConverge == 0 && res->minNll() < 1e20){
+        if (isMigradConverge == 0 && fabs(res->minNll()) < 1e20){
             break;
         }
     }
-    return;
+    return res;
 }
 
 void StdFitter::FitHesse(){
     this->minuit->hesse();
 }
 
-void StdFitter::FitMinos(RooArgSet& args){
+RooFitResult* StdFitter::FitMinos(RooArgSet& args){
     int isMinosValid{-1};
     RooFitResult *res = 0;
     for (int iL = 0; iL < 3; iL++) {
         isMinosValid = this->minuit->minos(args);
         res = this->minuit->save();
-        if (isMinosValid == 0 && res->minNll() < 1e20){
+        if (isMinosValid == 0 && fabs(res->minNll()) < 1e20){
             break;
         }
     }
+    return res;
 }
 #endif

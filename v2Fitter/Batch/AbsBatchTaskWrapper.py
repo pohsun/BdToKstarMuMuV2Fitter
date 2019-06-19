@@ -78,7 +78,12 @@ executable  = {executable}
         if wrapper_kwargs is None:
             wrapper_kwargs = {}
         p = self.getWrappedProcess(process, jobId, **wrapper_kwargs)
-        p.work_dir = os.path.join(self.task_dir, "job{jobId:04d}".format(jobId=jobId) if self.cfg['work_dir'] is None else self.cfg['work_dir'][jobId])
+        if self.cfg['work_dir'] is None:
+            p.work_dir = os.path.join(self.task_dir, "job{jobId:04d}".format(jobId=jobId))
+        elif isinstance(self.cfg['work_dir'], str):
+            p.work_dir = os.path.join(self.task_dir, self.cfg['work_dir'])
+        else:
+            p.work_dir = os.path.join(self.task_dir, self.cfg['work_dir'][jobId])
         try:
             p.beginSeq()
             p.runSeq()

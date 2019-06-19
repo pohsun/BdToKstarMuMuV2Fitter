@@ -28,9 +28,12 @@ class Plotter(Path):
     setStyle()
     canvas = ROOT.TCanvas()
 
-    def canvasPrint(self, name):
+    def canvasPrint(self, name, withBinLabel=True):
         Plotter.canvas.Update()
-        Plotter.canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
+        if withBinLabel:
+            Plotter.canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
+        else:
+            Plotter.canvas.Print("{0}.pdf".format(name))
 
     latex = ROOT.TLatex()
     latexCMSMark = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
@@ -413,14 +416,14 @@ def plotSummaryAfbFl(self, pltName, dbSetup):
             gr.Draw("A{0}".format(drawOpt))
         else:
             gr.Draw("{0} same".format(drawOpt))
-    self.canvasPrint(pltName + '_afb')
+    self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
         if grIdx == 0:
             gr.Draw("A{0}".format(drawOpt))
         else:
             gr.Draw("{0} same".format(drawOpt))
-    self.canvasPrint(pltName + '_fl')
+    self.canvasPrint(pltName + '_fl', False)
 
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
 
@@ -514,12 +517,12 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "betweenPeaks"
+    #  p.cfg['binKey'] = "abovePsi2s"
     #  plotter.cfg['switchPlots'].append('simpleSpectrum')
-    #  plotter.cfg['switchPlots'].append('effi')
-    #  plotter.cfg['switchPlots'].append('angular3D_sigM')
-    #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-    #  plotter.cfg['switchPlots'].append('angular3D_final')
+    plotter.cfg['switchPlots'].append('effi')
+    plotter.cfg['switchPlots'].append('angular3D_sigM')
+    plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+    plotter.cfg['switchPlots'].append('angular3D_final')
     plotter.cfg['switchPlots'].append('angular3D_summary')
     p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()

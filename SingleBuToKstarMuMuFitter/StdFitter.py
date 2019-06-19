@@ -38,6 +38,7 @@ class StdFitter(FitterCore):
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
         self.fitter.Init(self.pdf, self.data)
+        self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
@@ -83,6 +84,7 @@ class StdFitter(FitterCore):
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
         FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
+        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):
         self.FitMigrad()
@@ -93,7 +95,13 @@ class StdFitter(FitterCore):
 
     def FitMigrad(self):
         """Migrad"""
-        self.fitter.FitMigrad()
+        migradResult = self.fitter.FitMigrad()
+        self.fitResult = {
+            "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('migrad', 'migrad')): {
+                'status': migradResult.status(),
+                'nll': migradResult.minNll(),
+            }
+        }
 
     def FitHesse(self):
         """Hesse"""
@@ -106,7 +114,13 @@ class StdFitter(FitterCore):
             FitterCore.ArgLooper(self.args, lambda var: par.add(var), self.cfg['FitMinos'][1])
         else:
             par = self.args
-        self.fitter.FitMinos(par)
+        minosResult = self.fitter.FitMinos(par)
+        self.fitResult.update({
+            "{0}.{1}".format(self.name, self.cfg['argAliasInDB'].get('minos', 'minos')): {
+                'status': minosResult.status(),
+                'nll': minosResult.minNll(),
+            }
+        })
 
         # Dont' draw profiled likelihood scanning with following link
         # https://root.cern.ch/root/html/tutorials/roofit/rf605_profilell.C.html
@@ -138,7 +152,6 @@ This would be quite useful for proflied Feldman-Cousins method"""
             gausConstraints = ROOT.RooArgSet()
             for varName, val, valerr in zip(varNames, vals, valerrs):
                 # assuming all variables are read by WspaceReader
-                print(varName, val, type(val), valerr, type(valerr))
                 if varName == "afb":
                     var = self.process.sourcemanager.get("afb")
                     gausC = ROOT.RooGaussian("gausC_afb", "", var, ROOT.RooFit.RooConst(val), ROOT.RooFit.RooConst(valerr if valerr else 0.01))
@@ -149,6 +162,7 @@ This would be quite useful for proflied Feldman-Cousins method"""
                     var = self.pdf.getParameters(self.data).find(varName)
                     gausC = ROOT.RooGaussian("gausC_{0}".format(varName), "", var, ROOT.RooFit.RooConst(val if val else var.getVal()), ROOT.RooFit.RooConst(valerr if valerr else var.getError()))
                 self.cfg['source'][gausC.GetName()] = gausC
+                gausC.Print()
                 gausConstraints.add(gausC)
             self.cfg['createNLLOpt'].append(ROOT.RooFit.ExternalConstraints(gausConstraints))
             func(self)

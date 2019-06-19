@@ -30,7 +30,7 @@ class FitDBPlayer(Service):
         self.process = None
         self.logger = None
         self.absInputDir = absInputDir
-        self.odbfilename = None
+        self.odbfile = None
 
 
     @staticmethod
@@ -69,14 +69,23 @@ class FitDBPlayer(Service):
             aliasDict = {}
         try:
             db = shelve.open(dbfile, writeback=True)
-            def updateToDBImp(iArg):
-                argName = iArg.GetName()
-                aliasName = aliasDict.get(argName, argName)
-                if aliasName not in db:
-                    db[aliasName] = {}
-                for setter, getter in FitDBPlayer.funcPair:
-                    db[aliasName][getter] = getattr(iArg, getter)()
-            FitterCore.ArgLooper(args, updateToDBImp)
+            if isinstance(args, dict):
+                db.update(args)
+            elif args.InheritsFrom("RooArgSet"):
+                def updateToDBImp(iArg):
+                    argName = iArg.GetName()
+                    aliasName = aliasDict.get(argName, argName)
+                    if aliasName not in db:
+                        db[aliasName] = {}
+                    for setter, getter in FitDBPlayer.funcPair:
+                        try:
+                            db[aliasName][getter] = getattr(iArg, getter)()
+                        except AttributeError:
+                            # In case of no getError for RooNLLVar and so on.
+                            pass
+                FitterCore.ArgLooper(args, updateToDBImp)
+            else:
+                raise ValueError("Input arguement of type {0} is not supported".format(type(args)))
         finally:
             db.close()
             print("Updated to Database `{0}`.".format(dbfile))
@@ -105,7 +114,7 @@ class FitDBPlayer(Service):
                             }.get(getter, (db[aliasName][getter],))
                         )
                 else:
-                    print("WARNING\t: Unable to initialize {0}, record not found in {1}.".format(aliasName, dbfile))
+                    print("WARNING\t: Unable to initialize {0}, record {1} not found in {2}.".format(argName, aliasName, dbfile))
             FitterCore.ArgLooper(args, initFromDBImp)
             print("Initialized parameters from `{0}`.".format(dbfile))
         finally:

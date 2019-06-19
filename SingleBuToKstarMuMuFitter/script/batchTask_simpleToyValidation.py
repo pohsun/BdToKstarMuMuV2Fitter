@@ -64,12 +64,19 @@ if __name__ == '__main__':
         cfg=setupBatchTask)
 
     parser = AbsBatchTaskWrapper.BatchTaskParser
+    parser.add_argument(
+        '--binKey',
+        dest="binKey",
+        default="summary",
+        help="Select q2 bin with binKey"
+    )
     parser.set_defaults(
         wrapper=wrappedTask,
         process=p
     )
 
     args = parser.parse_args()
+    p.cfg['binKey'] = args.binKey
     args.func(args)
 
     sys.exit()
