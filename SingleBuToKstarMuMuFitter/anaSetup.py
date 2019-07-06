@@ -35,6 +35,28 @@ q2bins['psi2s'] = createBinTemplate("bin4", 12.86, 14.18)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
 q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
 
+    # SM prediction
+q2bins['belowJpsi']['sm'] = {
+    'afb': {
+        'getVal': 0.077,
+        'getError': 0.097,
+    },
+    'fl': {
+        'getVal': 0.673,
+        'getError': 0.306,
+    }
+}
+q2bins['abovePsi2s']['sm'] = {
+    'afb': {
+        'getVal': 0.366,
+        'getError': 0.030,
+    },
+    'fl': {
+        'getVal': 0.346,
+        'getError': 0.035,
+    }
+}
+
 # B mass regions
 bMassRegions = {}
 def createBmassTemplate(name, lowerBd, upperBd):
@@ -81,3 +103,6 @@ cuts = [
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
 cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_kstarMassWindow)
+
+# SM prediction
+

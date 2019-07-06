@@ -151,6 +151,40 @@ class FitDBPlayer(Service):
         finally:
             db.close()
 
+    def saveSMPrediction(self):
+        """ Save SM prediction to DB file. """
+        smInDB = {
+            'fl_SM': {
+                'getVal': None,
+                'getError': None,
+                'getErrorHi': None,
+                'getErrorLo': None,
+            },
+            'afb_SM': {
+                'getVal': None,
+                'getError': None,
+                'getErrorHi': None,
+                'getErrorLo': None,
+            },
+        }
+        if 'sm' in q2bins[self.process.cfg['binKey']]:
+            sm = q2bins[self.process.cfg['binKey']]['sm']
+            smInDB = {
+                'fl_SM': {
+                    'getVal': sm['fl']['getVal'],
+                    'getError': sm['fl']['getError'],
+                    'getErrorHi': sm['fl']['getError'],
+                    'getErrorLo': -sm['fl']['getError'],
+                },
+                'afb_SM': {
+                    'getVal': sm['afb']['getVal'],
+                    'getError': sm['afb']['getError'],
+                    'getErrorHi': sm['afb']['getError'],
+                    'getErrorLo': -sm['afb']['getError'],
+                }
+            }
+        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, smInDB)
+
     def resetDB(self, forceReset=False):
         baseDBFile = "{0}/{1}_{2}.db".format(self.absInputDir, os.path.splitext(self.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])
         self.odbfile = "{0}".format(os.path.basename(baseDBFile))
