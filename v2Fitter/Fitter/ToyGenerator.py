@@ -61,7 +61,7 @@ class ToyGenerator(Path):
 
     def _addSource(self):
         """Mixing generated toy and update source"""
-        if self.cfg['saveAs'] and not any([os.path.exists(f) for f in self.cfg['preloadFiles']]):
+        if self.cfg['saveAs'] and (not self.cfg['preloadFiles'] or not any([os.path.exists(f) for f in self.cfg['preloadFiles']])):
             ofile = ROOT.TFile(self.cfg['saveAs'], 'RECREATE')
             self.data.Write()
             ofile.Close()

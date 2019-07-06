@@ -15,6 +15,7 @@ from multiprocessing import Pool
 
 import ROOT
 from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins
+from SingleBuToKstarMuMuFitter.StdProcess import dbplayer
 from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
 from SingleBuToKstarMuMuFitter.plotCollection import Plotter
 
@@ -77,9 +78,6 @@ def func_mergeSetSummary(args):
     pool.close()
     os.system("ls -l " + args.batchDir + "/*/setSummary_*.root")
     print("INFO\t: Please check the merged filesize makes sense, and then delete work_dirs.")
-
-def worker_fitAbs(h1, pdf):
-    return
 
 def func_getFCConfInterval(args):
     """Create FCConfInterval.root from setSummary.root"""
@@ -433,7 +431,7 @@ if __name__ == '__main__':
     subparser_fitFCConfInterval.add_argument(
         '--dbDirPath',
         dest="dbDirPath",  # By default, no merge just overwrite.
-        default="{0}/input/selected/".format(modulePath),
+        default=dbplayer.absInputDir,
         help="Customize input dir of db files."
     )
     subparser_fitFCConfInterval.add_argument(

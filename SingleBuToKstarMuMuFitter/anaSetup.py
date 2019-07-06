@@ -60,6 +60,13 @@ bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.38, 5.88)
 bMassRegions['altSB'] = createBmassTemplate("altSB", 4.68, 5.88)
 bMassRegions['altSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB']['cutString'], bMassRegions['altSR']['cutString'])
 
+bMassRegions['altFit_vetoJpsiX'] = createBmassTemplate("altFit_vetoJpsiX", 5.18, 5.80)
+bMassRegions['altSR_vetoJpsiX'] = createBmassTemplate("altSR_vetoJpsiX", 5.18, 5.38)
+bMassRegions['altLSB_vetoJpsiX'] = createBmassTemplate("altLSB_vetoJpsiX", 5.18, 5.18)
+bMassRegions['altUSB_vetoJpsiX'] = createBmassTemplate("altUSB_vetoJpsiX", 5.38, 5.80)
+bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5.80)
+bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
+
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"

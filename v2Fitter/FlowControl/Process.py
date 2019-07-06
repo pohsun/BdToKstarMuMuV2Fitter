@@ -29,6 +29,9 @@ class Process:
     def __str__(self):
         return self._sequence.__str__()
 
+    def reset(self):
+        pass
+
     @classmethod
     def templateConfig(cls):
         cfg = {}
