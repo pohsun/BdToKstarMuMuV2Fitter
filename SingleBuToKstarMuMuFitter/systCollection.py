@@ -439,8 +439,7 @@ def func_makeLatexTable(args):
             'syst_simMismodel': [r"Simu.\ mismodel"],
             'syst_altSP': [r"$S$ - $P$ wave interf.\ "],
             'syst_altBkgCombA': [r"Comb.\ Bkg.\ shape"],
-            'syst_vetoJpsiX': [r"$J/\psi + X$ contrib.\ "],
-            'syst_altFitRange': [r"$B$ mass range"],
+            'syst_vetoJpsiX': [r"$B$ mass range"],
         }
         totalErrorLine = ["Total"]
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
@@ -520,8 +519,8 @@ if __name__ == '__main__':
     subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
     subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
 
-    subparser_altFitRange = subparsers.add_parser('altFitRange')
-    subparser_altFitRange.set_defaults(func=func_altFitRange)
+    #  subparser_altFitRange = subparsers.add_parser('altFitRange')
+    #  subparser_altFitRange.set_defaults(func=func_altFitRange)
 
     subparser_makeLatexTable = subparsers.add_parser('makeLatexTable')
     subparser_makeLatexTable.set_defaults(func=func_makeLatexTable)

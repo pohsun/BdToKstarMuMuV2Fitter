@@ -377,7 +377,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         flSystErrorLo = []
         afbSystErrorHi = []
         afbSystErrorLo = []
-        systErrorSourceBlackList = []
+        systErrorSourceBlackList = ["^syst_altFitRange_.*$"]
         for key, val in db.items():
             if re.match("^syst_.*_afb$", key) and not any([re.match(pat, key) for pat in systErrorSourceBlackList]):
                 afbSystErrorHi.append(db[key]['getErrorHi'])
@@ -471,7 +471,27 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
     # TODO
     if drawSM:
-        pass
+        yyFl = array('d', [0] * len(binKeys))
+        yyFlErrHi = array('d', [0] * len(binKeys))
+        yyFlErrLo = array('d', [0] * len(binKeys))
+
+        yyAfb = array('d', [0] * len(binKeys))
+        yyAfbErrHi = array('d', [0] * len(binKeys))
+        yyAfbErrLo = array('d', [0] * len(binKeys))
+
+        grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
+        grAfb.SetMarkerColor(4)
+        grAfb.SetLineColor(4)
+        grAfb.SetFillColor(4)
+        grAfb.SetFillStyle(3001)
+        #  grAfbs.append(grAfb)
+
+        grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
+        grFl.SetMarkerColor(4)
+        grFl.SetLineColor(4)
+        grFl.SetFillColor(4)
+        grFl.SetFillStyle(3001)
+        #  grFls.append(grFl)
 
     for grIdx, gr in enumerate(grAfbs):
         gr.SetTitle("")
@@ -578,12 +598,13 @@ plotterCfg['plots'] = {
             'dbSetup': [["Data", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db", 'FeldmanCousins', False, ["A2", "P0"], {}, 2, 3001],
                         ["Data", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db", 'FeldmanCousins', True, "P0", {}, 2, 3001],
                        ],
+            'drawSM': True,
         },
     },
-    'angular3D_summary_RECO2GEN': {
+    'angular2D_summary_RECO2GEN': {
         'func': [plotSummaryAfbFl],
         'kwargs': {
-            'pltName': "angular3D_summary_RECO2GEN",
+            'pltName': "angular2D_summary_RECO2GEN",
             'dbSetup': [["RECO", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db",
                          'Minuit', False, ["A2", "P0"],
                          {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
