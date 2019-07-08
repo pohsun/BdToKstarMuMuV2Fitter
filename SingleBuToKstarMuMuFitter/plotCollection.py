@@ -45,6 +45,7 @@ class Plotter(Path):
     latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
     latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
+    latexQ2 = staticmethod(lambda binKey, x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "{0}".format(q2bins[binKey])))
     @staticmethod
     def latexDataMarks(marks):
         if 'sim' in marks:
@@ -64,7 +65,7 @@ class Plotter(Path):
     frameB = Bmass.frame()
     frameB.SetMinimum(0)
     frameB.SetTitle("")
-    frameB_binning = 15
+    frameB_binning = 13
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
@@ -179,7 +180,7 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
     wspace.factory("SUM::model(tmp_nSig[1,1e5]*sigM,tmp_nBkg[20,1e5]*bkgCombM)")
     pdfPlots = [
-        [wspace.pdf('model'), plotterCfg_allStyle, None, "Fit"],
+        [wspace.pdf('model'), plotterCfg_allStyle, None, "Total Fit"],
         [wspace.pdf('model'), (ROOT.RooFit.Components('sigM'),) + plotterCfg_sigStyle, None, "Signal"],
         [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, "Background"],
     ]
@@ -218,12 +219,15 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
             Plotter.latex.DrawLatexNDC(.35, .70, "= {0:.2f}".format(nBkgCombDB))
             Plotter.latex.DrawLatexNDC(.50, .70, "#pm {0:.2f}".format(nBkgCombErrorDB))
         elif frame == 'L':
-            Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
+            #  Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
+            pass
         elif frame == 'K':
-            Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
+            #  Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
+            pass
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
 
+# TODO: Show in percentage
 def plotEfficiency(self, data_name, pdf_name):
     pltName = "effi"
     data = self.process.sourcemanager.get(data_name)
@@ -409,7 +413,22 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         'FeldmanCousins': getStatError_FeldmanCousins,
         'Minuit': getStatError_Minuit,
     }
-    for name, dbPat, statErrorKey, withSystError, drawOpt, argAliasInDB, fillColor, fillStyle in dbSetup:
+
+    Plotter.legend.Clear()
+    for dbsIdx, dbs in enumerate(dbSetup):
+        title = dbs.get('title', None)
+        dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
+        argAliasInDB = dbs.get('argAliasInDB', {})
+        withSystError = dbs.get('withSystError', False)
+        statErrorKey = dbs.get('statErrorKey', 'Minuit')
+        drawOpt = dbs.get('drawOpt', "PO" if withSystError else ["2", "PO"])
+        fillColor = dbs.get('fillColor', 2)
+        fillStyle = dbs.get('fillStyle', 3001)
+        legendOpt = dbs.get('legendOpt', None)
+        dbs.update({
+            'drawOpt': drawOpt,
+            'legendOpt': legendOpt,
+        })
 
         yyFl = array('d', [0] * len(binKeys))
         yyFlStatErrHi = array('d', [0] * len(binKeys))
@@ -468,9 +487,14 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         grFl.SetFillColor(fillColor if fillColor else 2)
         grFl.SetFillStyle(fillStyle if fillStyle else 3001)
         grFls.append(grFl)
+        
+        if legendOpt:
+            Plotter.legend.AddEntry(grAfb, title, legendOpt)
 
-    # TODO
     if drawSM:
+        dbSetup.append({
+            'drawOpt': ["2", "P0"],
+        })
         yyFl = array('d', [0] * len(binKeys))
         yyFlErrHi = array('d', [0] * len(binKeys))
         yyFlErrLo = array('d', [0] * len(binKeys))
@@ -479,19 +503,38 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyAfbErrHi = array('d', [0] * len(binKeys))
         yyAfbErrLo = array('d', [0] * len(binKeys))
 
+        for binKeyIdx, binKey in enumerate(['belowJpsi', 'betweenPeaks', 'abovePsi2s']):
+            if binKey != 'betweenPeaks':
+                fl = q2bins[binKey]['sm']['fl']
+                afb = q2bins[binKey]['sm']['afb']
+                yyFl[binKeyIdx] = fl['getVal']
+                yyAfb[binKeyIdx] = afb['getVal']
+                yyFlErrHi[binKeyIdx] = fl['getError']
+                yyFlErrLo[binKeyIdx] = fl['getError']
+                yyAfbErrHi[binKeyIdx] = afb['getError']
+                yyAfbErrLo[binKeyIdx] = afb['getError']
+            else:
+                yyFl[binKeyIdx] = -1
+                yyAfb[binKeyIdx] = -1
+                yyFlErrHi[binKeyIdx] = 0
+                yyFlErrLo[binKeyIdx] = 0
+                yyAfbErrHi[binKeyIdx] = 0
+                yyAfbErrLo[binKeyIdx] = 0
+
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(4)
         grAfb.SetLineColor(4)
         grAfb.SetFillColor(4)
         grAfb.SetFillStyle(3001)
-        #  grAfbs.append(grAfb)
+        grAfbs.append(grAfb)
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(4)
         grFl.SetLineColor(4)
         grFl.SetFillColor(4)
         grFl.SetFillStyle(3001)
-        #  grFls.append(grFl)
+        grFls.append(grFl)
+        Plotter.legend.AddEntry(grAfb, "SM", "LPFE")
 
     for grIdx, gr in enumerate(grAfbs):
         gr.SetTitle("")
@@ -499,9 +542,13 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.GetYaxis().SetTitle("A_{FB}")
         gr.GetYaxis().SetRangeUser(-0.75, 1.5)
         gr.SetLineWidth(2)
-        drawOpt = dbSetup[grIdx][4] if isinstance(dbSetup[grIdx][4], list) else [dbSetup[grIdx][4]]
-        for opt in drawOpt:
-            gr.Draw(opt if grIdx == 0 else opt + " SAME")
+        drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
+        for optIdx, opt in enumerate(drawOpt):
+            if grIdx == 0:
+                gr.Draw("A" + opt if optIdx == 0 else opt)
+            else:
+                gr.Draw(opt + " SAME")
+    Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_afb', False)
 
@@ -511,9 +558,13 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.GetYaxis().SetTitle("F_{L}")
         gr.GetYaxis().SetRangeUser(0, 1.5)
         gr.SetLineWidth(2)
-        drawOpt = dbSetup[grIdx][4] if isinstance(dbSetup[grIdx][4], list) else [dbSetup[grIdx][4]]
-        for opt in drawOpt:
-            gr.Draw(opt if grIdx == 0 else opt + " SAME")
+        drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
+        for optIdx, opt in enumerate(drawOpt):
+            if grIdx == 0:
+                gr.Draw("A" + opt if optIdx == 0 else opt)
+            else:
+                gr.Draw(opt + " SAME")
+    Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_fl', False)
 
@@ -548,7 +599,7 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_sigM",
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB'], "Fit"],
+            'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB'], "Total Fit"],
                         ],
             'marks': ['sim']}
     },
@@ -566,8 +617,8 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_bkgCombA",
             'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
-            'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic"],
-                         #  ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth"],
+            'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
+                         #  ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
                         ],
             'marks': []}
     },
@@ -585,9 +636,9 @@ plotterCfg['plots'] = {
         'kwargs': {
             'pltName': "angular3D_final",
             'dataReader': "dataReader",
-            'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Fit"],
-                         ["f_sig3D", plotterCfg_sigStyle, None, "Sig"],
-                         ["f_bkgComb", plotterCfg_bkgStyle, None, "Bkg"],
+            'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total Fit"],
+                         ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
+                         ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
                         ],
         }
     },
@@ -595,9 +646,15 @@ plotterCfg['plots'] = {
         'func': [plotSummaryAfbFl],
         'kwargs': {
             'pltName': "angular3D_summary",
-            'dbSetup': [["Data", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db", 'FeldmanCousins', False, ["A2", "P0"], {}, 2, 3001],
-                        ["Data", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db", 'FeldmanCousins', True, "P0", {}, 2, 3001],
-                       ],
+            'dbSetup': [{'title': "Total Fit",
+                         'statErrorKey': 'FeldmanCousins',
+                         'legendOpt': "LPFE"
+                         },
+                        {'title': "Total Fit",
+                         'statErrorKey': 'FeldmanCousins',
+                         'withSystError': True,
+                         },
+                        ],
             'drawSM': True,
         },
     },
@@ -605,16 +662,17 @@ plotterCfg['plots'] = {
         'func': [plotSummaryAfbFl],
         'kwargs': {
             'pltName': "angular2D_summary_RECO2GEN",
-            'dbSetup': [["RECO", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db",
-                         'Minuit', False, ["A2", "P0"],
-                         {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
-                         2, 3001],
-                        ["GEN", p.dbplayer.absInputDir + "/fitResults_{binLabel}.db",
-                         'Minuit', False, "2P0",
-                         {'unboundFl': 'unboundFl_GEN', 'unboundAfb': 'unboundAfb_GEN'},
-                         4, 3001],
-                       ],
-            'marks': ['sim']
+            'dbSetup': [{'title': "RECO",
+                         'argAliasInDB': {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
+                         'legendOpt': "LPFE",
+                         },
+                        {'title': "GEN",
+                         'argAliasInDB': {'unboundFl': 'unboundFl_GEN', 'unboundAfb': 'unboundAfb_GEN'},
+                         'fillColor': 4,
+                         'legendOpt': "LPFE",
+                         },
+                        ],
+            'marks': ['sim'],
         },
     },
 }
@@ -624,7 +682,7 @@ plotterCfg['plots'] = {
 #  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
 #  plotterCfg['switchPlots'].append('angular3D_final')
 #  plotterCfg['switchPlots'].append('angular3D_summary')
-#  plotterCfg['switchPlots'].append('angular3D_summary_RECO2GEN')
+#  plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
 plotter = Plotter(plotterCfg)
 
@@ -637,7 +695,7 @@ if __name__ == '__main__':
     #  plotter.cfg['switchPlots'].append('angular3D_final')
     #  plotter.cfg['switchPlots'].append('angular3D_summary')
     plotterCfg['switchPlots'].append('angular3D_summary')
-    plotterCfg['switchPlots'].append('angular3D_summary_RECO2GEN')
+    plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
     p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
