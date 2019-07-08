@@ -141,7 +141,7 @@ def table_dataresAFBFL():
         'syst_altSP',
         'syst_altBkgCombA',
         'syst_vetoJpsiX',
-        'syst_altFitRange',
+        #  'syst_altFitRange',
     ]
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
@@ -149,15 +149,15 @@ def table_dataresAFBFL():
             latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError']))
             fl = unboundFlToFl(db['unboundFl']['getVal'])
             latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
-                fl,
-                db['stat_FC_fl']['getErrorHi'],
-                db['stat_FC_fl']['getErrorLo'],
-                math.sqrt(sum([pow(db[v + '_fl']['getError'], 2) for v in syst_sources]))))
-            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
                 unboundAfbToAfb(db['unboundAfb']['getVal'], fl),
                 db['stat_FC_afb']['getErrorHi'],
                 db['stat_FC_afb']['getErrorLo'],
                 math.sqrt(sum([pow(db[v + '_afb']['getError'], 2) for v in syst_sources]))))
+            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
+                fl,
+                db['stat_FC_fl']['getErrorHi'],
+                db['stat_FC_fl']['getErrorLo'],
+                math.sqrt(sum([pow(db[v + '_fl']['getError'], 2) for v in syst_sources]))))
             db.close()
         print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")
         print(indent * (baseIndentLevel + 1) + r"\hline")
