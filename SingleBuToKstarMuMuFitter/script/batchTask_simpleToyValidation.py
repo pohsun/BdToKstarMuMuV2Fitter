@@ -3,7 +3,7 @@
 
 import sys
 
-from copy import deepcopy
+from copy import copy, deepcopy
 import v2Fitter.Batch.AbsBatchTaskWrapper as AbsBatchTaskWrapper
 
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins
@@ -24,20 +24,21 @@ class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
         jdl += """
-arguments = --binKey {binKey} run $(Process)
+arguments = --binKey {binKey} {func} $(Process)
 queue {nJobs}
 """.format(nJobs=self.cfg['nJobs'],
-           binKey=parser_args.binKey)
+           binKey=parser_args.binKey,
+           func=parser_args.Function_name.replace('submit', 'run'))
         return jdl
 
 class BatchTaskWrapperSummary(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
     def createJdl(self, parser_args):
         jdl = self.createJdlBase()
         jdl += """
-arguments = run_summary $(Process)
+arguments = {func} $(Process)
 queue {nJobs}
 """.format(nJobs=self.cfg['nJobs'],
-           binKey=parser_args.binKey)
+           func=parser_args.Function_name.replace('submit', 'run'))
         return jdl
 
 setupBatchTask = deepcopy(BatchTaskWrapper.templateCfg())
@@ -56,13 +57,17 @@ if __name__ == '__main__':
         default="summary",
         help="Select q2 bin with binKey"
     )
-    subparserSubSummary = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('submit_summary')
-    subparserRunSummary = AbsBatchTaskWrapper.BatchTaskSubparsers.add_parser('run_summary')
+
+    BatchTaskSubparserSubSummary = copy(AbsBatchTaskWrapper.BatchTaskSubparserSubmit)
+    AbsBatchTaskWrapper.BatchTaskSubparsers.choices['submit_summary'] = BatchTaskSubparserSubSummary
+
+    BatchTaskSubparserRunSummary = copy(AbsBatchTaskWrapper.BatchTaskSubparserRun)
+    AbsBatchTaskWrapper.BatchTaskSubparsers.choices['run_summary'] = BatchTaskSubparserRunSummary
 
     args = parser.parse_args()
     p.cfg['binKey'] = args.binKey
 
-    if parser.Function_name in ['run', 'submit']:
+    if args.Function_name in ['run', 'submit']:
         toyCollection.sigToyGenerator.cfg.update({
             'saveAs': None,
         })
@@ -70,17 +75,16 @@ if __name__ == '__main__':
             'saveAs': None,
         })
         fitCollection.finalFitter.cfg['data'] = "ToyGenerator.mixedToy"
-        plotCollection.plotter.cfg['plots']['angular3D_bin']['kwargs'].update({
+        plotCollection.plotter.cfg['plots']['simpleBLK']['kwargs'].update({
             'pltName': "angular3D_final",
-            'dataPlots': [["ToyGenerator.mixedToy", plotCollection.plotterCfg_dataStyle], "Toy"],
+            'dataPlots': [["ToyGenerator.mixedToy", plotCollection.plotterCfg_dataStyle, "Toy"]],
             'pdfPlots': [
-                ["f_final", plotCollection.plotterCfg_allStyle, None, "Fit"],
-                ["f_final", (ROOT.RooFit.Components('f_sig3D'),) + plotCollection.plotterCfg_sigStyle, None, "Sig"],
-                ["f_final", (ROOT.RooFit.Components('f_bkgComb'),) + plotCollection.plotterCfg_bkgStyle, None, "Bkg"],
+                ["f_final", plotCollection.plotterCfg_allStyle, None, "Toy Data"],
+                ["f_final", (ROOT.RooFit.Components('f_sig3D'),) + plotCollection.plotterCfg_sigStyle, None, "Signal"],
+                ["f_final", (ROOT.RooFit.Components('f_bkgComb'),) + plotCollection.plotterCfg_bkgStyle, None, "Background"],
             ],
             'marks': ['toy'],
         })
-
 
         plotCollection.plotter.cfg['switchPlots'] = [
             'simpleBLK',
@@ -96,9 +100,15 @@ if __name__ == '__main__':
             "myBatchTask",
             "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/batchTask_simpleToyValidation",
             cfg=setupBatchTask)
-    elif parser.Function_name in ['run_summary', 'submit_summary']:
-        plotCollection.plotter.cfg['plots']['angular3D_summary']['kwargs']['dbSetup'] = [["Data", p.work_dir + "/fitResults_{binLabel}.db", 'FeldmanCousins', False, ["A2", "P0"], {}, 2, 3001]]
+    elif args.Function_name in ['run_summary', 'submit_summary']:
+        plotCollection.plotter.cfg['plots']['angular3D_summary']['kwargs']['drawSM'] = False
+        plotCollection.plotter.cfg['plots']['angular3D_summary']['kwargs']['dbSetup'] = [{
+            'title': "Toy Data",
+            'dbPat': "fitResults_{binLabel}.db",
+            'legendOpt': "LPE"
+        }]
         plotCollection.plotter.cfg['plots']['angular3D_summary']['kwargs']['marks'] = ['toy']
+        plotCollection.plotter.cfg['switchPlots'] = ['angular3D_summary']
         p.setSequence([
             plotCollection.plotter
         ])
@@ -113,7 +123,8 @@ if __name__ == '__main__':
         wrapper=wrappedTask,
         process=p
     )
-    args = parser.parse_args()
 
+    args = parser.parse_args()
     args.func(args)
+
     sys.exit()
