@@ -19,7 +19,7 @@ def createBinTemplate(name, lowerBd, upperBd):
         'q2range': (lowerBd, upperBd),
         'cutString': "Mumumass > {0} && Mumumass < {1}".format(sqrt(lowerBd), sqrt(upperBd)),
         'label': "{0}".format(name),
-        'latexLabel': "{0}".format(name),
+        'latexLabel': "{upperBd:.2f} > q^{{2}} > {lowerBd:.2f}".format(upperBd=upperBd, lowerBd=lowerBd),
     }
     return template
 
@@ -34,6 +34,28 @@ q2bins['jpsi'] = createBinTemplate("bin2", 8.68, 10.09)
 q2bins['psi2s'] = createBinTemplate("bin4", 12.86, 14.18)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
 q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
+
+    # SM prediction
+q2bins['belowJpsi']['sm'] = {
+    'afb': {
+        'getVal': 0.077,
+        'getError': 0.097,
+    },
+    'fl': {
+        'getVal': 0.673,
+        'getError': 0.306,
+    }
+}
+q2bins['abovePsi2s']['sm'] = {
+    'afb': {
+        'getVal': 0.366,
+        'getError': 0.030,
+    },
+    'fl': {
+        'getVal': 0.346,
+        'getError': 0.035,
+    }
+}
 
 # B mass regions
 bMassRegions = {}
@@ -60,6 +82,13 @@ bMassRegions['altUSB'] = createBmassTemplate("altUSB", 5.38, 5.88)
 bMassRegions['altSB'] = createBmassTemplate("altSB", 4.68, 5.88)
 bMassRegions['altSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB']['cutString'], bMassRegions['altSR']['cutString'])
 
+bMassRegions['altFit_vetoJpsiX'] = createBmassTemplate("altFit_vetoJpsiX", 5.18, 5.80)
+bMassRegions['altSR_vetoJpsiX'] = createBmassTemplate("altSR_vetoJpsiX", 5.18, 5.38)
+bMassRegions['altLSB_vetoJpsiX'] = createBmassTemplate("altLSB_vetoJpsiX", 5.18, 5.18)
+bMassRegions['altUSB_vetoJpsiX'] = createBmassTemplate("altUSB_vetoJpsiX", 5.38, 5.80)
+bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5.80)
+bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
+
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
@@ -74,3 +103,6 @@ cuts = [
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
 cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_kstarMassWindow)
+
+# SM prediction
+

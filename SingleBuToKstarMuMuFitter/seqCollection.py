@@ -21,13 +21,11 @@ predefined_sequence['fitSigM'] = [dataCollection.sigMCReader, pdfCollection.stdW
 predefined_sequence['fitBkgCombA'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.bkgCombAFitter]
 predefined_sequence['fitFinal3D'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter]
 
-predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, fitCollection.finalFitter]
+predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter, fitCollection.sigMFitter, fitCollection.bkgCombAFitter, fitCollection.sig2DFitter, fitCollection.finalFitter]
 
-# For fitter validation
+# For fitter validation and syst
 predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
-
-# For systematics
 
 if __name__ == '__main__':
     #  p.cfg['binKey'] = "belowJpsi"
@@ -37,6 +35,9 @@ if __name__ == '__main__':
     #  p.setSequence(predefined_sequence['fitBkgCombA'])
     #  p.setSequence(predefined_sequence['fitFinal3D'])
     p.setSequence(predefined_sequence['stdFit'])
+    
+    #  p.setSequence(predefined_sequence['fitSig2D'])
+    #  p.setSequence(predefined_sequence['fitSigMCGEN'])
     try:
         p.beginSeq()
         p.runSeq()

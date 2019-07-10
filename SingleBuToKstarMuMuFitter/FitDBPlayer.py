@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import shutil
 import shelve
+import math
 
 import ROOT
 from v2Fitter.FlowControl.Service import Service
@@ -31,7 +32,6 @@ class FitDBPlayer(Service):
         self.logger = None
         self.absInputDir = absInputDir
         self.odbfile = None
-
 
     @staticmethod
     def MergeDB(dblist, mode="Overwrite", outputName="MergedDB.db"):
@@ -70,7 +70,11 @@ class FitDBPlayer(Service):
         try:
             db = shelve.open(dbfile, writeback=True)
             if isinstance(args, dict):
-                db.update(args)
+                modified_args = {}
+                for key, val in args.items():
+                    aliasName = aliasDict.get(key, key)
+                    modified_args[aliasName] = val
+                db.update(modified_args)
             elif args.InheritsFrom("RooArgSet"):
                 def updateToDBImp(iArg):
                     argName = iArg.GetName()
@@ -136,15 +140,50 @@ class FitDBPlayer(Service):
                 aliasName = aliasDict.get(argName, argName)
                 if aliasName in db:
                     significance = gaus.GetRandom()
+                    arg = db[aliasName]
                     if significance > 0:
-                        iArg.setVal(min(iArg.getMax(), iArg.getVal() + significance * iArg.getErrorHi()))
+                        iArg.setVal(min(arg['getMax'], arg['getVal'] + significance * (arg['getErrorHi'] if math.fabs(arg['getErrorHi']) > 1e-5 else arg['getError'])))
                     else:
-                        iArg.setVal(max(iArg.getMin(), iArg.getVal() + significance * iArg.getErrorHi()))
+                        iArg.setVal(max(arg['getMin'], arg['getVal'] + significance * (arg['getErrorLo'] if math.fabs(arg['getErrorLo']) > 1e-5 else arg['getError'])))
                 else:
                     print("ERROR\t: Unable to fluctuate {0}, record not found in {1}.".format(aliasName, dbfile))
             FitterCore.ArgLooper(args, flucturateFromDBImp)
         finally:
             db.close()
+
+    def saveSMPrediction(self):
+        """ Save SM prediction to DB file. """
+        smInDB = {
+            'fl_SM': {
+                'getVal': None,
+                'getError': None,
+                'getErrorHi': None,
+                'getErrorLo': None,
+            },
+            'afb_SM': {
+                'getVal': None,
+                'getError': None,
+                'getErrorHi': None,
+                'getErrorLo': None,
+            },
+        }
+        if 'sm' in q2bins[self.process.cfg['binKey']]:
+            sm = q2bins[self.process.cfg['binKey']]['sm']
+            smInDB = {
+                'fl_SM': {
+                    'getVal': sm['fl']['getVal'],
+                    'getError': sm['fl']['getError'],
+                    'getErrorHi': sm['fl']['getError'],
+                    'getErrorLo': -sm['fl']['getError'],
+                },
+                'afb_SM': {
+                    'getVal': sm['afb']['getVal'],
+                    'getError': sm['afb']['getError'],
+                    'getErrorHi': sm['afb']['getError'],
+                    'getErrorLo': -sm['afb']['getError'],
+                }
+            }
+        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, smInDB)
 
     def resetDB(self, forceReset=False):
         baseDBFile = "{0}/{1}_{2}.db".format(self.absInputDir, os.path.splitext(self.outputfilename)[0], q2bins[self.process.cfg['binKey']]['label'])

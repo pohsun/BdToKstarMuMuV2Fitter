@@ -132,3 +132,14 @@ class EfficiencyFitter(FitterCore):
         latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
         latex.DrawLatexNDC(.08, .89, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+
+    @staticmethod
+    def isPosiDef(formula2D):
+        f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)
+        formula2D.GetMinimumXY(f2_min_x, f2_min_y)
+        f2_min = formula2D.Eval(f2_min_x, f2_min_y)
+        if f2_min > 0:
+            return True
+        else:
+            print("WARNING\t: Sanitary check failed: Minimum of efficiency map is {0:.2e} at {1}, {2}".format(f2_min, f2_min_x, f2_min_y))
+        return False

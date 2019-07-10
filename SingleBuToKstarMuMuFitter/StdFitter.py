@@ -28,6 +28,7 @@ class StdFitter(FitterCore):
             'createNLLOpt': [ROOT.RooFit.Extended(1), ],
             'argPattern': [r'^.+$', ],
             'argAliasInDB': {},
+            'saveToDB': True,
             'argAliasSaveToDB': True,
         })
         return cfg
@@ -83,8 +84,9 @@ class StdFitter(FitterCore):
         """Post-processing"""
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
-        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
-        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
+        if self.cfg['saveToDB']:
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):
         self.FitMigrad()

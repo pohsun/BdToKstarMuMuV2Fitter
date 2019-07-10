@@ -9,7 +9,7 @@ import ROOT
 
 import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.Fitter.FitterCore import FitterCore
-from SingleBuToKstarMuMuFitter.StdFitter import StdFitter
+from SingleBuToKstarMuMuFitter.StdFitter import StdFitter, flToUnboundFl, afbToUnboundAfb
 from SingleBuToKstarMuMuFitter.EfficiencyFitter import EfficiencyFitter
 
 from SingleBuToKstarMuMuFitter.StdProcess import p
@@ -52,6 +52,7 @@ setupSigAFitter.update({
 })
 sigAFitter = StdFitter(setupSigAFitter)
 def sigAFitter_bookPdfData(self):
+    self.process.dbplayer.saveSMPrediction()
     StdFitter._bookPdfData(self)
     self.data.changeObservableName("genCosThetaK", "CosThetaK")
     self.data.changeObservableName("genCosThetaL", "CosThetaL")

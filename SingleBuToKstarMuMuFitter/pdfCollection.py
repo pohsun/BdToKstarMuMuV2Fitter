@@ -281,6 +281,8 @@ def buildSmoothBkgCombA(self):
         wspace.factory("SUM::f_bkgCombAAltA(frac_bkgCombAAltA[0.5,0,1]*f_bkgCombAAltALo,f_bkgCombAAltAUp)")
         f_bkgCombAAltA = wspace.pdf("f_bkgCombAAltA")
         frac_bkgCombAAltA = wspace.var("frac_bkgCombAAltA")
+        frac_bkgCombAAltA.setVal(self.process.sourcemanager.get('dataReader.LSB').sumEntries() / (self.process.sourcemanager.get('dataReader.LSB').sumEntries() + self.process.sourcemanager.get('dataReader.USB').sumEntries()))
+        frac_bkgCombAAltA.setConstant(True)
 
     self.cfg['source']['frac_bkgCombAAltA'] = frac_bkgCombAAltA
     self.cfg['source']['f_bkgCombAAltA'] = f_bkgCombAAltA
