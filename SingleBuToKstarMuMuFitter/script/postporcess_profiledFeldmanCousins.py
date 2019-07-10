@@ -20,6 +20,7 @@ from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb
 from SingleBuToKstarMuMuFitter.plotCollection import Plotter
 
 targetBinKeys = ["belowJpsi", "betweenPeaks", "abovePsi2s", "summary"]
+targetCoverage = 0.683
 
 def worker_mergeToys(task_dir):
     for binKey in targetBinKeys:
@@ -163,8 +164,6 @@ def func_getFCConfInterval(args):
             LRatioFl.Write()
 
             # Scan confidence interval based on LR
-            targetCoverage = 0.683
-
             gr_afbCILo = ROOT.TGraph()
             gr_afbCIHi = ROOT.TGraph()
             for afbTrue in afbFitResults.keys():

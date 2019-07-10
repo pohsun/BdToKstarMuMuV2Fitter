@@ -177,7 +177,7 @@ def setStyle():
     ROOT.gStyle.SetHistFillColor(0)
     ROOT.gStyle.SetHistLineWidth(2)
     ROOT.gStyle.SetMarkerStyle(21)           # x(5),.(1),triangle(22),square(21),circle(20)
-    ROOT.gStyle.SetMarkerSize(0.6)
+    ROOT.gStyle.SetMarkerSize(0.8)
 
     ROOT.gStyle.SetOptStat(0)
     ROOT.gStyle.SetStatFontSize(0.04)

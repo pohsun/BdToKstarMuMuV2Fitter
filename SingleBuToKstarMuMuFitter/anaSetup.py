@@ -19,7 +19,7 @@ def createBinTemplate(name, lowerBd, upperBd):
         'q2range': (lowerBd, upperBd),
         'cutString': "Mumumass > {0} && Mumumass < {1}".format(sqrt(lowerBd), sqrt(upperBd)),
         'label': "{0}".format(name),
-        'latexLabel': "{0}".format(name),
+        'latexLabel': "{upperBd:.2f} > q^{{2}} > {lowerBd:.2f}".format(upperBd=upperBd, lowerBd=lowerBd),
     }
     return template
 
