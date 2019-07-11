@@ -18,12 +18,16 @@ python seqCollection.py
 
 ## Validation
 
-* [`script/batchTask_simpleToyValidation.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/SingleBuToKstarMuMuFitter/script/batchTask_simpleToyValidation.py)
+* [`./script/batchTask_simpleToyValidation.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/SingleBuToKstarMuMuFitter/script/batchTask_simpleToyValidation.py)
+    Fitter validation using pure toys.
+* [`./script/batchTask_mixedToyValidation.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/SingleBuToKstarMuMuFitter/script/batchTask_mixedToyValidation.py)
+    Fitter validation using signal from official MC and background from toys.
 
 ## Statistical error
 
 Due to low statistics, Feldman-Cousins method is suggested to estimate statistical uncertainties.
 Two scripts are prepared for this procedure.
+
 * Step1 - fitting to profiled toys with [`script/batchTask_profiledFeldmanCousins.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/SingleBuToKstarMuMuFitter/script/batchTask_profiledFeldmanCousins.py)
 
 * Step2 - harvest fit results and calculate error with [`script/postporcess_profiledFeldmanCousins.py`](https://github.com/pohsun/BuToKstarMuMuV2Fitter/blob/master/SingleBuToKstarMuMuFitter/script/postporcess_profiledFeldmanCousins.py)
