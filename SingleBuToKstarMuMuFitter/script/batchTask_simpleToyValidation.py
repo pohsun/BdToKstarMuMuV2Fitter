@@ -79,7 +79,7 @@ if __name__ == '__main__':
             'pltName': "angular3D_final",
             'dataPlots': [["ToyGenerator.mixedToy", plotCollection.plotterCfg_dataStyle, "Toy"]],
             'pdfPlots': [
-                ["f_final", plotCollection.plotterCfg_allStyle, None, "Toy Data"],
+                ["f_final", plotCollection.plotterCfg_allStyle, None, "Total fit"],
                 ["f_final", (ROOT.RooFit.Components('f_sig3D'),) + plotCollection.plotterCfg_sigStyle, None, "Signal"],
                 ["f_final", (ROOT.RooFit.Components('f_bkgComb'),) + plotCollection.plotterCfg_bkgStyle, None, "Background"],
             ],
