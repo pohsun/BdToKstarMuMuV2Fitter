@@ -387,7 +387,6 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         """ FlErrHi, FlErrLo, AfbErrHi, AfbErrLo"""
         return db['stat_FC_fl']['getErrorHi'], -db['stat_FC_fl']['getErrorLo'], db['stat_FC_afb']['getErrorHi'], -db['stat_FC_afb']['getErrorLo']
 
-    # TODO: Fix the case of one-side-fail, exceed physically allowed region, etc..
     def getStatError_Minuit(db):
         """ FlErrHi, FlErrLo, AfbErrHi, AfbErrLo"""
         unboundFl = db[argAliasInDB.get("unboundFl", "unboundFl")]
@@ -400,6 +399,17 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyFlErrLo = fl - unboundFlToFl(unboundFl['getVal'] + unboundFl['getErrorLo'])
         yyAfbErrHi = unboundAfbToAfb(unboundAfb['getVal'] + unboundAfb['getErrorHi'], fl) - afb
         yyAfbErrLo = afb - unboundAfbToAfb(unboundAfb['getVal'] + unboundAfb['getErrorLo'], fl)
+
+        # Sanity check, bound error to boundary when MINOS is FAILED.
+        minimum_err = 1e-3
+        if yyFlErrHi < minimum_err:
+            yyFlErrHi = (1 - 4 * abs(afb) / 3) - fl
+        if yyFlErrLo < minimum_err:
+            yyFlErrLo = fl
+        if yyAfbErrHi < minimum_err:
+            yyAfbErrHi = 0.75 * (1 - fl) - afb
+        if yyAfbErrLo < minimum_err:
+            yyAfbErrLo = afb + 0.75 * (1- fl)
         return yyFlErrHi, yyFlErrLo, yyAfbErrHi, yyAfbErrLo
 
     statErrorMethods = {
@@ -541,6 +551,12 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw("A" + opt if optIdx == 0 else opt)
             else:
                 gr.Draw(opt + " SAME")
+    jpsiBox = ROOT.TBox(8.68, -0.75, 10.09, 1.5)
+    psi2sBox = ROOT.TBox(12.86, -0.75, 14.18, 1.5)
+    jpsiBox.SetFillColor(17)
+    psi2sBox.SetFillColor(17)
+    jpsiBox.Draw()
+    psi2sBox.Draw()
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_afb', False)
@@ -557,6 +573,10 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw("A" + opt if optIdx == 0 else opt)
             else:
                 gr.Draw(opt + " SAME")
+    jpsiBox.SetY1(0)
+    psi2sBox.SetY1(0)
+    jpsiBox.Draw()
+    psi2sBox.Draw()
     Plotter.legend.Draw()
     Plotter.latexDataMarks(marks)
     self.canvasPrint(pltName + '_fl', False)
