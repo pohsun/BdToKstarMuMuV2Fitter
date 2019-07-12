@@ -10,7 +10,6 @@ import types
 import functools
 import itertools
 from datetime import datetime
-from subprocess import call
 from copy import deepcopy
 
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins
@@ -78,7 +77,7 @@ class ProfiledFCToyStudier(AbsToyStudier.AbsToyStudier):
         """ Fill information to otree """
         if math.fabs(self.fitter._nll.getVal()) < 1e20:
             unboundAfb = self.fitter.args.find('unboundAfb').getVal()
-            unboundFl  = self.fitter.args.find('unboundFl').getVal()
+            unboundFl = self.fitter.args.find('unboundFl').getVal()
             self.treeContent.fl = StdFitter.unboundFlToFl(unboundFl)
             self.treeContent.afb = StdFitter.unboundAfbToAfb(unboundAfb, self.treeContent.fl)
             self.treeContent.fs = self.fitter.args.find('fs').getVal()
@@ -175,7 +174,6 @@ setupBatchTaskBestFit.update({
     'nJobs': 1,  # Fix to 1 for profiledFCToyStudier.cfg['nSetOfToys'] sets of toys
     'queue': "workday",
 })
-# Customize taskSubmitter and jobRunner if needed
 
 if __name__ == '__main__':
     # First create all profiling point...

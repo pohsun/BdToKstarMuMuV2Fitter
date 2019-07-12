@@ -45,8 +45,9 @@ class Plotter(Path):
     latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
     latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
-    def latexQ2(self, x=0.45, y=0.89):
-        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[self.process.cfg['binKey']]['latexLabel']))
+    @staticmethod
+    def latexQ2(binKey, x=0.45, y=0.89):
+        Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     @staticmethod
     def latexDataMarks(marks):
         if 'sim' in marks:
@@ -205,7 +206,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
 
     for frame in frames:
         plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
-        self.latexQ2()
+        Plotter.latexQ2(self.process.cfg['binKey'])
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
 
@@ -237,7 +238,7 @@ def plotEfficiency(self, data_name, pdf_name):
     h2_effi_sigA_fine.Draw("SURF SAME")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexCMSExtra(.08, .89)
-    self.latexQ2(.40, .93)
+    Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
     self.canvasPrint(pltName + "_2D")
     data_accXrec.Scale(0.01)
 
@@ -250,9 +251,8 @@ def plotEfficiency(self, data_name, pdf_name):
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
     cloned_frameL.Draw()
-    Plotter.latexCMSSim()
-    Plotter.latexCMSExtra()
-    self.latexQ2()
+    Plotter.latexDataMarks(['sim'])
+    Plotter.latexQ2(self.process.cfg['binKey'])
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
@@ -265,9 +265,8 @@ def plotEfficiency(self, data_name, pdf_name):
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
     cloned_frameK.Draw()
-    Plotter.latexCMSSim()
-    Plotter.latexCMSExtra()
-    self.latexQ2()
+    Plotter.latexDataMarks(['sim'])
+    Plotter.latexQ2(self.process.cfg['binKey'])
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
 types.MethodType(plotEfficiency, None, Plotter)
@@ -348,7 +347,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
                     Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
                 elif frame == 'K':
                     Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
-            self.latexQ2()
+            Plotter.latexQ2(self.process.cfg['binKey'])
             self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
 types.MethodType(plotPostfitBLK, None, Plotter)
 
