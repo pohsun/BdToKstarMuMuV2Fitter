@@ -113,7 +113,7 @@ def plot_histo():
 
     for p in pConfig.keys():
         h_data, h_mc = drawPlot(p)
-        canvas.Print("val_{0}.pdf".format(pConfig[p]['label']))
+        canvas.Print("val_dataMC_jpsi_{0}.pdf".format(pConfig[p]['label']))
 
 if __name__ == '__main__':
     #  create_histo()

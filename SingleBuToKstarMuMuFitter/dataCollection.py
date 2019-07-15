@@ -51,7 +51,21 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                     "({0}) && ({1}) && ({2}) && ({3})".format(
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
-                        cuts[-1] if self.process.cfg['binKey'] not in ['jpsi', 'psi2s'] else cuts_noResVeto,
+                        cuts[-1],
+                        "1" if not extraCuts else extraCuts,
+                    )
+                )
+            )
+
+    # Additional Fit_noResVeto for resonance
+    if "noResVeto" in targetBMassRegion and self.process.cfg['binKey'] in ['jpsi', 'psi2s']:
+            self.cfg['dataset'].append(
+                (
+                    "{0}.Fit_noResVeto".format(self.cfg['name'], key),
+                    "({0}) && ({1}) && ({2}) && ({3})".format(
+                        bMassRegions['Fit']['cutString'],
+                        q2bins[self.process.cfg['binKey']]['cutString'],
+                        cuts_noResVeto,
                         "1" if not extraCuts else extraCuts,
                     )
                 )
@@ -70,7 +84,7 @@ dataReaderCfg.update({
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$'], extraCuts=cut_kshortWindow)
+customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$', 'noResVeto'], extraCuts=cut_kshortWindow)
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
@@ -84,6 +98,29 @@ sigMCReaderCfg.update({
 sigMCReader = DataReader(sigMCReaderCfg)
 customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])  # Assuming cut_kshortWindow makes no impact
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
+
+# peakBkgMCReader
+bkgJpsiMCReaderCfg = copy(CFG)
+bkgJpsiMCReaderCfg.update({
+    'name': "bkgJpsiMCReader",
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/JPSI/sel_*.root"],
+    'preloadFile': modulePath + "/data/preload_bkgJpsiMCReader_{binLabel}.root",
+    'lumi': 295.761,
+})
+bkgJpsiMCReader = DataReader(bkgJpsiMCReaderCfg)
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'noResVeto'])
+bkgJpsiMCReader.customize = types.MethodType(customizeSigMC, bkgJpsiMCReader)
+
+bkgPsi2sMCReaderCfg = copy(CFG)
+bkgPsi2sMCReaderCfg.update({
+    'name': "bkgPsi2sMCReader",
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/PSIP/sel_*.root"],
+    'preloadFile': modulePath + "/data/preload_bkgPsi2sMCReader_{binLabel}.root",
+    'lumi': 218.472,
+})
+bkgPsi2sMCReader = DataReader(bkgPsi2sMCReaderCfg)
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'noResVeto'])
+bkgPsi2sMCReader.customize = types.MethodType(customizeSigMC, bkgPsi2sMCReader)
 
 # sigMCGENReader
 def customizeGEN(self):

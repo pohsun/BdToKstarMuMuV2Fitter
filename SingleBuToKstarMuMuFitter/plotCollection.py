@@ -128,7 +128,8 @@ class Plotter(Path):
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
                         *p[1])
-        cloned_frame.SetMaximum(scaleYaxis * cloned_frame.GetMaximum())
+        h0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
+        cloned_frame.SetMaximum(scaleYaxis * h0.GetMaximum())
         cloned_frame.Draw()
 
         # Legend
@@ -188,13 +189,18 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     ]
 
     pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
-    Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+    if dataPlots[0][0].sumEntries() > 2e3:
+        Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+    else:
+        Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
 
-def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK'):
+def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK', shareDataNorm=False):
     for pIdx, plt in enumerate(dataPlots):
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
+        if shareDataNorm and pIdx != 0:
+            dataPlots[pIdx][1] += (ROOT.RooFit.Rescale(dataPlots[0][0].sumEntries() / dataPlots[pIdx][0].sumEntries()),)
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
@@ -400,7 +406,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         yyAfbErrLo = afb - unboundAfbToAfb(unboundAfb['getVal'] + unboundAfb['getErrorLo'], fl)
 
         # Sanity check, bound error to boundary when MINOS is FAILED.
-        minimum_err = 1e-3
+        minimum_err = 1e-4  # 1e-3 is too wide for full signal MC
         if yyFlErrHi < minimum_err:
             yyFlErrHi = (1 - 4 * abs(afb) / 3) - fl
         if yyFlErrLo < minimum_err:
@@ -587,16 +593,17 @@ plotterCfg = {
 }
 plotterCfg_dataStyle = ()
 plotterCfg_mcStyle = ()
-plotterCfg_allStyle = (ROOT.RooFit.LineColor(1),)
-plotterCfg_sigStyleNoFill = (ROOT.RooFit.LineColor(4),)
-plotterCfg_sigStyle = (ROOT.RooFit.LineColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillColor(4), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
-plotterCfg_bkgStyle = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
+plotterCfg_allStyle = (ROOT.RooFit.MarkerColor(1), ROOT.RooFit.LineColor(1),)
+plotterCfg_sigStyleNoFill = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4),)
+plotterCfg_sigStyle = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
+plotterCfg_bkgStyle = (ROOT.RooFit.MarkerColor(2), ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 plotterCfg['plots'] = {
     'simpleSpectrum': {
         'func': [plotSpectrumWithSimpleFit],
         'kwargs': {
             'pltName': "h_Bmass",
             'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ],
+            #  'dataPlots': [["dataReader.Fit_noResVeto", plotterCfg_dataStyle, None], ],
             'marks': []}
     },
     'effi': {
@@ -700,8 +707,9 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "abovePsi2s"
+    p.cfg['binKey'] = "summary"
     #  plotter.cfg['switchPlots'].append('simpleSpectrum')
+    #  plotter.cfg['switchPlots'].append('dataMCComp')
     #  plotter.cfg['switchPlots'].append('effi')
     #  plotter.cfg['switchPlots'].append('angular3D_sigM')
     #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
@@ -709,6 +717,7 @@ if __name__ == '__main__':
     #  plotter.cfg['switchPlots'].append('angular3D_summary')
     #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
+    #  p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader,  dataCollection.bkgPsi2sMCReader, plotter])
     p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
