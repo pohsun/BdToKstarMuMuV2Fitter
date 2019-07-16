@@ -98,16 +98,27 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         canvas.Print("{0}.pdf".format(hname))
 
         h_projX = h.ProjectionX(hname.replace("h2", "h").replace("MumumassVsBmass", "Mumumass"), 22, 32)  # [5.18, 5.38] out of [4.76, 5.80] 
+        h_projX.SetYTitle("Number of events")
         if h_projX.GetSumOfWeights() > 10000:
             h_projX.Rebin(5)
+
+        h_projX.GetXaxis().SetRangeUser(2.5, 3.5)
         h_projX.Draw("E")
         plotCollection.Plotter.latexCMSMark()
         plotCollection.Plotter.latexCMSExtra()
         plotCollection.Plotter.latexLumi()
         canvas.Update()
-        canvas.Print("{0}.pdf".format(h_projX.GetName()))
+        canvas.Print("{0}_jpsi.pdf".format(h_projX.GetName()))
+        h_projX.GetXaxis().SetRangeUser(3.3, 4.1)
+        h_projX.Draw("E")
+        plotCollection.Plotter.latexCMSMark()
+        plotCollection.Plotter.latexCMSExtra()
+        plotCollection.Plotter.latexLumi()
+        canvas.Update()
+        canvas.Print("{0}_psi2s.pdf".format(h_projX.GetName()))
 
         h_projY = h.ProjectionY(hname.replace("h2", "h").replace("MumumassVsBmass", "Bmass"))
+        h_projY.SetYTitle("Number of events")
         h_projY.Draw("E")
         plotCollection.Plotter.latexCMSMark()
         plotCollection.Plotter.latexCMSExtra()

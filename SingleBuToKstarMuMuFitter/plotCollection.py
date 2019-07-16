@@ -49,7 +49,10 @@ class Plotter(Path):
     def latexQ2(binKey, x=0.45, y=0.89):
         Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     @staticmethod
-    def latexDataMarks(marks):
+    def latexDataMarks(marks=None):
+        if marks is None:
+            marks = []
+
         if 'sim' in marks:
             Plotter.latexCMSSim()
             Plotter.latexCMSExtra()
