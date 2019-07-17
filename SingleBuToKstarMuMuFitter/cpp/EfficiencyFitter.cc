@@ -45,7 +45,7 @@ public:
     virtual ~EfficiencyFitter();
     TH2* GetH2(){return h2_fcn;}
     TF2* GetF2(){return f2_fcn;}
-    int  GetChi2(){return chi2Val;}
+    double GetChi2(){return chi2Val;}
     TMinuit* Init(int, TH2*, TF2*);
 private:
     TMinuit *minuit = 0;
