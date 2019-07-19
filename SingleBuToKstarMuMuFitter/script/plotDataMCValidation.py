@@ -13,6 +13,7 @@ psi2s_range = anaSetup.q2bins['psi2s']['q2range']
 def create_histo(fname="plotDataMCValidation.root"):
     tree = ROOT.TChain("tree")
     tree.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root")
+    #  tree.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/JPSI/*.root")
 
     fout = ROOT.TFile(fname, "RECREATE")
     h_Bpt = ROOT.TH1F("h_Bpt", "", 100, 0, 100)
@@ -22,7 +23,8 @@ def create_histo(fname="plotDataMCValidation.root"):
     h_Bcosalphabs2d = ROOT.TH1F("h_Bcosalphabs2d", "", 70, 0.9993, 1)
     h_Kshortpt = ROOT.TH1F("h_Kshortpt", "", 100, 0, 10)
     h_CosThetaL = ROOT.TH1F("h_CosThetaL", "", 100, -1, 1)
-    h_CosThetaK = ROOT.TH1F("h_CosThetaK", "", 100, -1, 1)
+    h_Trkpt = ROOT.TH1F("h_Trkpt", "", 50, 0, 5)
+    h_Trkdcasigbs = ROOT.TH1F("h_Trkdcasigbs", "", 100, 0, 50)
 
     cutString = anaSetup.cuts_noResVeto
     wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
@@ -34,6 +36,8 @@ def create_histo(fname="plotDataMCValidation.root"):
     tree.Draw("Kshortpt>>h_Kshortpt", "({0})&&({1})".format(cutString, wgtString), "goff")
     tree.Draw("CosThetaL>>h_CosThetaL", "({0})&&({1})".format(cutString, wgtString), "goff")
     tree.Draw("CosThetaK>>h_CosThetaK", "({0})&&({1})".format(cutString, wgtString), "goff")
+    tree.Draw("Trkpt>>h_Trkpt", "({0})&&({1})".format(cutString, wgtString), "goff")
+    tree.Draw("Trkdcasigbs>>h_Trkdcasigbs", "({0})&&({1})".format(cutString, wgtString), "goff")
     fout.Write()
     fout.Close()
 
@@ -83,6 +87,16 @@ def plot_histo():
         'h_CosThetaL': {
             'label': "CosThetaL",
             'xTitle': "cos#theta_{l}",
+            'yTitle': None,
+        },
+        'h_Trkpt': {
+            'label': "Trkpt",
+            'xTitle': "#pi p_{T}",
+            'yTitle': None,
+        },
+        'h_Trkdcasigbs': {
+            'label': "Trkdcasigbs",
+            'xTitle': "#pi DCA/#sigma",
             'yTitle': None,
         },
     }
