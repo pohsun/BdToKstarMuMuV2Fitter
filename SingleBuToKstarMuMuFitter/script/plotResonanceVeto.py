@@ -63,14 +63,16 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         h.SetYTitle(varCollection.Bmass.getTitle().Data())
         h.Draw()
 
+        transparencyPeak = 1.0
+        transparencySR = 0.3
         highlight_jpsi = ROOT.TBox(math.sqrt(jpsi_range[0]), b_range[0], math.sqrt(jpsi_range[1]), b_range[1])
-        highlight_jpsi.SetFillColorAlpha(ROOT.kRed, 0.3)
+        highlight_jpsi.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
         highlight_jpsi.Draw()
         highlight_psi2s = ROOT.TBox(math.sqrt(psi2s_range[0]), b_range[0], math.sqrt(psi2s_range[1]), b_range[1])
-        highlight_psi2s.SetFillColorAlpha(ROOT.kRed, 0.3)
+        highlight_psi2s.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
         highlight_psi2s.Draw()
         highlight_SR = ROOT.TBox(1, anaSetup.bMassRegions['SR']['range'][0], 5, anaSetup.bMassRegions['SR']['range'][1])
-        highlight_SR.SetFillColorAlpha(ROOT.kRed, 0.3)
+        highlight_SR.SetFillColorAlpha(ROOT.kRed, transparencySR)
         highlight_SR.Draw()
 
         nEvtInSR = 0
@@ -97,7 +99,7 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         canvas.Update()
         canvas.Print("{0}.pdf".format(hname))
 
-        h_projX = h.ProjectionX(hname.replace("h2", "h").replace("MumumassVsBmass", "Mumumass"), 22, 32)  # [5.18, 5.38] out of [4.76, 5.80] 
+        h_projX = h.ProjectionX(hname.replace("h2", "h").replace("MumumassVsBmass", "Mumumass"), 22, 32)  # [5.18, 5.38] out of [4.76, 5.80]
         h_projX.SetYTitle("Number of events")
         if h_projX.GetSumOfWeights() > 10000:
             h_projX.Rebin(5)
