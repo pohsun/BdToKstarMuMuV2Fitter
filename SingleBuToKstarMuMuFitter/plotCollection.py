@@ -183,7 +183,10 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.05,0.40])")
     wspace.factory("SUM::sigM(sigFrac[0.8,0,1]*gauss1,gauss2)")
     wspace.factory("c1[-5.6,-20,20]")
-    wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
+    #  wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
+    #  wspace.factory("c2[0,-20,20]")
+    #  wspace.factory("c3[0,-20,20]")
+    #  wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)+c2+c3*Bmass',{Bmass,c1,c2,c3})")
     wspace.factory("SUM::model(tmp_nSig[1,1e5]*sigM,tmp_nBkg[20,1e5]*bkgCombM)")
     pdfPlots = [
         [wspace.pdf('model'), plotterCfg_allStyle, None, "Total fit"],
@@ -498,7 +501,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         grFl.SetFillColor(fillColor if fillColor else 2)
         grFl.SetFillStyle(fillStyle if fillStyle else 3001)
         grFls.append(grFl)
-        
+
         if legendOpt:
             Plotter.legend.AddEntry(grAfb, title, legendOpt)
 
@@ -639,7 +642,15 @@ plotterCfg['plots'] = {
             'pltName': "angular3D_bkgCombA",
             'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
             'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
-                         #  ["f_bkgCombAltA", (ROOT.RooFit.LineColor(4), ROOT.RooFit.LineStyle(9)), None, "Smooth Bkg."],
+                        ],
+            'marks': []}
+    },
+    'angular3D_bkgCombAAltA': {
+        'func': [functools.partial(plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_bkgCombAAltA",
+            'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
+            'pdfPlots': [["f_bkgCombAAltA", plotterCfg_bkgStyle, None, "Smooth Bkg."],
                         ],
             'marks': []}
     },
@@ -703,6 +714,7 @@ plotterCfg['plots'] = {
 #  plotterCfg['switchPlots'].append('effi')
 #  plotterCfg['switchPlots'].append('angular3D_sigM')
 #  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
+#  plotterCfg['switchPlots'].append('angular3D_bkgCombAAltA')
 #  plotterCfg['switchPlots'].append('angular3D_final')
 #  plotterCfg['switchPlots'].append('angular3D_summary')
 #  plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
@@ -716,6 +728,7 @@ if __name__ == '__main__':
     #  plotter.cfg['switchPlots'].append('effi')
     #  plotter.cfg['switchPlots'].append('angular3D_sigM')
     #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+    #  plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
     #  plotter.cfg['switchPlots'].append('angular3D_final')
     #  plotter.cfg['switchPlots'].append('angular3D_summary')
     #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
