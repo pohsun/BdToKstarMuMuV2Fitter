@@ -34,6 +34,7 @@ q2bins['jpsi'] = createBinTemplate("bin2", 8.68, 10.09)
 q2bins['psi2s'] = createBinTemplate("bin4", 12.86, 14.18)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
 q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
+q2bins['full'] = createBinTemplate("full", 1., 19.)
 
     # SM prediction
 q2bins['belowJpsi']['sm'] = {
