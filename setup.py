@@ -12,6 +12,9 @@ import site
 SITEPKG_PATH = site.USER_SITE
 MODULENAMES = ["v2Fitter","SingleBuToKstarMuMuFitter"]
 
+if not os.path.exists(SITEPKG_PATH):
+    os.makedirs(SITEPKG_PATH)
+
 for m in MODULENAMES:
     with open("{0}/{1}.pth".format(SITEPKG_PATH, m), "w") as f:
         f.write(os.path.dirname(os.path.abspath(__file__)))
