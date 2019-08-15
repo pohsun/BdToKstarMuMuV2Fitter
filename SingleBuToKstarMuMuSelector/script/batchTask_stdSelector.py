@@ -9,12 +9,12 @@ from SingleBuToKstarMuMuSelector.StdProcess import p
 from copy import copy
 
 class BatchTaskWrapper(AbsBatchTaskWrapper.AbsBatchTaskWrapper):
-    def createJdl(self, parse_args):
+    def createJdl(self, parser_args):
         jdl = self.createJdlBase()
         jdl += """
 arguments = run $(Process)
 queue {nJobs}
-""".format(parse_args['nJobs'])
+""".format(nJobs=self.cfg['nJobs'])
         return jdl
 
 jobIdToDataset = StdSelector.datasets.keys()
@@ -24,18 +24,18 @@ setupBatchTask.update({
     'work_dir': jobIdToDataset,
     'nJobs': len(jobIdToDataset)
 })
+wrappedTask = BatchTaskWrapper(
+    "myBatchTask",
+    "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuSelector/batchTask_StdSelector",
+    cfg=setupBatchTask)
 
 if __name__ == '__main__':
-    wrappedTask = BatchTaskWrapper(
-        "myBatchTask",
-        "/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuSelector/BatchTaskSelector",
-        cfg=setupBatchTask)
-
     parser = AbsBatchTaskWrapper.BatchTaskParser
     parser.set_defaults(
         wrapper=wrappedTask,
         process=p
     )
+
     args = parser.parse_args()
     if args.Function_name == "run":
         selector = StdSelector.StdSelector(StdSelector.datasets[jobIdToDataset[args.jobId]])

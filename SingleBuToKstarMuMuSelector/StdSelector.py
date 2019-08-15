@@ -63,9 +63,9 @@ datasets['BuToKstarMuMu'].update({
     'ifile': [DATADIR + "/BuToKstarMuMu_8TeV_merged.root"],
 })
 for part in range(1, 4 + 1):
-    datasets['BuToKstarMuMu-extended-part' + part] = copy(baseCfg)
-    datasets['BuToKstarMuMu-extended-part' + part].update({
-        'datasetTag': 'BToKstarMuMu-extended-part' + part,
+    datasets['BuToKstarMuMu-extended-part' + str(part)] = copy(baseCfg)
+    datasets['BuToKstarMuMu-extended-part' + str(part)].update({
+        'datasetTag': 'BToKstarMuMu-extended-part' + str(part),
         'ifile': [DATADIR + "/BuToKstarMuMu_8TeV_extended_part{0}.root".format(part)],
     })
 datasets['BuToKstarMuMu-NoFilter'] = copy(baseCfg)
