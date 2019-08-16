@@ -574,11 +574,11 @@ void SingleBuToKstarMuMuSelector::UpdateGenMatch()
     genKst_4vec . SetXYZM(genkstpx , genkstpy , genkstpz , KSTAR_MASS);
     genK_4vec   . SetXYZM(genkspx  , genkspy  , genkspz  , KSHORT_MASS);
 
-    double maxDeltaR = 0.3;
-    if (Mup_4vec.DeltaR(Mup_4vec) < 0.1) isTrueMup = true;
-    if (Mum_4vec.DeltaR(Mum_4vec) < 0.1) isTrueMum = true;
-    if (K_4vec.DeltaR(K_4vec) < maxDeltaR) isTrueK = true;
-    if (isTrueK && Kst_4vec.DeltaR(Kst_4vec) < maxDeltaR) isTrueKst = true;
+    double maxDeltaR = 0.15;
+    if (Mup_4vec.DeltaR(genMup_4vec) < maxDeltaR) isTrueMup = true;
+    if (Mum_4vec.DeltaR(genMum_4vec) < maxDeltaR) isTrueMum = true;
+    if (K_4vec.DeltaR(genK_4vec) < maxDeltaR) isTrueK = true;
+    if (isTrueK && Kst_4vec.DeltaR(genKst_4vec) < maxDeltaR) isTrueKst = true;
     if (isTrueKst && isTrueMup && isTrueMum) isTrueB = true;
 }//}}}
 
