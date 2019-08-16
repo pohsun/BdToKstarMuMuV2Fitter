@@ -25,7 +25,7 @@ class StdSelector(SelectorCore):
         self.tree = ROOT.TChain(self.cfg['itreeName'])
         for tr in self.cfg['ifile']:
             self.tree.Add(tr)
-        option = "{cutSet};{eventContent};{isMC};".format(
+        option = "cutSet={cutSet};eventContent={eventContent};isMC={isMC};".format(
                 cutSet=self.cfg['cutSet'],
                 eventContent=self.cfg['eventContent'],
                 isMC="true" if self.cfg['isMC'] else "false",
@@ -39,7 +39,7 @@ class StdSelector(SelectorCore):
             self.cfg['ofilename'] += ".root"
         option += self.cfg['ofilename'] + ";"
 #
-        self.tree.Process(SingleBuToKstarMuMuSelector.cpp.modulePath + "/SingleBuToKstarMuMuSelector.C+", option)
+        self.tree.Process(SingleBuToKstarMuMuSelector.cpp.modulePath + "/SingleBuToKstarMuMuSelector.C+", option)  # '+' is necessary for dynamic compile and load.
 
 DATADIR="/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2"
 datasets = {}
@@ -96,4 +96,5 @@ datasets['BuToKstarPsi2S-extended'].update({
 })
 
 if __name__ == '__main__':
-    print(datasets)
+    for dKey, dCfg in datasets.items():
+        print(dKey, dCfg)

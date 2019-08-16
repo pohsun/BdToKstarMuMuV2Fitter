@@ -285,9 +285,17 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
         fOutputTree_->Branch("Dimueta"       , &Dimueta       , "Dimueta/F");
     }
 
-    std::map<string,int> mapcontent;
-    mapcontent.insert(std::pair<string,int>("data",1));
-    mapcontent.insert(std::pair<string,int>("mc",999));
+    std::map<string, int> mapcontent;
+    mapcontent.insert(std::pair<string, int>("data", 1));
+    mapcontent.insert(std::pair<string, int>("mc", 999));
+    if (mapcontent.find(eventContent) == mapcontent.end()){
+        printf("ERROR\t: No compatible datatype found. Please check use following types...\n\t\t[");
+        for (auto iContent = mapcontent.begin(); iContent != mapcontent.end(); iContent++){
+            if (iContent->second != 0) printf("%s,",iContent->first.c_str());
+        }
+        printf("]\n");
+        throw "Unknown eventContent";
+    }
     switch (mapcontent[eventContent]) {
         case 1:
             break;
@@ -333,20 +341,13 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
             fOutputTree_->Branch("genCosThetaL" , &genCosThetaL , "genCosThetaL/F");
             fOutputTree_->Branch("genCosThetaK" , &genCosThetaK , "genCosThetaK/F");
 
-            fOutputTree_->Branch("isTrueB", &isTrueB, "isTrueB/O");
-            fOutputTree_->Branch("isTrueMum", &isTrueMum, "isTrueMum/O");
-            fOutputTree_->Branch("isTrueMup", &isTrueMup, "isTrueMup/O");
-            fOutputTree_->Branch("isTrueK", &isTrueK, "isTrueK/O");
-            fOutputTree_->Branch("isTrueKst", &isTrueKst, "isTrueKst/O");
-
+            fOutputTree_->Branch("isTrueB"      , &isTrueB      , "isTrueB/O");
+            fOutputTree_->Branch("isTrueMum"    , &isTrueMum    , "isTrueMum/O");
+            fOutputTree_->Branch("isTrueMup"    , &isTrueMup    , "isTrueMup/O");
+            fOutputTree_->Branch("isTrueK"      , &isTrueK      , "isTrueK/O");
+            fOutputTree_->Branch("isTrueKst"    , &isTrueKst    , "isTrueKst/O");
             break;
         default:
-            printf("No compatible datatype found. Please check use following types...\n\t\t[");
-            for (auto iContent = mapcontent.begin(); iContent != mapcontent.end(); iContent++){
-                if (iContent->second != 0) printf("%s,",iContent->first.c_str());
-            }
-            printf("]\n");
-            throw "Unknown eventcontent";
             break;
     }
 
