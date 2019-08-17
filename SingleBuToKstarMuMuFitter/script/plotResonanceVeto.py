@@ -76,7 +76,7 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         h.SetYTitle(varCollection.Bmass.getTitle().Data())
         h.Draw()
 
-        transparencyPeak = 0.3 if q2r in ['full', 'peaks'] else 1.0
+        transparencyPeak = 0. if q2r in ['full', 'peaks'] else 0.  # Binning is irrelavent
         transparencySR = 0.3
         highlight_jpsi = ROOT.TBox(math.sqrt(jpsi_range[0]), b_range[0], math.sqrt(jpsi_range[1]), b_range[1])
         highlight_jpsi.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
