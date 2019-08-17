@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 ft=python et:
 
+import os
+
 import ROOT
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
@@ -10,12 +12,17 @@ b_range = anaSetup.bMassRegions['Fit']['range']
 jpsi_range = anaSetup.q2bins['jpsi']['q2range']
 psi2s_range = anaSetup.q2bins['psi2s']['q2range']
 
-def create_histo(fname="plotDataMCValidation.root"):
-    tree = ROOT.TChain("tree")
-    tree.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root")
-    #  tree.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/JPSI/*.root")
+def create_histo(kwargs):
+    ofname = kwargs.get('ofname', "plotDataMCValidation.root")
+    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"])
+    cutString = kwargs.get('cutString', anaSetup.cuts_noResVeto)
+    wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
 
-    fout = ROOT.TFile(fname, "RECREATE")
+    tree = ROOT.TChain("tree")
+    for tr in iTreeFiles:
+        tree.Add(tr)
+
+    fout = ROOT.TFile(ofname, "RECREATE")
     h_Bpt = ROOT.TH1F("h_Bpt", "", 100, 0, 100)
     h_Bphi = ROOT.TH1F("h_Bphi", "", 63, -3.15, 3.15)
     h_Bvtxcl = ROOT.TH1F("h_Bvtxcl", "", 100, 0, 1)
@@ -26,8 +33,6 @@ def create_histo(fname="plotDataMCValidation.root"):
     h_Trkpt = ROOT.TH1F("h_Trkpt", "", 50, 0, 5)
     h_Trkdcasigbs = ROOT.TH1F("h_Trkdcasigbs", "", 100, 0, 50)
 
-    cutString = anaSetup.cuts_noResVeto
-    wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
     tree.Draw("Bpt>>h_Bpt", "({0})&&({1})".format(cutString, wgtString), "goff")
     tree.Draw("Bphi>>h_Bphi", "({0})&&({1})".format(cutString, wgtString), "goff")
     tree.Draw("Bvtxcl>>h_Bvtxcl", "({0})&&({1})".format(cutString, wgtString), "goff")
@@ -130,5 +135,13 @@ def plot_histo():
         canvas.Print("val_dataMC_jpsi_{0}.pdf".format(pConfig[p]['label']))
 
 if __name__ == '__main__':
-    #  create_histo()
+    if not os.path.exists("plotDataMCValidation_data.root"):
+        create_histo({
+            'ofname': "plotDataMCValidation_data.root"
+        })
+    if not os.path.exists("plotDataMCValidation_jpsi.root"):
+        create_histo({
+            'ofname': "plotDataMCValidation_jpsi.root",
+            'iTreeFiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/JPSI/*.root"]
+        })
     plot_histo()
