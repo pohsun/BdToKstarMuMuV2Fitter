@@ -75,6 +75,16 @@ bMassRegions['USB'] = createBmassTemplate("USB", 5.38, 5.80)
 bMassRegions['SB'] = createBmassTemplate("SB", 4.76, 5.80)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
+bMassRegions['innerLSB'] = createBmassTemplate("innerLSB", 4.97, 5.18)
+bMassRegions['innerUSB'] = createBmassTemplate("innerUSB", 5.38, 5.59)
+bMassRegions['innerSB'] = createBmassTemplate("innerSB", 4.97, 5.59)
+bMassRegions['innerSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['innerSB']['cutString'], bMassRegions['SR']['cutString'])
+
+bMassRegions['outerLSB'] = createBmassTemplate("outerLSB", 4.76, 4.97)
+bMassRegions['outerUSB'] = createBmassTemplate("outerUSB", 5.59, 5.80)
+bMassRegions['outerSB'] = createBmassTemplate("outerSB", 4.76, 5.80)
+bMassRegions['outerSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['outerSB']['cutString'], "Bmass > 4.97 && Bmass < 5.59")
+
 # systematics
 bMassRegions['altFit'] = createBmassTemplate("altFit", 4.68, 5.88)
 bMassRegions['altSR'] = createBmassTemplate("altSR", 5.18, 5.38)

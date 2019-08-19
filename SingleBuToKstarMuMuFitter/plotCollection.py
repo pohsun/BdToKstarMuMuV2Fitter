@@ -298,7 +298,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     afbDB = unboundAfbToAfb(args.find('unboundAfb').getVal(), flDB)
     sigFrac = {}
     bkgCombFrac = {}
-    for regionName in ["Fit", "SR", "LSB", "USB"]:
+    for regionName in ["Fit", "SR", "LSB", "USB", "SB", "innerSB", "outerSB"]:
         dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_dataStyle, "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
@@ -317,7 +317,18 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             obs,
             ROOT.RooFit.NormSet(obs),
             ROOT.RooFit.Range(regionName)).getVal()
+
+        if regionName in ["SB", "innerSB"]:
+            sigFrac[regionName] -= sigFrac['SR']
+            bkgCombFrac[regionName] -= bkgCombFrac['SR']
+        elif regionName == "outerSB":
+            sigFrac[regionName] -= sigFrac['SR']
+            sigFrac[regionName] -= sigFrac['innerSB']
+            bkgCombFrac[regionName] -= bkgCombFrac['SR']
+            bkgCombFrac[regionName] -= bkgCombFrac['innerSB']
+
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
+        #  print(regionName, sigFrac[regionName], bkgCombFrac[regionName], nTotal_local)
 
         # Correct the shape of f_final
         args.find("nSig").setVal(nSigDB * sigFrac[regionName])

@@ -84,7 +84,7 @@ dataReaderCfg.update({
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['^Fit$', '^SR$', '^.{0,1}SB$', 'noResVeto'], extraCuts=cut_kshortWindow)
+customizeData = functools.partial(customizeOne, targetBMassRegion=['.*', 'noResVeto'], extraCuts=cut_kshortWindow)
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
@@ -162,7 +162,7 @@ def buildAccXRecEffiHist(self):
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
     for binKey in q2bins.keys():
-        if binKey in ['jpsi', 'psi2s', 'peaks']:
+        if binKey not in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
             continue
         h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
         if h2_accXrec == None or forceRebuild:
