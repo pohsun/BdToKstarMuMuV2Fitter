@@ -166,6 +166,7 @@ def table_dataresAFBFL():
     print("")
 
 def table_FinalDataresAFBFL():
+    print("[table_FinalDataAFBFL] Printing duplication of dataresAFBFL")
     table_dataresAFBFL()
 
 if __name__ == '__main__':
@@ -174,3 +175,4 @@ if __name__ == '__main__':
     #  table_coverageAFBFL()
     #  table_dataresAFBFL()
     #  table_FinalDataresAFBFL()
+    pass

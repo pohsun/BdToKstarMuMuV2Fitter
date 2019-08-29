@@ -93,6 +93,8 @@ class EfficiencyFitter(FitterCore):
 
         fitter = ROOT.EfficiencyFitter()
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
+        h_effi_2D_pull = ROOT.TH1F("h_effi_2D_pull", "", 30, -3, 3)
+        fitter.SetPull(h_effi_2D_pull)
         for xIdx in range(nPar):
             minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
         minuit.Command("MINI")
@@ -118,10 +120,7 @@ class EfficiencyFitter(FitterCore):
         setStyle()
         canvas = ROOT.TCanvas()
         latex = ROOT.TLatex()
-        h2_effi_2D_comp = h2_accXrec.Clone("h2_effi_2D_comp")
-        h2_effi_2D_comp.Reset("ICESM")
-        for lBin, KBin in itertools.product(list(range(1, h2_effi_2D_comp.GetNbinsX() + 1)), list(range(1, h2_effi_2D_comp.GetNbinsY() + 1))):
-            h2_effi_2D_comp.SetBinContent(lBin, KBin, f2_effi_sigA.Eval(h2_accXrec.GetXaxis().GetBinCenter(lBin), h2_accXrec.GetYaxis().GetBinCenter(KBin)) / h2_accXrec.GetBinContent(lBin, KBin))
+        h2_effi_2D_comp = fitter.GetRatio()
         h2_effi_2D_comp.SetMinimum(0)
         h2_effi_2D_comp.SetMaximum(1.5)
         h2_effi_2D_comp.SetTitleOffset(1.6, "X")
@@ -130,8 +129,17 @@ class EfficiencyFitter(FitterCore):
         h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
         h2_effi_2D_comp.Draw("LEGO2")
         latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-        latex.DrawLatexNDC(.08, .89, "#chi^{{2}}={0:.2f}".format(fitter.GetChi2()))
+        latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+
+        # Plot pull between fitting result to data
+        h_effi_2D_pull.SetXTitle("Pull")
+        h_effi_2D_pull.SetYTitle("# of bins")
+        h_effi_2D_pull.Draw()
+        latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+        latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+        canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+
 
     @staticmethod
     def isPosiDef(formula2D):

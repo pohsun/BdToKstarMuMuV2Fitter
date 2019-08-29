@@ -35,7 +35,7 @@ if __name__ == '__main__':
     #  p.setSequence(predefined_sequence['fitBkgCombA'])
     #  p.setSequence(predefined_sequence['fitFinal3D'])
     p.setSequence(predefined_sequence['stdFit'])
-    
+
     #  p.setSequence(predefined_sequence['fitSig2D'])
     #  p.setSequence(predefined_sequence['fitSigMCGEN'])
     try:

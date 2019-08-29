@@ -25,27 +25,40 @@ def create_histo():
     #  tree.AddFriend(treeFriend)
 
     fout = ROOT.TFile("h2_MumumassVsBmass.root", "RECREATE")
-    h2_MumumassVsBmass_presel = ROOT.TH2F("h2_MumumassVsBmass_presel", "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1])
-    h2_MumumassVsBmass_resRej = ROOT.TH2F("h2_MumumassVsBmass_resRej", "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1])
-    h2_MumumassVsBmass_antiRad = ROOT.TH2F("h2_MumumassVsBmass_antiRad", "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1])
-    h2_MumumassVsBmass_resVeto = ROOT.TH2F("h2_MumumassVsBmass_resVeto", "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1])
+    h2_MumumassVsBmass_presel  = [] 
+    h2_MumumassVsBmass_resRej  = []
+    h2_MumumassVsBmass_antiRad = []
+    h2_MumumassVsBmass_resVeto = []
 
-    tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_presel", "({0})*({1})".format(anaSetup.cut_passTrigger,
-                                                                                  anaSetup.cut_kshortWindow,
-                                                                                  anaSetup.cut_kstarMassWindow))
-    tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_resRej", "({0})*({1})*({2})".format(anaSetup.cut_passTrigger,
-                                                                                        anaSetup.cut_kshortWindow,
-                                                                                        anaSetup.cut_kstarMassWindow,
-                                                                                        anaSetup.cut_resonanceRej))
-    tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_antiRad", "({0})*({1})*({2})".format(anaSetup.cut_passTrigger,
-                                                                                         anaSetup.cut_kshortWindow,
-                                                                                         anaSetup.cut_kstarMassWindow,
-                                                                                         anaSetup.cut_antiRadiation))
-    tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_resVeto", "({0})*({1})*({2})*({3})".format(anaSetup.cut_passTrigger,
-                                                                                               anaSetup.cut_kshortWindow,
-                                                                                               anaSetup.cut_kstarMassWindow,
-                                                                                               anaSetup.cut_resonanceRej,
-                                                                                               anaSetup.cut_antiRadiation))
+
+    for q2r in ['full', 'summary', 'peaks']:
+        q2rCut = anaSetup.q2bins[q2r]['cutString']
+
+        h2_MumumassVsBmass_presel.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_presel".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
+        h2_MumumassVsBmass_resRej.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_resRej".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
+        h2_MumumassVsBmass_antiRad.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_antiRad".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
+        h2_MumumassVsBmass_resVeto.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_resVeto".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
+
+        tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_presel".format(q2r), "({0})*({1})*({2})".format(q2rCut,
+                                                                                      anaSetup.cut_passTrigger,
+                                                                                      #  anaSetup.cut_kshortWindow,
+                                                                                      anaSetup.cut_kstarMassWindow))
+        tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_resRej".format(q2r), "({0})*({1})*({2})*({3})".format(q2rCut,
+                                                                                            anaSetup.cut_passTrigger,
+                                                                                            #  anaSetup.cut_kshortWindow,
+                                                                                            anaSetup.cut_kstarMassWindow,
+                                                                                            anaSetup.cut_resonanceRej))
+        tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_antiRad".format(q2r), "({0})*({1})*({2})*({3})".format(q2rCut,
+                                                                                             anaSetup.cut_passTrigger,
+                                                                                             #  anaSetup.cut_kshortWindow,
+                                                                                             anaSetup.cut_kstarMassWindow,
+                                                                                             anaSetup.cut_antiRadiation))
+        tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_resVeto".format(q2r), "({0})*({1})*({2})*({3})*({4})".format(q2rCut,
+                                                                                                   anaSetup.cut_passTrigger,
+                                                                                                   #  anaSetup.cut_kshortWindow,
+                                                                                                   anaSetup.cut_kstarMassWindow,
+                                                                                                   anaSetup.cut_resonanceRej,
+                                                                                                   anaSetup.cut_antiRadiation))
     fout.Write()
     fout.Close()
 
@@ -56,21 +69,23 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
 
     fin = ROOT.TFile(fname)
 
-    def _plot(hname):
+    def _plot(hname, q2r):
         h = fin.Get(hname)
         h.SetMarkerSize(0.2)
         h.SetXTitle(varCollection.Mumumass.getTitle().Data())
         h.SetYTitle(varCollection.Bmass.getTitle().Data())
         h.Draw()
 
+        transparencyPeak = 0. if q2r in ['full', 'peaks'] else 0.  # Binning is irrelavent
+        transparencySR = 0.3
         highlight_jpsi = ROOT.TBox(math.sqrt(jpsi_range[0]), b_range[0], math.sqrt(jpsi_range[1]), b_range[1])
-        highlight_jpsi.SetFillColorAlpha(ROOT.kRed, 0.3)
+        highlight_jpsi.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
         highlight_jpsi.Draw()
         highlight_psi2s = ROOT.TBox(math.sqrt(psi2s_range[0]), b_range[0], math.sqrt(psi2s_range[1]), b_range[1])
-        highlight_psi2s.SetFillColorAlpha(ROOT.kRed, 0.3)
+        highlight_psi2s.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
         highlight_psi2s.Draw()
         highlight_SR = ROOT.TBox(1, anaSetup.bMassRegions['SR']['range'][0], 5, anaSetup.bMassRegions['SR']['range'][1])
-        highlight_SR.SetFillColorAlpha(ROOT.kRed, 0.3)
+        highlight_SR.SetFillColorAlpha(ROOT.kRed, transparencySR)
         highlight_SR.Draw()
 
         nEvtInSR = 0
@@ -88,8 +103,8 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
 
 
         latex = ROOT.TLatex()
-        latex.DrawLatexNDC(.20, .80, "Yields_{{Non-peaking}}={0:.0f}".format(nEvtInSR))
-        latex.DrawLatexNDC(.20, .74, "Yields_{{peaking}}={0:.1e}".format(nEvtInPeaks))
+        #  latex.DrawLatexNDC(.20, .80, "Yields_{{Non-peaking}}={0:.0f}".format(nEvtInSR))
+        #  latex.DrawLatexNDC(.20, .74, "Yields_{{peaking}}={0:.1e}".format(nEvtInPeaks))
 
         plotCollection.Plotter.latexCMSMark()
         plotCollection.Plotter.latexCMSExtra()
@@ -97,17 +112,28 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         canvas.Update()
         canvas.Print("{0}.pdf".format(hname))
 
-        h_projX = h.ProjectionX(hname.replace("h2", "h").replace("MumumassVsBmass", "Mumumass"), 22, 32)  # [5.18, 5.38] out of [4.76, 5.80] 
+        h_projX = h.ProjectionX(hname.replace("h2", "h").replace("MumumassVsBmass", "Mumumass"), 22, 32)  # [5.18, 5.38] out of [4.76, 5.80]
+        h_projX.SetYTitle("Number of events")
         if h_projX.GetSumOfWeights() > 10000:
             h_projX.Rebin(5)
+
+        h_projX.GetXaxis().SetRangeUser(2.5, 3.5)
         h_projX.Draw("E")
         plotCollection.Plotter.latexCMSMark()
         plotCollection.Plotter.latexCMSExtra()
         plotCollection.Plotter.latexLumi()
         canvas.Update()
-        canvas.Print("{0}.pdf".format(h_projX.GetName()))
+        canvas.Print("{0}_jpsi.pdf".format(h_projX.GetName()))
+        h_projX.GetXaxis().SetRangeUser(3.3, 4.1)
+        h_projX.Draw("E")
+        plotCollection.Plotter.latexCMSMark()
+        plotCollection.Plotter.latexCMSExtra()
+        plotCollection.Plotter.latexLumi()
+        canvas.Update()
+        canvas.Print("{0}_psi2s.pdf".format(h_projX.GetName()))
 
         h_projY = h.ProjectionY(hname.replace("h2", "h").replace("MumumassVsBmass", "Bmass"))
+        h_projY.SetYTitle("Number of events")
         h_projY.Draw("E")
         plotCollection.Plotter.latexCMSMark()
         plotCollection.Plotter.latexCMSExtra()
@@ -115,8 +141,9 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         canvas.Update()
         canvas.Print("{0}.pdf".format(h_projY.GetName()))
 
-    for hname in ["h2_MumumassVsBmass_presel", "h2_MumumassVsBmass_resRej", "h2_MumumassVsBmass_antiRad", "h2_MumumassVsBmass_resVeto"]:
-        _plot(hname)
+    for hname in ["h2_MumumassVsBmass_{0}_presel", "h2_MumumassVsBmass_{0}_resRej", "h2_MumumassVsBmass_{0}_antiRad", "h2_MumumassVsBmass_{0}_resVeto"]:
+        for q2r in ['full', 'peaks', 'summary']:
+            _plot(hname.format(q2r), q2r)
 
 if __name__ == '__main__':
     if not os.path.exists("h2_MumumassVsBmass.root"):

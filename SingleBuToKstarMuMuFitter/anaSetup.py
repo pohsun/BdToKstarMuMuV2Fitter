@@ -34,6 +34,7 @@ q2bins['jpsi'] = createBinTemplate("bin2", 8.68, 10.09)
 q2bins['psi2s'] = createBinTemplate("bin4", 12.86, 14.18)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
 q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
+q2bins['full'] = createBinTemplate("full", 1., 19.)
 
     # SM prediction
 q2bins['belowJpsi']['sm'] = {
@@ -74,6 +75,16 @@ bMassRegions['USB'] = createBmassTemplate("USB", 5.38, 5.80)
 bMassRegions['SB'] = createBmassTemplate("SB", 4.76, 5.80)
 bMassRegions['SB']['cutString'] = "({0}) && !({1})".format(bMassRegions['SB']['cutString'], bMassRegions['SR']['cutString'])
 
+bMassRegions['innerLSB'] = createBmassTemplate("innerLSB", 4.97, 5.18)
+bMassRegions['innerUSB'] = createBmassTemplate("innerUSB", 5.38, 5.59)
+bMassRegions['innerSB'] = createBmassTemplate("innerSB", 4.97, 5.59)
+bMassRegions['innerSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['innerSB']['cutString'], bMassRegions['SR']['cutString'])
+
+bMassRegions['outerLSB'] = createBmassTemplate("outerLSB", 4.76, 4.97)
+bMassRegions['outerUSB'] = createBmassTemplate("outerUSB", 5.59, 5.80)
+bMassRegions['outerSB'] = createBmassTemplate("outerSB", 4.76, 5.80)
+bMassRegions['outerSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['outerSB']['cutString'], "Bmass > 4.97 && Bmass < 5.59")
+
 # systematics
 bMassRegions['altFit'] = createBmassTemplate("altFit", 4.68, 5.88)
 bMassRegions['altSR'] = createBmassTemplate("altSR", 5.18, 5.38)
@@ -94,7 +105,7 @@ cut_passTrigger = "Triggers >= 1"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.182)>0.09 && abs(Bmass-Mumumass-1.593)>0.03"
-cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
+cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"  # In FriendTree only
 cuts = [
     cut_passTrigger,
     cut_kstarMassWindow,
@@ -102,7 +113,7 @@ cuts = [
     cut_antiRadiation,
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
-cuts_noResVeto = "({0})&&({1})".format(cut_passTrigger, cut_kstarMassWindow)
+cuts_noResVeto = "({0}) && ({1}) && !({2}) && !({3})".format(cut_passTrigger, cut_kstarMassWindow, cut_resonanceRej, cut_antiRadiation)
 
 # SM prediction
 
