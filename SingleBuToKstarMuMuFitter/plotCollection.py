@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=3 ft=python et:
+# vim: set sw=4 sts=4 fdm=indent fdl=0 fdn=1 ft=python et:
 
 import os
 import re
