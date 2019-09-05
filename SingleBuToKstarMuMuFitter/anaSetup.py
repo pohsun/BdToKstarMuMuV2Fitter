@@ -113,7 +113,8 @@ cuts = [
     cut_antiRadiation,
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
-cuts_noResVeto = "({0}) && ({1}) && !({2}) && !({3})".format(cut_passTrigger, cut_kstarMassWindow, cut_resonanceRej, cut_antiRadiation)
+cuts_noResVeto = "({0}) && ({1})".format(cut_passTrigger, cut_kstarMassWindow)
+cuts_antiResVeto = "({0}) && ({1}) && !({2}) && !({3})".format(cut_passTrigger, cut_kstarMassWindow, cut_resonanceRej, cut_antiRadiation)
 
 # SM prediction
 
