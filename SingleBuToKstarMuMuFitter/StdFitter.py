@@ -38,8 +38,12 @@ class StdFitter(FitterCore):
         self.fitter = ROOT.StdFitter()
         for opt in self.cfg.get("createNLLOpt", []):
             self.fitter.addNLLOpt(opt)
-        self.fitter.Init(self.pdf, self.data)
-        self._nll = self.fitter.GetNLL()
+        if hasattr(self.data, "InheritsFrom") and hasattr(self.pdf, "InheritsFrom"):
+            self.fitter.Init(self.pdf, self.data)
+            self._nll = self.fitter.GetNLL()
+        else:
+            self.logger.logERROR("Either {data} or {pdf} is not valid.".format(data=self.cfg['data'], pdf=self.cfg['pdf']))
+            raise RuntimeError("{name}: Either {data} or {pdf} is not valid.".format(name=self.name, data=self.cfg['data'], pdf=self.cfg['pdf']))
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
