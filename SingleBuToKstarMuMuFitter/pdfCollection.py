@@ -113,6 +113,21 @@ setupBuildEffiSigA = {
     ]
 }
 
+def buildEffiSigAAlt(self):
+    """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
+    wspace = self.getWspace()
+
+    effi_sigAAlt = wspace.pdf("effi_sigAAlt")
+    if effi_sigAAlt == None:
+        hist = self.process.sourcemanager.get('effiHistReader.accXrec')
+        if hist == None:
+            self.logger.logINFO("Measured efficiency not found. Skip building alternative efficiency map.")
+        else:
+            effi_sigAAlt = ROOT.RooHistFunc("effi_sigAAlt", "", ROOT.RooArgSet(CosThetaL, CosThetaK), hist)
+            getattr(wspace, 'import')(effi_sigAAlt)
+
+    self.cfg['source']['effi_sigAAlt'] = effi_sigAAlt
+
 setupBuildSigM = {
     'objName': "f_sigM",
     'varNames': ["Bmass"],
@@ -151,8 +166,10 @@ def buildSig(self):
 
     f_sig2D = wspace.obj("f_sig2D")
     f_sig3D = wspace.obj("f_sig3D")
+    f_sig2DAltEffi = wspace.obj("f_sig2DAltEffi")
+    f_sig3DAltEffi = wspace.obj("f_sig3DAltEffi")
     if f_sig3D == None:
-        for k in ['effi_sigA', 'f_sigA', 'f_sigM']:
+        for k in ['effi_sigA', 'effi_sigAAlt', 'f_sigA', 'f_sigM']:
             locals()[k] = self.cfg['source'][k] if k in self.cfg['source'] else self.process.sourcemanager.get(k)
         f_sig2D = RooEffProd("f_sig2D", "", locals()['f_sigA'], locals()['effi_sigA'])
         getattr(wspace, 'import')(f_sig2D, ROOT.RooFit.RecycleConflictNodes())
@@ -161,8 +178,16 @@ def buildSig(self):
         wspace.factory("PROD::f_sig3D(f_sigM, f_sig2D)")
         f_sig3D = wspace.pdf("f_sig3D")
 
+        if locals()['effi_sigAAlt'] != None:
+            f_sig2DAltEffi = RooEffProd("f_sig2DAltEffi", "", locals()['f_sigA'], locals()['effi_sigAAlt'])
+            getattr(wspace, 'import')(f_sig2DAltEffi, ROOT.RooFit.RecycleConflictNodes())
+            wspace.factory("PROD::f_sig3DAltEffi(f_sigM, f_sig2DAltEffi)")
+            f_sig3DAltEffi = wspace.pdf("f_sig3DAltEffi")
+
     self.cfg['source']['f_sig2D'] = f_sig2D
     self.cfg['source']['f_sig3D'] = f_sig3D
+    self.cfg['source']['f_sig2DAltEffi'] = f_sig2DAltEffi
+    self.cfg['source']['f_sig3DAltEffi'] = f_sig3DAltEffi
 
 setupBuildBkgCombM = {
     'objName': "f_bkgCombM",
@@ -313,6 +338,7 @@ def buildFinal(self):
     variations = [("f_final", "f_sig3D", "f_bkgComb"),
                   ("f_finalAltBkgCombA", "f_sig3D", "f_bkgCombAltA"),
                   ("f_finalAltBkgCombM", "f_sig3D", "f_bkgCombAltM"),
+                  ("f_finalAltEffi", "f_sig3DAltEffi", "f_bkgComb"),
                   ("f_finalM", "f_sigM", "f_bkgCombM"),
                   ("f_finalMAltBkgCombM", "f_sigM", "f_bkgCombMAltM")]
     wspace.factory("nSig[10,1e-2,1e5]")
@@ -320,12 +346,17 @@ def buildFinal(self):
     for p, pSig, pBkg in variations:
         f_final = wspace.obj(p)
         if f_final == None:
+            # Check if materials are at hand.
             for k in [pSig, pBkg]:
                 locals()[k] = self.cfg['source'][k] if k in self.cfg['source'] else self.process.sourcemanager.get(k)
-                if wspace.obj(k) == None:
+                if locals()[k] != None and wspace.obj(k) == None:
                     getattr(wspace, 'import')(locals()[k])
-            wspace.factory("SUM::{0}(nSig*{1},nBkgComb*{2})".format(p, pSig, pBkg))
-            f_final = wspace.obj(p)
+            if wspace.obj(pSig) != None and wspace.obj(pBkg) != None:
+                wspace.factory("SUM::{0}(nSig*{1},nBkgComb*{2})".format(p, pSig, pBkg))
+                f_final = wspace.obj(p)
+            else:
+                self.logger.logWARNING("Skip building {0}. Materials are not at hand.".format(p))
+
         self.cfg['source'][p] = f_final
 
 sharedWspaceTagString = "{binLabel}"
@@ -354,9 +385,10 @@ def customizePDFBuilder(self):
         'wspaceTag': sharedWspaceTagString.format(binLabel=q2bins[self.process.cfg['binKey']]['label']),
         'obj': OrderedDict([
             ('effi_sigA', [buildEffiSigA]),
+            ('effi_sigAAlt', [buildEffiSigAAlt]),
             ('f_sigA', [buildSigA]),
             ('f_sigM', [buildSigM]),
-            ('f_sig3D', [buildSig]),  # Include f_sig2D
+            ('f_sig3D', [buildSig]),  # Include f_sig2D and AltEffi variations
             ('f_bkgCombA', [buildAnalyticBkgCombA]),
             ('f_bkgCombAAltA', [buildSmoothBkgCombA]),
             ('f_bkgCombM', [buildBkgCombM]),
@@ -368,16 +400,11 @@ def customizePDFBuilder(self):
 stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
 
 if __name__ == '__main__':
-    #  binKey = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
-    binKey = ['abovePsi2s']
-    for b in binKey:
-        p.cfg['binKey'] = b
-        p.setSequence([dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
+    p.cfg['binKey'] = "summary"
+    p.setSequence([dataCollection.effiHistReader, dataCollection.dataReader, stdWspaceReader, stdPDFBuilder])
+
+    try:
         p.beginSeq()
         p.runSeq()
+    finally:
         p.endSeq()
-
-        #  p.reset()
-        dataCollection.dataReader.reset()
-        stdWspaceReader.reset()
-        stdPDFBuilder.reset()

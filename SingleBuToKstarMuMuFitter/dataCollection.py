@@ -169,13 +169,15 @@ accXEffThetaLBins = array('d', [-1, -0.7, -0.3, 0., 0.3, 0.7, 1.])
 accXEffThetaKBins = array('d', [-1, -0.7, 0., 0.4, 0.8, 1.])
 def buildAccXRecEffiHist(self):
     """Build efficiency histogram for later fitting/plotting"""
+    targetBins = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
+    if self.process.cfg['binKey'] not in targetBins:
+        return
+
     fin = self.process.filemanager.open("buildAccXRecEffiHist", modulePath + "/data/accXrecEffHists_Run2012.root", "UPDATE")
 
     # Build acceptance, reco efficiency, and accXrec
     forceRebuild = False
-    for binKey in q2bins.keys():
-        if binKey not in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
-            continue
+    for binKey in targetBins:
         h2_accXrec = fin.Get("h2_accXrec_{0}".format(binKey))
         if h2_accXrec == None or forceRebuild:
             h2_acc = fin.Get("h2_acc_{0}".format(binKey))
