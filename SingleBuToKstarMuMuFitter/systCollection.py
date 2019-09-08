@@ -208,6 +208,30 @@ def func_altEffi(args):
     finally:
         p.endSeq()
 
+# # Use histogram instead of smooth map.
+def func_altEffi2(args):
+    setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalAltEffiFitter.update({
+        'pdf': 'f_finalAltEffi',
+        'argAliasInDB': {'afb': 'afb_altEffi2', 'fl': 'fl_altEffi2', 'fs': 'fs_altEffi2', 'as': 'as_altEffi2'},
+        'saveToDB': False,
+    })
+    finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        finalAltEffiFitter,
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        updateToDB_altShape(args, "altEffi2")
+    finally:
+        p.endSeq()
+
 # Simulation mismodeling
 # # Quote the difference between fitting results of unfiltered GEN and that of high stat RECO.
 
@@ -480,13 +504,13 @@ if __name__ == '__main__':
         help="q2 bin",
     )
     parser.add_argument(
-        '--updatePlot',
+        '--noUpdatePlot',
         dest='updatePlot',
         action='store_false',
         help="Want to update plots? (Default: True)",
     )
     parser.add_argument(
-        '--updateDB',
+        '--noUpdateDB',
         dest='updateDB',
         action='store_false',
         help="Want to update to db file? (Default: True)",
@@ -500,6 +524,9 @@ if __name__ == '__main__':
 
     subparser_altEffi = subparsers.add_parser('altEffi')
     subparser_altEffi.set_defaults(func=func_altEffi)
+    
+    subparser_altEffi2 = subparsers.add_parser('altEffi2')
+    subparser_altEffi2.set_defaults(func=func_altEffi2)
 
     subparser_simMismodel = subparsers.add_parser('simMismodel')
     subparser_simMismodel.set_defaults(func=func_simMismodel)

@@ -13,7 +13,7 @@ from SingleBuToKstarMuMuFitter.StdProcess import p
 # Standard fitting procedures
 predefined_sequence = {}
 predefined_sequence['loadData'] = [dataCollection.dataReader]
-predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
+predefined_sequence['buildAllPdfs'] = [dataCollection.dataReader, dataCollection.effiHistReader, pdfCollection.stdWspaceReader, pdfCollection.stdPDFBuilder]
 predefined_sequence['buildEfficiecyHist'] = [dataCollection.effiHistReader]
 
 predefined_sequence['fitEfficiency'] = [dataCollection.effiHistReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter]
