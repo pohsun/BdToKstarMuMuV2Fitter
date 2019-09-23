@@ -19,7 +19,7 @@ from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
 
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass
+from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass, genCosThetaK, genCosThetaL
 
 from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
@@ -179,27 +179,35 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
         dataPlots[pIdx] = self.initDataPlotCfg(plt)
     wspace = ROOT.RooWorkspace("wspace")
     getattr(wspace, 'import')(Bmass)
-    wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.05])")
-    wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.05,0.40])")
+    Bmass.setRange("Fit", 4.76, 5.80)
+    #  Bmass.setRange("Fit", 5.08, 5.48)
+    wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.04])")
+    wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.04,0.40])")
     wspace.factory("SUM::sigM(sigFrac[0.8,0,1]*gauss1,gauss2)")
     wspace.factory("c1[-5.6,-20,20]")
-    #  wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
+    wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
     #  wspace.factory("c2[0,-20,20]")
     #  wspace.factory("c3[0,-20,20]")
     #  wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)+c2+c3*Bmass',{Bmass,c1,c2,c3})")
-    wspace.factory("SUM::model(tmp_nSig[1,1e5]*sigM,tmp_nBkg[20,1e5]*bkgCombM)")
+    wspace.factory("SUM::model(tmp_nSig[0,1e5]*sigM,tmp_nBkg[0,1e5]*bkgCombM)")
     pdfPlots = [
         [wspace.pdf('model'), plotterCfg_allStyle, None, "Total fit"],
         [wspace.pdf('model'), (ROOT.RooFit.Components('sigM'),) + plotterCfg_sigStyle, None, "Signal"],
         [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
     ]
 
-    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
+    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Range("Fit"), ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
+
+    def avgWidth(fr, w1, w2):
+        return math.sqrt(fr * w1**2 + (1. - fr) * w2**2)
+    self.logger.logINFO("Averaged peak width is {0}".format(avgWidth(wspace.var('sigFrac').getVal(), wspace.var('sigma1').getVal(), wspace.var('sigma2').getVal())))
+
     if dataPlots[0][0].sumEntries() > 2e3:
         Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     else:
         Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
+
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
 
 def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK', shareDataNorm=False):
@@ -222,10 +230,10 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK', share
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
 
-def plotEfficiency(self, data_name, pdf_name):
+def plotEfficiency(self, dataName, pdfName):
     pltName = "effi"
-    data = self.process.sourcemanager.get(data_name)
-    pdf = self.process.sourcemanager.get(pdf_name)
+    data = self.process.sourcemanager.get(dataName)
+    pdf = self.process.sourcemanager.get(pdfName)
     if data == None or pdf == None:
         self.logger.logWARNING("Skip plotEfficiency. pdf or data not found")
         return
@@ -604,6 +612,38 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
+def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt="BOX", marks=None):
+    # Ref: https://root.cern.ch/root/html/tutorials/roofit/rf309_ndimplot.C.html
+    data = self.process.sourcemanager.get(dataName)
+    if data == None:
+        self.logger.logWARNING("Skip plotOnXYZ. dataset {0} not found".format(dataName))
+        return
+    # Explicit claim of inherited method:
+    #   https://root-forum.cern.ch/t/roodatasets-weighs-createhistogram-and-roondkeyspdf/16240/5
+    hist = super(data.__class__, data).createHistogram(pltName, *createHistogramArgs)
+
+    hist.SetFillColor(2)
+    hist.Draw(drawOpt)
+
+    Plotter.latexDataMarks(marks)
+    self.canvasPrint(pltName)
+
+    hist.Draw("COL TEXT")
+    Plotter.latexDataMarks(marks)
+    self.canvasPrint(pltName + "_COL")
+
+    hist.SetTitleOffset(1.4, "X")
+    hist.SetTitleOffset(1.8, "Y")
+    hist.SetTitleOffset(1.5, "Z")
+    hist.Draw("LEGO2")
+    Plotter.latexCMSSim(.08, .93)
+    Plotter.latexCMSExtra(.08, .89)
+    Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
+    self.canvasPrint(pltName + "_LEGO")
+
+types.MethodType(plotOnXYZ, None, Plotter)
+
+
 plotterCfg = {
     'name': "plotter",
     'switchPlots': [],
@@ -621,13 +661,40 @@ plotterCfg['plots'] = {
             'pltName': "h_Bmass",
             'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ],
             #  'dataPlots': [["dataReader.Fit_noResVeto", plotterCfg_dataStyle, None], ],
+            #  'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ],
+            #  'dataPlots': [["bkgJpsiMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "J/#psi K^{*+}"], ],
+            #  'dataPlots': [["bkgPsi2sMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "#psi(2S) K^{*+}"], ],
             'marks': []}
     },
     'effi': {
         'func': [plotEfficiency],
         'kwargs': {
-            'data_name': "effiHistReader.accXrec",
-            'pdf_name': "effi_sigA"}
+            'dataName': "effiHistReader.accXrec",
+            'pdfName': "effi_sigA"}
+    },
+    'plotOnXY_Bmass_CosThetaK': {
+        'func': [plotOnXYZ],
+        'kwargs': {
+            'pltName': "plotOnXY_Bmass_CosThetaK",
+            'dataName': "sigMCReader.Fit",
+            'createHistogramArgs': (Bmass,
+                                    ROOT.RooFit.Binning(20, 5.18, 5.38),
+                                    ROOT.RooFit.YVar(CosThetaK,
+                                                     ROOT.RooFit.Binning(20, -1., 1.))
+                                    ),
+            'drawOpt': "VIOLIN"}
+    },
+    'plotOnXY_Bmass_CosThetaL': {
+        'func': [plotOnXYZ],
+        'kwargs': {
+            'pltName': "plotOnXY_Bmass_CosThetaL",
+            'dataName': "sigMCReader.Fit",
+            'createHistogramArgs': (Bmass,
+                                    ROOT.RooFit.Binning(20, 5.18, 5.38),
+                                    ROOT.RooFit.YVar(CosThetaL,
+                                                     ROOT.RooFit.Binning(20, -1., 1.))
+                                    ),
+            'drawOpt': "VIOLIN"}
     },
     'angular3D_sigM': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
@@ -730,11 +797,14 @@ plotterCfg['plots'] = {
 #  plotterCfg['switchPlots'].append('angular3D_summary')
 #  plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
+#  plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
+#  plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    p.cfg['binKey'] = "summary"
-    #  plotter.cfg['switchPlots'].append('simpleSpectrum')
+    p.cfg['binKey'] = "jpsi"
+    plotter.cfg['switchPlots'].append('simpleSpectrum')
     #  plotter.cfg['switchPlots'].append('dataMCComp')
     #  plotter.cfg['switchPlots'].append('effi')
     #  plotter.cfg['switchPlots'].append('angular3D_sigM')
@@ -743,9 +813,11 @@ if __name__ == '__main__':
     #  plotter.cfg['switchPlots'].append('angular3D_final')
     #  plotter.cfg['switchPlots'].append('angular3D_summary')
     #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+    #  plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
+    #  plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
 
-    #  p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader,  dataCollection.bkgPsi2sMCReader, plotter])
-    p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+    p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, plotter])
+    #  p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
     p.endSeq()
