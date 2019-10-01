@@ -1,0 +1,12 @@
+getenv      = True
+output      = DATASET.$(ProcId).out
+error       = DATASET.$(ProcId).err
+log         = DATASET.log
++JobFlavour = "workday"
+
+initialdir  = /afs/cern.ch/work/p/pchen/BToKstarMuMu/EvtGen
+executable  = evtgen130_btokstarmumu
+arguments   = kstarjpsi 30000000
+transfer_input_files = DECAY_2010.DEC, evt.pdl, Bu_JpsiKstar_mumuKpi_cc.dec
+
+queue 1
