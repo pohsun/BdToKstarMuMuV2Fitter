@@ -21,7 +21,7 @@ from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, 
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass, genCosThetaK, genCosThetaL
 
-from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle
+from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle, isPreliminary
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
@@ -43,7 +43,7 @@ class Plotter(Path):
     latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
     latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
     latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
-    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if True else None)
+    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if isPreliminary else "")
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
     @staticmethod
     def latexQ2(binKey, x=0.45, y=0.89):
@@ -246,7 +246,7 @@ def plotEfficiency(self, dataName, pdfName):
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
     data_accXrec.Scale(100)
     data_accXrec.SetMinimum(0)
-    data_accXrec.SetMaximum(100 * 0.00015)  # Z axis in percentage
+    data_accXrec.SetMaximum(0.1 if self.process.cfg['binKey'] in ['jpsi', 'psi2s'] else 0.015)  # Z axis in percentage
     data_accXrec.SetTitleOffset(1.6, "X")
     data_accXrec.SetTitleOffset(1.8, "Y")
     data_accXrec.SetTitleOffset(1.8, "Z")
