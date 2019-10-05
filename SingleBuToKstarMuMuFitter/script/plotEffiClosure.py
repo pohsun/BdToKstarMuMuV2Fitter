@@ -89,9 +89,6 @@ def plot_histo():
         h_data = fin_data.Get(pName)
         h_data.SetXTitle(pCfg['xTitle'])
         h_data.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
-        h_data.SetMaximum(1.8 * h_data.GetMaximum())
-        h_data.SetMinimum(0)
-        h_data.Draw("E")
 
         h_expc = fin_expc.Get(pName)
         h_expc.SetXTitle(pCfg['xTitle'])
@@ -100,7 +97,11 @@ def plot_histo():
         h_expc.SetLineColor(2)
         h_expc.SetFillColor(2)
         h_expc.SetFillStyle(3001)
-        h_expc.Draw("HIST SAME")
+
+        h_expc.SetMaximum(1.8 * h_data.GetMaximum())
+        h_expc.SetMinimum(0)
+        h_expc.Draw("HIST")
+        h_data.Draw("E SAME")
 
         legend.Clear()
         legend.AddEntry(h_data, "Data", "lep")
