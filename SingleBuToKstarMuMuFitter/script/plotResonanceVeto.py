@@ -106,9 +106,7 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         #  latex.DrawLatexNDC(.20, .80, "Yields_{{Non-peaking}}={0:.0f}".format(nEvtInSR))
         #  latex.DrawLatexNDC(.20, .74, "Yields_{{peaking}}={0:.1e}".format(nEvtInPeaks))
 
-        plotCollection.Plotter.latexCMSMark()
-        plotCollection.Plotter.latexCMSExtra()
-        plotCollection.Plotter.latexLumi()
+        plotCollection.Plotter.latexDataMarks()
         canvas.Update()
         canvas.Print("{0}.pdf".format(hname))
 
@@ -126,18 +124,14 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         canvas.Print("{0}_jpsi.pdf".format(h_projX.GetName()))
         h_projX.GetXaxis().SetRangeUser(3.3, 4.1)
         h_projX.Draw("E")
-        plotCollection.Plotter.latexCMSMark()
-        plotCollection.Plotter.latexCMSExtra()
-        plotCollection.Plotter.latexLumi()
+        plotCollection.Plotter.latexDataMarks()
         canvas.Update()
         canvas.Print("{0}_psi2s.pdf".format(h_projX.GetName()))
 
         h_projY = h.ProjectionY(hname.replace("h2", "h").replace("MumumassVsBmass", "Bmass"))
         h_projY.SetYTitle("Number of events")
         h_projY.Draw("E")
-        plotCollection.Plotter.latexCMSMark()
-        plotCollection.Plotter.latexCMSExtra()
-        plotCollection.Plotter.latexLumi()
+        plotCollection.Plotter.latexDataMarks()
         canvas.Update()
         canvas.Print("{0}.pdf".format(h_projY.GetName()))
 

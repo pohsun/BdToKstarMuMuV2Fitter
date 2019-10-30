@@ -108,7 +108,7 @@ def plot_histo():
         legend.AddEntry(h_expc, "J/#psi K^{*+} MC", "F")
         legend.Draw()
 
-        plotCollection.Plotter.latexDataMarks([])
+        plotCollection.Plotter.latexDataMarks()
         return h_data, h_expc
 
     for p in pConfig.keys():

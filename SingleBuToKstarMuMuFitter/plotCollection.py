@@ -43,29 +43,31 @@ class Plotter(Path):
     latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
     latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
     latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
-    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85: Plotter.latex.DrawLatexNDC(x, y, "#font[52]{#scale[0.8]{Preliminary}}") if isPreliminary else "")
+    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85, msg="Internal": Plotter.latex.DrawLatexNDC(x, y, "#font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=msg if not isPreliminary else "Preliminary")))
     latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
     @staticmethod
     def latexQ2(binKey, x=0.45, y=0.89):
         Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     @staticmethod
-    def latexDataMarks(marks=None):
+    def latexDataMarks(marks=None, extraArgs=None):
         if marks is None:
             marks = []
+        if extraArgs is None:
+            extraArgs = {}
 
         if 'sim' in marks:
             Plotter.latexCMSSim()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(**extraArgs)
         elif 'toy' in marks:
             Plotter.latexCMSToy()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(**extraArgs)
         elif 'mix' in marks:
             Plotter.latexCMSMix()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(**extraArgs)
         else:
             Plotter.latexCMSMark()
             Plotter.latexLumi()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(**extraArgs)
 
     frameB = Bmass.frame()
     frameB.SetMinimum(0)
@@ -119,7 +121,7 @@ class Plotter(Path):
         """
         # Major plot
         cloned_frame = frame.emptyClone("cloned_frame")
-        marks = [] if marks is None else marks
+        marks = {} if marks is None else marks
         dataPlots = [] if dataPlots is None else dataPlots
         pdfPlots = [] if pdfPlots is None else pdfPlots
         for pIdx, p in enumerate(dataPlots):
@@ -146,7 +148,7 @@ class Plotter(Path):
         Plotter.legend.Draw()
 
         # Some marks
-        Plotter.latexDataMarks(marks)
+        Plotter.latexDataMarks(**marks)
 
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
     plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
@@ -365,7 +367,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
 
         drawLatexFitResults = False
         for frame in 'BLK':
-            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots)
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, marks={'extraArgs': {'msg': ""}} if regionName == "Fit" else None)
             if drawLatexFitResults:
                 if frame == 'B':
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
@@ -385,7 +387,7 @@ types.MethodType(plotPostfitBLK, None, Plotter)
 def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
     if marks is None:
-        marks = []
+        marks = {}
     binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
@@ -588,7 +590,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     jpsiBox.Draw()
     psi2sBox.Draw()
     Plotter.legend.Draw()
-    Plotter.latexDataMarks(marks)
+    Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
@@ -608,7 +610,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     jpsiBox.Draw()
     psi2sBox.Draw()
     Plotter.legend.Draw()
-    Plotter.latexDataMarks(marks)
+    Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
@@ -618,6 +620,7 @@ def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt="BOX", marks
     if data == None:
         self.logger.logWARNING("Skip plotOnXYZ. dataset {0} not found".format(dataName))
         return
+    marks = {} if marks is None else marks
     # Explicit claim of inherited method:
     #   https://root-forum.cern.ch/t/roodatasets-weighs-createhistogram-and-roondkeyspdf/16240/5
     hist = super(data.__class__, data).createHistogram(pltName, *createHistogramArgs)
@@ -625,11 +628,11 @@ def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt="BOX", marks
     hist.SetFillColor(2)
     hist.Draw(drawOpt)
 
-    Plotter.latexDataMarks(marks)
+    Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName)
 
     hist.Draw("COL TEXT")
-    Plotter.latexDataMarks(marks)
+    Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + "_COL")
 
     hist.SetTitleOffset(1.4, "X")
@@ -637,7 +640,7 @@ def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt="BOX", marks
     hist.SetTitleOffset(1.5, "Z")
     hist.Draw("LEGO2")
     Plotter.latexCMSSim(.08, .93)
-    Plotter.latexCMSExtra(.08, .89)
+    Plotter.latexCMSExtra(.08, .89, marks.get('extraArgs', {}).get('msg', None))
     Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
     self.canvasPrint(pltName + "_LEGO")
 
@@ -664,7 +667,7 @@ plotterCfg['plots'] = {
             #  'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ],
             #  'dataPlots': [["bkgJpsiMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "J/#psi K^{*+}"], ],
             #  'dataPlots': [["bkgPsi2sMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "#psi(2S) K^{*+}"], ],
-            'marks': []}
+            'marks': {}}}
     },
     'effi': {
         'func': [plotEfficiency],
@@ -682,7 +685,8 @@ plotterCfg['plots'] = {
                                     ROOT.RooFit.YVar(CosThetaK,
                                                      ROOT.RooFit.Binning(20, -1., 1.))
                                     ),
-            'drawOpt': "VIOLIN"}
+            'drawOpt': "VIOLIN",
+            'marks': {'marks': ['sim']}}
     },
     'plotOnXY_Bmass_CosThetaL': {
         'func': [plotOnXYZ],
@@ -694,7 +698,8 @@ plotterCfg['plots'] = {
                                     ROOT.RooFit.YVar(CosThetaL,
                                                      ROOT.RooFit.Binning(20, -1., 1.))
                                     ),
-            'drawOpt': "VIOLIN"}
+            'drawOpt': "VIOLIN",
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_sigM': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
@@ -703,7 +708,7 @@ plotterCfg['plots'] = {
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
                         ],
-            'marks': ['sim']}
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_sig2D': {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
@@ -712,7 +717,7 @@ plotterCfg['plots'] = {
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
                         ],
-            'marks': []}
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_bkgCombA': {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
@@ -721,7 +726,7 @@ plotterCfg['plots'] = {
             'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
             'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
                         ],
-            'marks': []}
+            'marks': {}}
     },
     'angular3D_bkgCombAAltA': {
         'func': [functools.partial(plotSimpleBLK, frames='LK')],
@@ -730,7 +735,7 @@ plotterCfg['plots'] = {
             'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
             'pdfPlots': [["f_bkgCombAAltA", plotterCfg_bkgStyle, None, "Smooth Bkg."],
                         ],
-            'marks': []}
+            'marks': {}}
     },
     'simpleBLK': {  # Most general case, to be customized by user
         'func': [functools.partial(plotSimpleBLK, frames='BLK')],
@@ -739,7 +744,7 @@ plotterCfg['plots'] = {
             'dataPlots': [["ToyGenerator.mixedToy", plotterCfg_mcStyle, "Toy"], ],
             'pdfPlots': [["f_sigM", plotterCfg_sigStyle, None, None],
                         ],
-            'marks': ['sim']}
+            'marks': {'marks': ['sim']}}
     },
     'angular3D_final': {
         'func': [plotPostfitBLK],
@@ -784,7 +789,7 @@ plotterCfg['plots'] = {
                          'legendOpt': "LPE",
                          },
                         ],
-            'marks': ['sim'],
+            'marks': {'marks': ['sim']},
         },
     },
 }

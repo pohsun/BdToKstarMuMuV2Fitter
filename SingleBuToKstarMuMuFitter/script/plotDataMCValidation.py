@@ -110,8 +110,6 @@ def plot_histo():
         h_data = fin_data.Get(pName)
         h_data.SetXTitle(pCfg['xTitle'])
         h_data.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
-        h_data.SetMaximum(1.8 * h_data.GetMaximum())
-        h_data.Draw("E")
 
         h_mc = fin_mc.Get(pName)
         h_mc.SetXTitle(pCfg['xTitle'])
@@ -120,14 +118,18 @@ def plot_histo():
         h_mc.SetLineColor(2)
         h_mc.SetFillColor(2)
         h_mc.SetFillStyle(3001)
-        h_mc.Draw("HIST SAME")
+
+        h_mc.SetMaximum(1.8 * h_data.GetMaximum())
+        h_mc.SetMinimum(0)
+        h_mc.Draw("HIST")
+        h_data.Draw("E SAME")
 
         legend.Clear()
         legend.AddEntry(h_data, "Data", "lep")
         legend.AddEntry(h_mc, "J/#psi K^{*+} MC", "F")
         legend.Draw()
 
-        plotCollection.Plotter.latexDataMarks([])
+        plotCollection.Plotter.latexDataMarks()
         return h_data, h_mc
 
     for p in pConfig.keys():
