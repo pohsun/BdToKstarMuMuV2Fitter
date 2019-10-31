@@ -246,24 +246,26 @@ def plotEfficiency(self, dataName, pdfName):
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
+    data_accXrec.SetZTitle("Efficiency [%]")
     data_accXrec.Scale(100)
     data_accXrec.SetMinimum(0)
     data_accXrec.SetMaximum(0.1 if self.process.cfg['binKey'] in ['jpsi', 'psi2s'] else 0.015)  # Z axis in percentage
+    h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
+    h2_effi_sigA_fine.Scale(100 * h2_effi_sigA_fine.GetNbinsX()/2 * h2_effi_sigA_fine.GetNbinsY()/2)
+    print(h2_effi_sigA_fine.GetMaximum())
+
     data_accXrec.SetTitleOffset(1.6, "X")
     data_accXrec.SetTitleOffset(1.8, "Y")
     data_accXrec.SetTitleOffset(1.8, "Z")
-    data_accXrec.SetZTitle("Efficiency [%]")
     data_accXrec.Draw("LEGO2")
-    h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
-    h2_effi_sigA_fine.Scale(100)
     h2_effi_sigA_fine.SetLineColor(2)
-    h2_effi_sigA_fine.Draw("SURF SAME")
+    h2_effi_sigA_fine.Draw("SURF SAME0")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexCMSExtra(.08, .89)
     Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
     self.canvasPrint(pltName + "_2D")
-    data_accXrec.Scale(0.01)
 
+    data_accXrec.Scale(0.01)  # Scale back, Normalization to be handled with RooFit in 1D plot
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
@@ -667,7 +669,8 @@ plotterCfg['plots'] = {
             #  'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ],
             #  'dataPlots': [["bkgJpsiMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "J/#psi K^{*+}"], ],
             #  'dataPlots': [["bkgPsi2sMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "#psi(2S) K^{*+}"], ],
-            'marks': {}}}
+            'marks': {}
+        }
     },
     'effi': {
         'func': [plotEfficiency],
@@ -808,10 +811,10 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    p.cfg['binKey'] = "jpsi"
-    plotter.cfg['switchPlots'].append('simpleSpectrum')
+    #  p.cfg['binKey'] = "jpsi"
+    #  plotter.cfg['switchPlots'].append('simpleSpectrum')
     #  plotter.cfg['switchPlots'].append('dataMCComp')
-    #  plotter.cfg['switchPlots'].append('effi')
+    plotter.cfg['switchPlots'].append('effi')
     #  plotter.cfg['switchPlots'].append('angular3D_sigM')
     #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
     #  plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
@@ -821,8 +824,8 @@ if __name__ == '__main__':
     #  plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
     #  plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
 
-    p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, plotter])
-    #  p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+    #  p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, plotter])
+    p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
     p.endSeq()
