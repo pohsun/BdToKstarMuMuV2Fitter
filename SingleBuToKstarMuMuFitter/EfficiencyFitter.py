@@ -132,6 +132,27 @@ class EfficiencyFitter(FitterCore):
         latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
         canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
+        # Plot numerator and denominator
+        compTEXTScale = 1e6
+        h2_accXrec.Scale(compTEXTScale)  # Efficiency is so low, unable to compare without scale up
+        h2_accXrec.Draw("COL")
+        h2_accXrec.SetBarOffset(-0.1)
+        h2_accXrec.Draw("TEXT SAME")
+        h2_effi_2D_compText = h2_accXrec.Clone("h2_effi_2D_compText")
+        h2_effi_2D_compText.Reset("ICES")
+        for i, j in itertools.product(range(1, h2_effi_2D_compText.GetNbinsX()+1), range(1, h2_effi_2D_compText.GetNbinsY()+1)):
+            xi = h2_effi_2D_compText.GetXaxis().GetBinLowEdge(i)
+            xf = h2_effi_2D_compText.GetXaxis().GetBinUpEdge(i)
+            yi = h2_effi_2D_compText.GetYaxis().GetBinLowEdge(j)
+            yf = h2_effi_2D_compText.GetYaxis().GetBinUpEdge(j)
+            h2_effi_2D_compText.SetBinContent(i, j, compTEXTScale* f2_effi_sigA.Integral(xi,xf,yi,yf)/(xf-xi)/(yf-yi))
+        h2_effi_2D_compText.SetMarkerColor(2)
+        h2_effi_2D_compText.SetBarOffset(0.1)
+        h2_effi_2D_compText.Draw("TEXT SAME")
+        latex.DrawLatexNDC(.19, .96, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+        canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+        h2_accXrec.Scale(1. / compTEXTScale)
+
         # Plot pull between fitting result to data
         h2_effi_2D_pull = fitter.GetPull2D()
         h2_effi_2D_pull.SetZTitle("Pull")
