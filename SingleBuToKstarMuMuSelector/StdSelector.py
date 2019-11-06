@@ -68,12 +68,15 @@ for part in range(1, 4 + 1):
         'datasetTag': 'BToKstarMuMu-extended-part' + str(part),
         'ifile': [DATADIR + "/BuToKstarMuMu_8TeV_extended_part{0}.root".format(part)],
     })
-datasets['BuToKstarMuMu-NoFilter'] = copy(baseCfg)
-datasets['BuToKstarMuMu-NoFilter'].update({
-    'datasetTag': 'BToKstarMuMu-NoFilter',
-    'ifile': [DATADIR + "/BuToKstarMuMu_NoFilter_8TeV_merged.root"],
-    'cutSet': "genonly",
-})
+
+# Format doesn't match and it's way slow to filter, please go for EvtGen
+# datasets['BuToKstarMuMu-NoFilter'] = copy(baseCfg)
+# datasets['BuToKstarMuMu-NoFilter'].update({
+#     'datasetTag': 'BToKstarMuMu-NoFilter',
+#     'ifile': [DATADIR + "/BuToKstarMuMu_NoFilter_8TeV_merged.root"],
+#     'cutSet': "genonly",
+# })
+
 datasets['BuToKstarJPsi'] = copy(baseCfg)
 datasets['BuToKstarJPsi'].update({
     'datasetTag': 'BToKstarJPsi',

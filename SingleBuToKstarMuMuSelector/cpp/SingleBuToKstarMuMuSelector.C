@@ -53,13 +53,18 @@ float Bcosalphabs2d;
 float Bctau        ;
 
 float Kshortpt     ;
-float Pimpt        ;
 float Pippt        ;
+float Pipeta       ;
+float Pipphi       ;
+float Pimpt        ;
+float Pimeta       ;
+float Pimphi       ;
 float Trkpt        ;
 float Trkdcasigbs  ;
 
 float Dimupt      ;
 float Dimueta     ;
+float Dimuphi     ;
 
 // Branches for Generator level information
 float genQ2        ;
@@ -141,11 +146,16 @@ void ResetEventContent()
     Kshortpt       = 0;
     Pimpt          = 0;
     Pippt          = 0;
+    Pimeta         = 0;
+    Pipeta         = 0;
+    Pimphi         = 0;
+    Pipphi         = 0;
     Trkpt          = 0;
     Trkdcasigbs    = 0;
 
     Dimupt         = 0;
     Dimueta        = 0;
+    Dimuphi        = 0;
 
     // mc
     genBChg = BIGNUMBER;
@@ -277,12 +287,17 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
 
         fOutputTree_->Branch("Kshortpt"      , &Kshortpt      , "Kshortpt/F");
         fOutputTree_->Branch("Pimpt"         , &Pimpt         , "Pimpt/F");
+        fOutputTree_->Branch("Pimeta"        , &Pimeta        , "Pimeta/F");
+        fOutputTree_->Branch("Pimphi"        , &Pimphi        , "Pimphi/F");
         fOutputTree_->Branch("Pippt"         , &Pippt         , "Pippt/F");
+        fOutputTree_->Branch("Pipeta"        , &Pipeta        , "Pipeta/F");
+        fOutputTree_->Branch("Pipphi"        , &Pipphi        , "Pipphi/F");
         fOutputTree_->Branch("Trkpt"         , &Trkpt         , "Trkpt/F");
         fOutputTree_->Branch("Trkdcasigbs"   , &Trkdcasigbs   , "Trkdcasigbs/F");
 
         fOutputTree_->Branch("Dimupt"        , &Dimupt        , "Dimupt/F");
         fOutputTree_->Branch("Dimueta"       , &Dimueta       , "Dimueta/F");
+        fOutputTree_->Branch("Dimuphi"       , &Dimuphi       , "Dimuphi/F");
     }
 
     std::map<string, int> mapcontent;
@@ -461,8 +476,12 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Bctau = bctau->at(BIndex);
 
     Kshortpt = sqrt( (kspx->at(BIndex))*(kspx->at(BIndex)) + (kspy->at(BIndex))*(kspy->at(BIndex)) );
-    Pimpt = sqrt( (pimpx->at(BIndex))*(pimpx->at(BIndex)) + (pimpy->at(BIndex))*(pimpy->at(BIndex)) );
-    Pippt = sqrt( (pippx->at(BIndex))*(pippx->at(BIndex)) + (pippy->at(BIndex))*(pippy->at(BIndex)) );
+    Pippt = Pip_4vec.Pt();
+    Pipeta = Pip_4vec.Eta();
+    Pipphi = Pip_4vec.Phi();
+    Pimpt = Pim_4vec.Pt();
+    Pimeta = Pim_4vec.Eta();
+    Pimphi = Pim_4vec.Phi();
     Trkpt = trkpt->at(BIndex);
     Trkdcasigbs = fabs( trkdcabs->at(BIndex)/trkdcabserr->at(BIndex) );
 
@@ -471,6 +490,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
 
     Dimupt = buff2.Pt();
     Dimueta = buff2.Eta();
+    Dimuphi = buff2.Phi();
 
     buff1.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
     if ( Bchg > 0){

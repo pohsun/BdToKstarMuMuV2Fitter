@@ -4,45 +4,112 @@
 import os
 
 import ROOT
-import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
+#  import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
-
-
-b_range = anaSetup.bMassRegions['Fit']['range']
-jpsi_range = anaSetup.q2bins['jpsi']['q2range']
-psi2s_range = anaSetup.q2bins['psi2s']['q2range']
+import SingleBuToKstarMuMuSelector.StdOptimizerBase as StdOptimizerBase
 
 def create_histo(kwargs):
     ofname = kwargs.get('ofname', "plotDataMCValidation.root")
-    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"])
-    cutString = kwargs.get('cutString', anaSetup.cuts_noResVeto)
-    wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
+    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*.root"])
+    cutString = kwargs.get('cutString', "1")
+    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)")
 
     tree = ROOT.TChain("tree")
     for tr in iTreeFiles:
         tree.Add(tr)
 
-    fout = ROOT.TFile(ofname, "RECREATE")
-    h_Bpt = ROOT.TH1F("h_Bpt", "", 100, 0, 100)
-    h_Bphi = ROOT.TH1F("h_Bphi", "", 63, -3.15, 3.15)
-    h_Bvtxcl = ROOT.TH1F("h_Bvtxcl", "", 100, 0, 1)
-    h_Blxysig = ROOT.TH1F("h_Blxysig", "", 100, 0, 100)
-    h_Bcosalphabs2d = ROOT.TH1F("h_Bcosalphabs2d", "", 70, 0.9993, 1)
-    h_Kshortpt = ROOT.TH1F("h_Kshortpt", "", 100, 0, 10)
-    h_CosThetaL = ROOT.TH1F("h_CosThetaL", "", 100, -1, 1)
-    h_Trkpt = ROOT.TH1F("h_Trkpt", "", 50, 0, 5)
-    h_Trkdcasigbs = ROOT.TH1F("h_Trkdcasigbs", "", 100, 0, 50)
+    df = ROOT.RDataFrame(tree).Filter("nb>0", "At least one B candidate")
+    aug_df = StdOptimizerBase.Define_AllCheckBits(df)\
+        .Define("weight", wgtString)\
+        .Define("PassAll", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_trkpt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * 1 * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_trkdcabssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * 1 * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_kspt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * 1 * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_blsbssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * 1 * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_bcosalphabs2d", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * 1 * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_bvtxcl", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * 1 * bit_kstarmass")\
+        .Define("PassAllExcept_kstarmass", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * 1")
 
-    tree.Draw("Bpt>>h_Bpt", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Bphi>>h_Bphi", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Bvtxcl>>h_Bvtxcl", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Blxysig>>h_Blxysig", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Bcosalphabs2d>>h_Bcosalphabs2d", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Kshortpt>>h_Kshortpt", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("CosThetaL>>h_CosThetaL", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("CosThetaK>>h_CosThetaK", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Trkpt>>h_Trkpt", "({0})&&({1})".format(cutString, wgtString), "goff")
-    tree.Draw("Trkdcasigbs>>h_Trkdcasigbs", "({0})&&({1})".format(cutString, wgtString), "goff")
+    print(aug_df.GetDefinedColumnNames())
+    displayCol = ROOT.vector('string')()
+    displayCol.push_back("nb")
+    displayCol.push_back("BestCand_trkpt")
+
+    h_Trkpt = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkpt)")\
+        .Define("BestCand_trkpt", "Define_GetValAtArgMax(trkpt, bvtxcl, PassAllExcept_trkpt)")\
+        .Define("BestCand_trkptW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_trkpt)")\
+        .Histo1D(("h_Trkpt", "", 50, 0, 5), "BestCand_trkpt", "BestCand_trkptW")
+
+    h_Bvtxcl = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAllExcept_bvtxcl)")\
+        .Define("BestCand_bvtxcl", "Define_GetValAtArgMax(bvtxcl, bvtxcl, PassAllExcept_bvtxcl)")\
+        .Define("BestCand_bvtxclW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_bvtxcl)")\
+        .Histo1D(("h_Bvtxcl", "", 100, 0, 1), "BestCand_bvtxcl", "BestCand_bvtxclW")
+
+    h_Blxysig = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAllExcept_blsbssig)")\
+        .Define("BestCand_blsbssig", "Define_GetValAtArgMax(blsbssig, bvtxcl, PassAllExcept_blsbssig)")\
+        .Define("BestCand_blsbssigW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_blsbssig)")\
+        .Histo1D(("h_Blxysig", "", 100, 0, 100), "BestCand_blsbssig", "BestCand_blsbssigW")
+
+    h_Bcosalphabs2d = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAllExcept_bcosalphabs2d)")\
+        .Define("BestCand_bcosalphabs2d", "Define_GetValAtArgMax(bcosalphabs2d, bvtxcl, PassAllExcept_bcosalphabs2d)")\
+        .Define("BestCand_bcosalphabs2dW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_bcosalphabs2d)")\
+        .Histo1D(("h_Bcosalphabs2d", "", 70, 0.9993, 1), "BestCand_bcosalphabs2d", "BestCand_bcosalphabs2dW")
+
+    h_Trkdcabssig = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkdcabssig)")\
+        .Define("BestCand_trkdcabssig", "Define_GetValAtArgMax(trkdcabssig, bvtxcl, PassAllExcept_trkdcabssig)")\
+        .Define("BestCand_trkdcabssigW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_trkdcabssig)")\
+        .Histo1D(("h_Trkdcabssig", "", 100, 0, 50), "BestCand_trkdcabssig", "BestCand_trkdcabssigW")
+
+    h_Kshortpt = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAllExcept_kspt)")\
+        .Define("BestCand_kspt", "Define_GetValAtArgMax(kspt, bvtxcl, PassAllExcept_kspt)")\
+        .Define("BestCand_ksptW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_kspt)")\
+        .Histo1D(("h_Kshortpt", "", 100, 0, 10), "BestCand_kspt", "BestCand_ksptW")
+
+    aug_df_PassAll = aug_df\
+        .Filter("Filter_IsNonEmptyBit(PassAll)")\
+        .Define("BestCand_weight", "Define_GetValAtArgMax(weight, bvtxcl, PassAll)")\
+
+    h_Bmass = aug_df_PassAll\
+        .Define("BestCand_bmass", "Define_GetValAtArgMax(bmass, bvtxcl, PassAll)")\
+        .Histo1D(("h_Bmass", "", 52, 4.76, 5.80), "BestCand_bmass")
+    h_Bpt = aug_df_PassAll\
+        .Define("bpt", "sqrt(bpx*bpx+bpy*bpy)")\
+        .Define("BestCand_bpt", "Define_GetValAtArgMax(bpt, bvtxcl, PassAll)")\
+        .Histo1D(("h_Bpt", "", 100, 0, 100), "BestCand_bpt", "BestCand_weight")
+    cimp_getPhi = """
+#include "math.h"
+ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const ROOT::VecOps::RVec<double> &px)
+{
+    ROOT::VecOps::RVec<double> output;
+    for(int i=0; i<py.size(); i++){
+        output.emplace_back(atan2(py.at(i), px.at(i)));
+    }
+   return output;
+}
+"""
+    if not hasattr(ROOT, "getPhi"):
+        ROOT.gInterpreter.Declare(cimp_getPhi)
+    h_Bphi = aug_df_PassAll\
+        .Define("bphi", "getPhi(bpy, bpx)")\
+        .Define("BestCand_bphi", "Define_GetValAtArgMax(bphi, bvtxcl, PassAll)")\
+        .Histo1D(("h_Bphi", "", 63, -3.15, 3.15), "BestCand_bphi", "BestCand_weight")
+    h_CosThetaL = aug_df_PassAll\
+        .Define("BestCand_cosThetaL", "Define_GetValAtArgMax(cosThetaL, bvtxcl, PassAll)")\
+        .Histo1D(("h_CosThetaL", "", 100, -1, 1), "BestCand_cosThetaL", "BestCand_weight")
+    h_CosThetaK = aug_df_PassAll\
+        .Define("BestCand_cosThetaK", "Define_GetValAtArgMax(cosThetaK, bvtxcl, PassAll)")\
+        .Histo1D(("h_CosThetaK", "", 100, -1, 1), "BestCand_cosThetaK", "BestCand_weight")
+
+    hists = [h_Bmass, h_Trkpt, h_Bvtxcl, h_Blxysig, h_Bcosalphabs2d, h_Trkdcabssig, h_Kshortpt, h_Bpt, h_Bphi, h_CosThetaL, h_CosThetaK]
+    fout = ROOT.TFile(ofname, "RECREATE")
+    for h in hists:
+        h.Write()
     fout.Write()
     fout.Close()
 
@@ -78,6 +145,7 @@ def plot_histo():
             'label': "Bcosalphabs2d",
             'xTitle': "cos#alpha_{xy}^{B^{+}}",
             'yTitle': None,
+            'isLogY': True,
         },
         'h_Kshortpt': {
             'label': "Kshortpt",
@@ -99,7 +167,7 @@ def plot_histo():
             'xTitle': "#pi p_{T}",
             'yTitle': None,
         },
-        'h_Trkdcasigbs': {
+        'h_Trkdcabssig': {
             'label': "Trkdcasigbs",
             'xTitle': "#pi DCA/#sigma",
             'yTitle': None,
@@ -119,8 +187,14 @@ def plot_histo():
         h_mc.SetFillColor(2)
         h_mc.SetFillStyle(3001)
 
-        h_mc.SetMaximum(1.8 * h_data.GetMaximum())
-        h_mc.SetMinimum(0)
+        if pCfg.get('isLogY', False):
+            canvas.SetLogy(1)
+            h_mc.SetMaximum(70 * h_data.GetMaximum())
+            h_mc.SetMinimum(1)
+        else:
+            canvas.SetLogy(0)
+            h_mc.SetMaximum(1.8 * h_data.GetMaximum())
+            h_mc.SetMinimum(0)
         h_mc.Draw("HIST")
         h_data.Draw("E SAME")
 
@@ -138,12 +212,14 @@ def plot_histo():
 
 if __name__ == '__main__':
     if not os.path.exists("plotDataMCValidation_data.root"):
+        # Remark: Takes ~2 minutes for data processing
         create_histo({
             'ofname': "plotDataMCValidation_data.root"
         })
     if not os.path.exists("plotDataMCValidation_jpsi.root"):
+        # Remark: Takes ~5 minutes for data processing
         create_histo({
             'ofname': "plotDataMCValidation_jpsi.root",
-            'iTreeFiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/JPSI/*.root"]
+            'iTreeFiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarJPsi_8TeV_*.root"]
         })
     plot_histo()
