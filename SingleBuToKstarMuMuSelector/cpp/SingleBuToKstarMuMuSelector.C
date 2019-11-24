@@ -13,6 +13,7 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TProof.h>
+#include <TVector3.h>
 #include <TLorentzVector.h>
 
 // Global Constants
@@ -33,6 +34,7 @@ float Q2           ;
 float Bmass        ;
 float CosThetaL    ;
 float CosThetaK    ;
+float Phi          ;
 
 int   Triggers     ;
 float Mumumass     ;
@@ -70,6 +72,7 @@ float Dimuphi     ;
 float genQ2        ;
 float genCosThetaL ;
 float genCosThetaK ;
+float genPhi       ;
 
 int   genBChg      ;
 float genBPt       ;
@@ -124,6 +127,7 @@ void ResetEventContent()
     Bmass          = 0;
     CosThetaL      = BIGNUMBER;
     CosThetaK      = BIGNUMBER;
+    Phi            = BIGNUMBER;
 
     Triggers       = 0;
     Mumumass       = 0;
@@ -198,6 +202,7 @@ void ResetEventContent()
     genQ2 = 0;
     genCosThetaL = BIGNUMBER;
     genCosThetaK = BIGNUMBER;
+    genPhi       = BIGNUMBER;
 
     isTrueB = false;
     isTrueMum = false;
@@ -265,6 +270,7 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
         fOutputTree_->Branch("Bmass"         , &Bmass         , "Bmass/F");
         fOutputTree_->Branch("CosThetaL"     , &CosThetaL     , "CosThetaL/F");
         fOutputTree_->Branch("CosThetaK"     , &CosThetaK     , "CosThetaK/F");
+        fOutputTree_->Branch("Phi"           , &Phi           , "Phi/F");
 
         fOutputTree_->Branch("Triggers"      , &Triggers      , "Triggers/I");
         fOutputTree_->Branch("Mumumass"      , &Mumumass      , "Mumumass/F");
@@ -355,6 +361,7 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
             fOutputTree_->Branch("genQ2"        , &genQ2        , "genQ2/F");
             fOutputTree_->Branch("genCosThetaL" , &genCosThetaL , "genCosThetaL/F");
             fOutputTree_->Branch("genCosThetaK" , &genCosThetaK , "genCosThetaK/F");
+            fOutputTree_->Branch("genPhi"       , &genPhi       , "genPhi/F");
 
             fOutputTree_->Branch("isTrueB"      , &isTrueB      , "isTrueB/O");
             fOutputTree_->Branch("isTrueMum"    , &isTrueMum    , "isTrueMum/O");
@@ -492,21 +499,25 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Dimueta = buff2.Eta();
     Dimuphi = buff2.Phi();
 
-    buff1.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
-    if ( Bchg > 0){
-        buff3 = Mum_4vec;//Take mu- to avoid extra minus sign.
-    }else{
-        buff3 = Mup_4vec;
-    }
+    buff1.Boost(-buff2.BoostVector());
+    buff3 = Bchg > 0 ? Mum_4vec : Mup_4vec;//Take mu- to avoid extra minus sign.
     buff3.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
     CosThetaL = buff1.Vect().Dot(buff3.Vect())/buff1.Vect().Mag()/buff3.Vect().Mag();
 
     buff1 = B_4vec;
     buff2 = Kst_4vec;
-    buff1.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
+    buff1.Boost(-buff2.BoostVector());
     buff3 = Tk_4vec;//Take pion to avoid extra minus.
-    buff3.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
+    buff3.Boost(-buff2.BoostVector());
     CosThetaK = buff1.Vect().Dot(buff3.Vect())/buff1.Vect().Mag()/buff3.Vect().Mag();
+
+    buff1 = Tk_4vec;
+    buff2 = Bchg > 0 ? Mup_4vec : Mum_4vec;
+    buff1.Boost(-B_4vec.BoostVector());
+    buff2.Boost(-B_4vec.BoostVector());
+    auto buff1_perpB = buff1.Vect() - buff1.Vect().Dot(B_4vec.Vect())/B_4vec.Vect().Mag2() * B_4vec.Vect();
+    auto buff2_perpB = buff2.Vect() - buff2.Vect().Dot(B_4vec.Vect())/B_4vec.Vect().Mag2() * B_4vec.Vect();
+    Phi = buff2_perpB.Angle(buff1_perpB);
 }//}}}
 
 void SingleBuToKstarMuMuSelector::UpdateBranchMC()
@@ -563,21 +574,25 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC()
     genDimuEta = buff2.Eta();
     genDimuPhi = buff2.Phi();
 
-    buff1.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
-    if (genBChg > 0){
-        buff3 = genMum_4vec;//Take mu- to avoid extra minus sign.
-    }else{
-        buff3 = genMup_4vec;
-    }
-    buff3.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
+    buff1.Boost(-buff2.BoostVector());
+    buff3 = genBChg > 0 ? genMum_4vec : genMup_4vec;//Take mu- to avoid extra minus sign.
+    buff3.Boost(-buff2.BoostVector());
     genCosThetaL = buff1.Vect().Dot(buff3.Vect())/buff1.Vect().Mag()/buff3.Vect().Mag();
 
     buff1 = genB_4vec;
     buff2 = genKst_4vec;
-    buff1.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
+    buff1.Boost(-genKst_4vec.BoostVector());
     buff3 = genTk_4vec;//Take pion to avoid extra minus.
-    buff3.Boost(-buff2.X()/buff2.T(),-buff2.Y()/buff2.T(),-buff2.Z()/buff2.T());
+    buff3.Boost(-genKst_4vec.BoostVector());
     genCosThetaK = buff1.Vect().Dot(buff3.Vect())/buff1.Vect().Mag()/buff3.Vect().Mag();
+    
+    buff1 = genTk_4vec;
+    buff2 = genBChg > 0 ? genMup_4vec : genMum_4vec;
+    buff1.Boost(-genB_4vec.BoostVector());
+    buff2.Boost(-genB_4vec.BoostVector());
+    auto buff1_perpB = buff1.Vect() - buff1.Vect().Dot(genB_4vec.Vect())/genB_4vec.Vect().Mag2() * genB_4vec.Vect();
+    auto buff2_perpB = buff2.Vect() - buff2.Vect().Dot(genB_4vec.Vect())/genB_4vec.Vect().Mag2() * genB_4vec.Vect();
+    genPhi = buff2_perpB.Angle(buff1_perpB);
 }//}}}
 
 void SingleBuToKstarMuMuSelector::UpdateGenMatch()

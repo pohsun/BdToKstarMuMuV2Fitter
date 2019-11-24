@@ -4,14 +4,12 @@
 import os
 
 import ROOT
-#  import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 import SingleBuToKstarMuMuSelector.StdOptimizerBase as StdOptimizerBase
 
 def create_histo(kwargs):
     ofname = kwargs.get('ofname', "plotDataMCValidation.root")
     iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*.root"])
-    cutString = kwargs.get('cutString', "1")
     wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)")
 
     tree = ROOT.TChain("tree")
@@ -29,11 +27,6 @@ def create_histo(kwargs):
         .Define("PassAllExcept_bcosalphabs2d", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * 1 * bit_bvtxcl * bit_kstarmass")\
         .Define("PassAllExcept_bvtxcl", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * 1 * bit_kstarmass")\
         .Define("PassAllExcept_kstarmass", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * 1")
-
-    print(aug_df.GetDefinedColumnNames())
-    displayCol = ROOT.vector('string')()
-    displayCol.push_back("nb")
-    displayCol.push_back("BestCand_trkpt")
 
     h_Trkpt = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkpt)")\
