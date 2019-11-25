@@ -11,10 +11,11 @@ import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 import SingleBuToKstarMuMuFitter.FitDBPlayer as FitDBPlayer
 
 
+#  wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
+wgtString = "1*(fabs(Bmass-5.28)<0.06) - 0.5*(fabs(Bmass-5.11)<0.06) - 0.5*(fabs(Bmass-5.46)<0.06)"  # +1/-1 for SR/sideband
 def create_histo_data(kwargs):
-    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root"])
+    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/DATA/*.root"])
     cutString = "({0}) && ({1})".format(anaSetup.cuts_antiResVeto, anaSetup.q2bins['jpsi']['cutString'])
-    wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
 
     tree = ROOT.TChain("tree")
     for tr in iTreeFiles:
@@ -43,7 +44,7 @@ def create_histo_expc(kwargs):
     fout = ROOT.TFile("plotEffiClosure_expc.root", "RECREATE")
     h2_sigA_gen_fine = ROOT.TH2F("h2_sigA_gen_fine", "genCosThetaK:genCosThetaL", 20, -1, 1, 20, -1, 1)  # Y:X
     h2_sigA_expc_fine = h2_sigA_gen_fine.Clone("h2_sigA_expc_fine")
-    tree.Draw("genCosThetaK:genCosThetaL>>h2_sigA_gen_fine", "genQ2 > 8.68 && genQ2 < 10.09")
+    tree.Draw("genCosThetaK:genCosThetaL>>h2_sigA_gen_fine", "genQ2 > 8.68 && genQ2 < 10.09", wgtString)
 
     effiFile = ROOT.TFile(anaSetup.modulePath + "/input/wspace_bin2.root")
     effiWspace = effiFile.Get("wspace.bin2")
@@ -93,7 +94,7 @@ def plot_histo():
         h_expc = fin_expc.Get(pName)
         h_expc.SetXTitle(pCfg['xTitle'])
         h_expc.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
-        h_expc.Scale(h_data.GetSumOfWeights() / h_expc.GetSumOfWeights())
+        h_expc.Scale(h_data.GetSumOfWeights() / h_expc.GetSumOfWeights())  # Scale to data yields
         h_expc.SetLineColor(2)
         h_expc.SetFillColor(2)
         h_expc.SetFillStyle(3001)

@@ -106,6 +106,7 @@ f_effiSigA_format['belowJpsi'] = ["l1[0,-0.5,0.5]", "l2[0.2,0.1,2]", "l3[0.1,0,1
         pdfK=pdfK,
         xTerm=xTerm,
         args="{CosThetaL,CosThetaK,hasXTerm,effi_norm," + ','.join(["l{0}".format(i) for i in range(1, 9)] + ["k{0}".format(i) for i in range(1, 7)] + ["x{0}".format(i) for i in range(16)]) + "}")]
+#  f_effiSigA_format['jpsi'] = f_effiSigA_format['belowJpsi']
 setupBuildEffiSigA = {
     'objName': "effi_sigA",
     'varNames': ["CosThetaK", "CosThetaL"],

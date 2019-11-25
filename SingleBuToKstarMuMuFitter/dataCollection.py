@@ -91,8 +91,8 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
 dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/sel_*.root"],
-    'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/script/plotMatchCandPreSelector.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/DATA/sel_*.root"],
+    #  'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/script/plotMatchCandPreSelector.root"],
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
 })
@@ -104,7 +104,7 @@ dataReader.customize = types.MethodType(customizeData, dataReader)
 sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/SIG/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/SIG/sel_*.root"],
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
@@ -116,7 +116,7 @@ sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 bkgJpsiMCReaderCfg = copy(CFG)
 bkgJpsiMCReaderCfg.update({
     'name': "bkgJpsiMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/JPSI/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/JPSI/sel_*.root"],
     'preloadFile': modulePath + "/data/preload_bkgJpsiMCReader_{binLabel}.root",
     'lumi': 295.761,
 })
@@ -127,7 +127,7 @@ bkgJpsiMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgJpsiMCReader
 bkgPsi2sMCReaderCfg = copy(CFG)
 bkgPsi2sMCReaderCfg.update({
     'name': "bkgPsi2sMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/PSIP/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/PSIP/sel_*.root"],
     'preloadFile': modulePath + "/data/preload_bkgPsi2sMCReader_{binLabel}.root",
     'lumi': 218.472,
 })
