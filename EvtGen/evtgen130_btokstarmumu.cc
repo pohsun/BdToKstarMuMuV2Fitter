@@ -45,6 +45,7 @@
 #include "TROOT.h"
 #include "TTree.h"
 #include "TLorentzVector.h"
+#include "TRandom3.h"
 
 using std::vector;
 
@@ -204,9 +205,15 @@ void runKstarll(int nevent, EvtGen &myGenerator) {
     q2low[7]=14.18;   q2high[7]=16.00;
     q2low[8]=16.00;   q2high[8]=19.00;
 
+    TRandom3 rnd;
+    rnd.SetSeed();
     do{
         //EvtVector4R p_init(EvtPDL::getMass(Bu),0.0,0.0,0.0);
-        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+100.),10.0,0.0,0.0);// Allowed to give some extra boost.
+        // Randomized production rate in phi
+        double motherP = 10.;
+        double motherPx, motherPy, motherPz;
+        rnd.Sphere(motherPx, motherPy, motherPz, motherP);
+        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+100.), motherPx, motherPy, motherPz);// Allowed to give some extra boost.
 
         EvtParticle* root_part=0;
         if (count < nevent/2){
@@ -438,9 +445,13 @@ void runKstarJpsi(int nevent, EvtGen &myGenerator) {
     q2low[7]=14.18;   q2high[7]=16.00;
     q2low[8]=16.00;   q2high[8]=19.00;
 
+    TRandom3 rnd;
+    rnd.SetSeed();
     do{
-        //EvtVector4R p_init(EvtPDL::getMass(Bu),0.0,0.0,0.0);
-        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+100.),10.0,0.0,0.0);// Allowed to give some extra boost.
+        double motherP = 10.;
+        double motherPx, motherPy, motherPz;
+        rnd.Sphere(motherPx, motherPy, motherPz, motherP);
+        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+100.), motherPx, motherPy, motherPz);// Allowed to give some extra boost.
 
         EvtParticle* root_part=0;
         if (count < nevent/2){
