@@ -27,6 +27,7 @@ constexpr double KSHORT_MASS = 0.497614;
 constexpr int BIGNUMBER = 9999;
 
 // user defined variables
+long long int nTotalEvents;
 int   Run;
 int   Event;
 
@@ -260,6 +261,13 @@ void SingleBuToKstarMuMuSelector::Begin(TTree * /*tree*/)
 
 void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
 {//{{{
+    fOutputMetaTree_ = new TTree("metatree", "Meta information of the single candidate tree.");
+    nTotalEvents = 0;
+    fOutputMetaTree_->Branch("nTotalEvents", &nTotalEvents);
+    fOutputMetaTree_->Branch("isMC", &isMC);
+    fOutputMetaTree_->Branch("eventContent", &eventContent);
+    fOutputMetaTree_->Branch("cutSet", &cutSet);
+
     fOutputTree_ = new TTree("tree", "Single candidate tree indexed with Run:Event.");
     fOutputTree_->Branch("Run"      , &Run);
     fOutputTree_->Branch("Event"    , &Event);
@@ -520,7 +528,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Phi = buff2_perpB.Angle(buff1_perpB);
 }//}}}
 
-void SingleBuToKstarMuMuSelector::UpdateBranchMC()
+void SingleBuToKstarMuMuSelector::UpdateBranchMC(bool keepMinimum=false)
 {//{{{
     TLorentzVector genB_4vec, genKst_4vec, genMup_4vec, genMum_4vec, genTk_4vec, genK_4vec, genPip_4vec, genPim_4vec, buff1, buff2, buff3;
     genB_4vec   . SetXYZM(genbpx   , genbpy   , genbpz   , B_MASS);
@@ -532,13 +540,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC()
     genPip_4vec . SetXYZM(genpippx , genpippy , genpippz , PION_MASS);
     genPim_4vec . SetXYZM(genpimpx , genpimpy , genpimpz , PION_MASS);
 
-    genBChg      = genbchg;
-    genBPt       = genB_4vec.Pt();
-    genBEta      = genB_4vec.Eta();
-    genBPhi      = genB_4vec.Phi();
-    genBVtxX     = 0;//Should be at PV?
-    genBVtxY     = 0;
-    genBVtxZ     = 0;
+    genQ2        = (genMup_4vec+genMum_4vec).Mag2();
     genMupPt     = genMup_4vec.Pt();
     genMupEta    = genMup_4vec.Eta();
     genMupPhi    = genMup_4vec.Phi();
@@ -546,36 +548,10 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC()
     genMumEta    = genMum_4vec.Eta();
     genMumPhi    = genMum_4vec.Phi();
 
-    genKstPt     = genKst_4vec.Pt();
-    genKstEta    = genKst_4vec.Eta();
-    genKstPhi    = genKst_4vec.Phi();
-    genTkChg     = gentrkchg;
-    genTkPt      = genTk_4vec.Pt();
-    genTkEta     = genTk_4vec.Eta();
-    genTkPhi     = genTk_4vec.Phi();
-    genKPt       = genK_4vec.Pt();
-    genKEta      = genK_4vec.Eta();
-    genKPhi      = genK_4vec.Phi();
-    genKVtxX     = genksvtxx;
-    genKVtxY     = genksvtxy;
-    genKVtxZ     = genksvtxz;
-    genPipPt     = genPip_4vec.Pt();
-    genPipEta    = genPip_4vec.Eta();
-    genPipPhi    = genPip_4vec.Phi();
-    genPimPt     = genPim_4vec.Pt();
-    genPimEta    = genPim_4vec.Eta();
-    genPimPhi    = genPim_4vec.Phi();
-    genQ2        = (genMup_4vec+genMum_4vec).Mag2();
-
     buff1 = genB_4vec;
     buff2 = genMup_4vec+genMum_4vec;
-
-    genDimuPt = buff2.Pt();
-    genDimuEta = buff2.Eta();
-    genDimuPhi = buff2.Phi();
-
     buff1.Boost(-buff2.BoostVector());
-    buff3 = genBChg > 0 ? genMum_4vec : genMup_4vec;//Take mu- to avoid extra minus sign.
+    buff3 = genbchg > 0 ? genMum_4vec : genMup_4vec;//Take mu- to avoid extra minus sign.
     buff3.Boost(-buff2.BoostVector());
     genCosThetaL = buff1.Vect().Dot(buff3.Vect())/buff1.Vect().Mag()/buff3.Vect().Mag();
 
@@ -587,12 +563,49 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC()
     genCosThetaK = buff1.Vect().Dot(buff3.Vect())/buff1.Vect().Mag()/buff3.Vect().Mag();
     
     buff1 = genTk_4vec;
-    buff2 = genBChg > 0 ? genMup_4vec : genMum_4vec;
+    buff2 = genbchg > 0 ? genMup_4vec : genMum_4vec;
     buff1.Boost(-genB_4vec.BoostVector());
     buff2.Boost(-genB_4vec.BoostVector());
     auto buff1_perpB = buff1.Vect() - buff1.Vect().Dot(genB_4vec.Vect())/genB_4vec.Vect().Mag2() * genB_4vec.Vect();
     auto buff2_perpB = buff2.Vect() - buff2.Vect().Dot(genB_4vec.Vect())/genB_4vec.Vect().Mag2() * genB_4vec.Vect();
     genPhi = buff2_perpB.Angle(buff1_perpB);
+
+    if (!keepMinimum){
+        genBChg      = genbchg;
+        genBPt       = genB_4vec.Pt();
+        genBEta      = genB_4vec.Eta();
+        genBPhi      = genB_4vec.Phi();
+        genBVtxX     = 0;//Should be at PV?
+        genBVtxY     = 0;
+        genBVtxZ     = 0;
+
+        genKstPt     = genKst_4vec.Pt();
+        genKstEta    = genKst_4vec.Eta();
+        genKstPhi    = genKst_4vec.Phi();
+        genTkChg     = gentrkchg;
+        genTkPt      = genTk_4vec.Pt();
+        genTkEta     = genTk_4vec.Eta();
+        genTkPhi     = genTk_4vec.Phi();
+        genKPt       = genK_4vec.Pt();
+        genKEta      = genK_4vec.Eta();
+        genKPhi      = genK_4vec.Phi();
+        genKVtxX     = genksvtxx;
+        genKVtxY     = genksvtxy;
+        genKVtxZ     = genksvtxz;
+        genPipPt     = genPip_4vec.Pt();
+        genPipEta    = genPip_4vec.Eta();
+        genPipPhi    = genPip_4vec.Phi();
+        genPimPt     = genPim_4vec.Pt();
+        genPimEta    = genPim_4vec.Eta();
+        genPimPhi    = genPim_4vec.Phi();
+
+        buff1 = genB_4vec;
+        buff2 = genMup_4vec+genMum_4vec;
+        genDimuPt = buff2.Pt();
+        genDimuEta = buff2.Eta();
+        genDimuPhi = buff2.Phi();
+    }
+
 }//}}}
 
 void SingleBuToKstarMuMuSelector::UpdateGenMatch()
@@ -621,6 +634,7 @@ Bool_t SingleBuToKstarMuMuSelector::Process(Long64_t entry)
 {//{{{
     ResetEventContent();
     GetEntry(entry);
+    nTotalEvents++;
 
     Run = run;
     Event = event;
@@ -628,16 +642,19 @@ Bool_t SingleBuToKstarMuMuSelector::Process(Long64_t entry)
     // printf("DEBUG\t: Event %u with BIndex %d\n", event, BIndex);
 
     if (BIndex >= 0){
-        // Fill and reset index
         UpdateBranchData();
         if (isMC){
             UpdateBranchMC();
             UpdateGenMatch();
         }
+        fOutputTree_->Fill();
     }else if (isMC && cutSet == "genonly"){
         UpdateBranchMC();
+        fOutputTree_->Fill();
+    }else if (isMC){
+        UpdateBranchMC(true);
+        fOutputTree_->Fill();
     }
-    fOutputTree_->Fill();
 
     return kTRUE;
 }//}}}
@@ -648,7 +665,10 @@ void SingleBuToKstarMuMuSelector::SlaveTerminate()
 
     TFile *fOutputFile = new TFile(ofilename.c_str(), "recreate"); 
     fOutput->Write();
+    fOutputMetaTree_->Fill();
+    fOutputMetaTree_->Write();
     fOutputFile->Close();
+
 }//}}}
 
 void SingleBuToKstarMuMuSelector::Terminate()

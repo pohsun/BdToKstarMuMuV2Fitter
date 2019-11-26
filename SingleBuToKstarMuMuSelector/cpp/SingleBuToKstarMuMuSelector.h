@@ -325,8 +325,9 @@ public :
        // Output contents
     std::string ofilename;
     TTree *fOutputTree_ = 0;
+    TTree *fOutputMetaTree_ = 0;
     void UpdateBranchData();
-    void UpdateBranchMC();
+    void UpdateBranchMC(bool);
     void UpdateGenMatch();
    
     // ClassDef(SingleBuToKstarMuMuSelector,0);
