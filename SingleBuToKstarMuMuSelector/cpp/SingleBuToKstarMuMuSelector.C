@@ -1,4 +1,4 @@
-// vim: sw=4 ts=4 fdm=marker et:
+// vim: sw=4 ts=4 fdm=syntax fdl=0 fdn=2 et:
 
 // -----------------------------------------------
 //       Author: Xin Shi <Xin.Shi@cern.ch> 
@@ -634,11 +634,10 @@ Bool_t SingleBuToKstarMuMuSelector::Process(Long64_t entry)
             UpdateBranchMC();
             UpdateGenMatch();
         }
-        fOutputTree_->Fill();
     }else if (isMC && cutSet == "genonly"){
         UpdateBranchMC();
-        fOutputTree_->Fill();
     }
+    fOutputTree_->Fill();
 
     return kTRUE;
 }//}}}
