@@ -616,35 +616,41 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
-def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt="BOX", marks=None):
+def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt=None, marks=None):
     # Ref: https://root.cern.ch/root/html/tutorials/roofit/rf309_ndimplot.C.html
     data = self.process.sourcemanager.get(dataName)
     if data == None:
         self.logger.logWARNING("Skip plotOnXYZ. dataset {0} not found".format(dataName))
         return
     marks = {} if marks is None else marks
+    drawOpt = [] if drawOpt is None else drawOpt
     # Explicit claim of inherited method:
     #   https://root-forum.cern.ch/t/roodatasets-weighs-createhistogram-and-roondkeyspdf/16240/5
     hist = super(data.__class__, data).createHistogram(pltName, *createHistogramArgs)
 
     hist.SetFillColor(2)
-    hist.Draw(drawOpt)
-
-    Plotter.latexDataMarks(**marks)
-    self.canvasPrint(pltName)
-
-    hist.Draw("COL TEXT")
-    Plotter.latexDataMarks(**marks)
-    self.canvasPrint(pltName + "_COL")
-
-    hist.SetTitleOffset(1.4, "X")
-    hist.SetTitleOffset(1.8, "Y")
-    hist.SetTitleOffset(1.5, "Z")
-    hist.Draw("LEGO2")
-    Plotter.latexCMSSim(.08, .93)
-    Plotter.latexCMSExtra(.08, .89, marks.get('extraArgs', {}).get('msg', None))
-    Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
-    self.canvasPrint(pltName + "_LEGO")
+    for opt in drawOpt:
+        if re.match("LEGO", opt.upper()):
+            hist.SetTitleOffset(1.4, "X")
+            hist.SetTitleOffset(1.8, "Y")
+            hist.SetTitleOffset(1.5, "Z")
+            hist.Draw(opt)
+            Plotter.latexCMSSim(.08, .93)
+            Plotter.latexCMSExtra(.08, .89, marks.get('extraArgs', {}).get('msg', None))
+            Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
+            self.canvasPrint(pltName + "_LEGO")
+        elif re.match("COL", opt.upper()):
+            hist.Draw(opt)
+            Plotter.latexDataMarks(**marks)
+            self.canvasPrint(pltName + "_COL")
+        elif re.match("BOX", opt.upper()):
+            hist.Draw(opt)
+            Plotter.latexDataMarks(**marks)
+            self.canvasPrint(pltName + "_BOX")
+        else:
+            hist.Draw(opt)
+            Plotter.latexDataMarks(**marks)
+            self.canvasPrint(pltName)
 
 types.MethodType(plotOnXYZ, None, Plotter)
 
@@ -688,7 +694,7 @@ plotterCfg['plots'] = {
                                     ROOT.RooFit.YVar(CosThetaK,
                                                      ROOT.RooFit.Binning(20, -1., 1.))
                                     ),
-            'drawOpt': "VIOLIN",
+            'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
             'marks': {'marks': ['sim']}}
     },
     'plotOnXY_Bmass_CosThetaL': {
@@ -701,8 +707,19 @@ plotterCfg['plots'] = {
                                     ROOT.RooFit.YVar(CosThetaL,
                                                      ROOT.RooFit.Binning(20, -1., 1.))
                                     ),
-            'drawOpt': "VIOLIN",
+            'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
             'marks': {'marks': ['sim']}}
+    },
+    'plotOnX_Kstarmass': {
+        'func': [plotOnXYZ],
+        'kwargs': {
+            'pltName': "plotOnX_Kstarmass",
+            'dataName': "dataReader.Fit",
+            'createHistogramArgs': (Kstarmass,
+                                    ROOT.RooFit.Binning(30, 0.742, 1.042),
+                                    ),
+            'drawOpt': [""],
+            'marks': {}}
     },
     'angular3D_sigM': {
         'func': [functools.partial(plotSimpleBLK, frames='B')],
@@ -796,35 +813,37 @@ plotterCfg['plots'] = {
         },
     },
 }
-#  plotterCfg['switchPlots'].append('simpleSpectrum')
-#  plotterCfg['switchPlots'].append('effi')
-#  plotterCfg['switchPlots'].append('angular3D_sigM')
-#  plotterCfg['switchPlots'].append('angular3D_bkgCombA')
-#  plotterCfg['switchPlots'].append('angular3D_bkgCombAAltA')
-#  plotterCfg['switchPlots'].append('angular3D_final')
-#  plotterCfg['switchPlots'].append('angular3D_summary')
-#  plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+# plotterCfg['switchPlots'].append('simpleSpectrum')
+# plotterCfg['switchPlots'].append('effi')
+# plotterCfg['switchPlots'].append('angular3D_sigM')
+# plotterCfg['switchPlots'].append('angular3D_bkgCombA')
+# plotterCfg['switchPlots'].append('angular3D_bkgCombAAltA')
+# plotterCfg['switchPlots'].append('angular3D_final')
+# plotterCfg['switchPlots'].append('angular3D_summary')
+# plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
-#  plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
-#  plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+# plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
+# plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+# plotterCfg['switchPlots'].append('plotOnX_Kstarmass')
 
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "jpsi"
-    #  plotter.cfg['switchPlots'].append('simpleSpectrum')
-    #  plotter.cfg['switchPlots'].append('dataMCComp')
-    plotter.cfg['switchPlots'].append('effi')
-    #  plotter.cfg['switchPlots'].append('angular3D_sigM')
-    #  plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-    #  plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
-    #  plotter.cfg['switchPlots'].append('angular3D_final')
-    #  plotter.cfg['switchPlots'].append('angular3D_summary')
-    #  plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
-    #  plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
-    #  plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+    # p.cfg['binKey'] = "jpsi"
+    # plotter.cfg['switchPlots'].append('simpleSpectrum')
+    # plotter.cfg['switchPlots'].append('dataMCComp')
+    # plotter.cfg['switchPlots'].append('effi')
+    # plotter.cfg['switchPlots'].append('angular3D_sigM')
+    # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+    # plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
+    # plotter.cfg['switchPlots'].append('angular3D_final')
+    # plotter.cfg['switchPlots'].append('angular3D_summary')
+    # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+    # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
+    # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+    # plotter.cfg['switchPlots'].append('plotOnX_Kstarmass')
 
-    #  p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, plotter])
+    # p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, plotter])
     p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
     p.beginSeq()
     p.runSeq()
