@@ -8,6 +8,7 @@ from __future__ import print_function, division
 import os
 import ROOT
 ROOT.gROOT.SetBatch(True)
+ROOT.ROOT.EnableImplicitMT(2)
 
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 from v2Fitter.FlowControl.Process import Process

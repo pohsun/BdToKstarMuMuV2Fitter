@@ -31,6 +31,8 @@ q2bins['summary'] = createBinTemplate("bin0", 1., 19.)
 q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.94618 && Mumumass < 3.17648) && !(Mumumass > 3.58608 && Mumumass < 3.76563)"
 
 q2bins['jpsi'] = createBinTemplate("bin2", 8.68, 10.09)
+q2bins['jpsiLo'] = createBinTemplate("bin2a", 8.68, 9.37)
+q2bins['jpsiHi'] = createBinTemplate("bin2b", 9.37, 10.09)
 q2bins['psi2s'] = createBinTemplate("bin4", 12.86, 14.18)
 q2bins['peaks'] = createBinTemplate("peaks", 1., 19.)
 q2bins['peaks']['cutString'] = "(Mumumass > 2.94618 && Mumumass < 3.17648) || (Mumumass > 3.58608 && Mumumass < 3.76563)"
