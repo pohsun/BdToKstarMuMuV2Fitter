@@ -24,12 +24,15 @@ class EfficiencyFitter(FitterCore):
         cfg.update({
             'name': "EfficiencyFitter",
             'data': "effiHistReader.accXrec",
+            'hdata': "effiHistReader.h2_accXrec",
             'dataX': "effiHistReader.h_accXrec_fine_ProjectionX",
             'dataY': "effiHistReader.h_accXrec_fine_ProjectionY",
             'pdf': "effi_sigA",
             'pdfX': "effi_cosl",
             'pdfY': "effi_cosK",
-            'updateArgs': True,
+            'saveToDB': True,
+            'argAliasInDB': None,
+            'noDraw': False,
         })
         del cfg['createNLLOpt']
         return cfg
@@ -70,10 +73,10 @@ class EfficiencyFitter(FitterCore):
         """Post-processing"""
         args = self.pdf.getParameters(self.data)
         self.ToggleConstVar(args, True)
-        FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args)
+        if self.cfg['saveToDB']:
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args, self.cfg.get('argAliasInDB'))
 
     def _runFitSteps(self):
-        h2_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
 
         effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
         args = self.pdf.getParameters(self.data)
@@ -92,6 +95,7 @@ class EfficiencyFitter(FitterCore):
         f2_effi_sigA = ROOT.TF2("f2_effi_sigA", effi_sigA_formula, -1, 1, -1, 1)
 
         fitter = ROOT.EfficiencyFitter()
+        h2_accXrec = self.process.sourcemanager.get(self.cfg.get('hdata'))
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
         h_effi_pull = ROOT.TH1F("h_effi_pull", "", 30, -3, 3)
         fitter.SetPull(h_effi_pull)
@@ -117,60 +121,61 @@ class EfficiencyFitter(FitterCore):
         self.logger.logINFO("Sanitary check: Efficiency ranges from {0:.2e} to {1:.2e}".format(f2_effi_sigA.Eval(f2_min_x, f2_min_y), f2_effi_sigA.Eval(f2_max_x, f2_max_y)))
 
         # Plot comparison between fitting result to data
-        setStyle()
-        canvas = ROOT.TCanvas()
-        latex = ROOT.TLatex()
-        h2_effi_2D_comp = fitter.GetRatio()
-        h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
-        h2_effi_2D_comp.SetMinimum(0)
-        h2_effi_2D_comp.SetMaximum(1.5)
-        h2_effi_2D_comp.SetTitleOffset(1.6, "X")
-        h2_effi_2D_comp.SetTitleOffset(1.8, "Y")
-        h2_effi_2D_comp.SetTitleOffset(1.5, "Z")
-        h2_effi_2D_comp.Draw("LEGO2")
-        latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-        latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
-        canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+        if not self.cfg.get('noDraw', False):
+            setStyle()
+            canvas = ROOT.TCanvas()
+            latex = ROOT.TLatex()
+            h2_effi_2D_comp = fitter.GetRatio()
+            h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
+            h2_effi_2D_comp.SetMinimum(0)
+            h2_effi_2D_comp.SetMaximum(1.5)
+            h2_effi_2D_comp.SetTitleOffset(1.6, "X")
+            h2_effi_2D_comp.SetTitleOffset(1.8, "Y")
+            h2_effi_2D_comp.SetTitleOffset(1.5, "Z")
+            h2_effi_2D_comp.Draw("LEGO2")
+            latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
+            canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
-        # Plot numerator and denominator
-        compTEXTScale = 1e6
-        h2_accXrec.Scale(compTEXTScale)  # Efficiency is so low, unable to compare without scale up
-        h2_accXrec.Draw("COL")
-        h2_accXrec.SetBarOffset(-0.1)
-        h2_accXrec.Draw("TEXT SAME")
-        h2_effi_2D_compText = h2_accXrec.Clone("h2_effi_2D_compText")
-        h2_effi_2D_compText.Reset("ICES")
-        for i, j in itertools.product(range(1, h2_effi_2D_compText.GetNbinsX()+1), range(1, h2_effi_2D_compText.GetNbinsY()+1)):
-            xi = h2_effi_2D_compText.GetXaxis().GetBinLowEdge(i)
-            xf = h2_effi_2D_compText.GetXaxis().GetBinUpEdge(i)
-            yi = h2_effi_2D_compText.GetYaxis().GetBinLowEdge(j)
-            yf = h2_effi_2D_compText.GetYaxis().GetBinUpEdge(j)
-            h2_effi_2D_compText.SetBinContent(i, j, compTEXTScale* f2_effi_sigA.Integral(xi,xf,yi,yf)/(xf-xi)/(yf-yi))
-        h2_effi_2D_compText.SetMarkerColor(2)
-        h2_effi_2D_compText.SetBarOffset(0.1)
-        h2_effi_2D_compText.Draw("TEXT SAME")
-        latex.DrawLatexNDC(.19, .96, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-        canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
-        h2_accXrec.Scale(1. / compTEXTScale)
+            # Plot numerator and denominator
+            compTEXTScale = 1e6
+            h2_accXrec.Scale(compTEXTScale)  # Efficiency is so low, unable to compare without scale up
+            h2_accXrec.Draw("COL")
+            h2_accXrec.SetBarOffset(-0.1)
+            h2_accXrec.Draw("TEXT SAME")
+            h2_effi_2D_compText = h2_accXrec.Clone("h2_effi_2D_compText")
+            h2_effi_2D_compText.Reset("ICES")
+            for i, j in itertools.product(range(1, h2_effi_2D_compText.GetNbinsX()+1), range(1, h2_effi_2D_compText.GetNbinsY()+1)):
+                xi = h2_effi_2D_compText.GetXaxis().GetBinLowEdge(i)
+                xf = h2_effi_2D_compText.GetXaxis().GetBinUpEdge(i)
+                yi = h2_effi_2D_compText.GetYaxis().GetBinLowEdge(j)
+                yf = h2_effi_2D_compText.GetYaxis().GetBinUpEdge(j)
+                h2_effi_2D_compText.SetBinContent(i, j, compTEXTScale* f2_effi_sigA.Integral(xi,xf,yi,yf)/(xf-xi)/(yf-yi))
+            h2_effi_2D_compText.SetMarkerColor(2)
+            h2_effi_2D_compText.SetBarOffset(0.1)
+            h2_effi_2D_compText.Draw("TEXT SAME")
+            latex.DrawLatexNDC(.19, .96, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            h2_accXrec.Scale(1. / compTEXTScale)
 
-        # Plot pull between fitting result to data
-        h2_effi_2D_pull = fitter.GetPull2D()
-        h2_effi_2D_pull.SetZTitle("Pull")
-        h2_effi_2D_pull.SetMinimum(-3.)
-        h2_effi_2D_pull.SetMaximum(3.)
-        h2_effi_2D_pull.SetFillColor(42)
-        h2_effi_2D_pull.Draw("BOX1 TEXT")
-        latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-        latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
-        canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            # Plot pull between fitting result to data
+            h2_effi_2D_pull = fitter.GetPull2D()
+            h2_effi_2D_pull.SetZTitle("Pull")
+            h2_effi_2D_pull.SetMinimum(-3.)
+            h2_effi_2D_pull.SetMaximum(3.)
+            h2_effi_2D_pull.SetFillColor(42)
+            h2_effi_2D_pull.Draw("BOX1 TEXT")
+            latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+            canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
-        h_effi_pull.Fit("gaus", "", "", -2., 2.)
-        h_effi_pull.SetXTitle("Pull")
-        h_effi_pull.SetYTitle("# of bins")
-        h_effi_pull.Draw("")
-        latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-        latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
-        canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            h_effi_pull.Fit("gaus", "", "", -2., 2.)
+            h_effi_pull.SetXTitle("Pull")
+            h_effi_pull.SetYTitle("# of bins")
+            h_effi_pull.Draw("")
+            latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+            canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
 
     @staticmethod
