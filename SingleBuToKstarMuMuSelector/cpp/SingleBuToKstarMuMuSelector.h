@@ -15,6 +15,8 @@
 #include <TFile.h>
 #include <TSelector.h>
 
+class TProofOutputFile;
+
 using namespace std;  
 
 class SingleBuToKstarMuMuSelector : public TSelector {
@@ -324,6 +326,8 @@ public :
 
        // Output contents
     std::string ofilename;
+    TFile *fOutputFile = 0;
+    TProofOutputFile *fProofOutputFile = 0;
     TTree *fOutputTree_ = 0;
     TTree *fOutputMetaTree_ = 0;
     void UpdateBranchData();

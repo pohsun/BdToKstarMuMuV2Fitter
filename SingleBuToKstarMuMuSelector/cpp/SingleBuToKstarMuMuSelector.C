@@ -13,6 +13,7 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TProof.h>
+#include <TProofOutputFile.h>
 #include <TVector3.h>
 #include <TLorentzVector.h>
 
@@ -261,7 +262,11 @@ void SingleBuToKstarMuMuSelector::Begin(TTree * /*tree*/)
 
 void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
 {//{{{
+    fProofOutputFile = new TProofOutputFile(ofilename.c_str());
+    fOutputFile = fProofOutputFile->OpenFile("RECREATE");
+
     fOutputMetaTree_ = new TTree("metatree", "Meta information of the single candidate tree.");
+    fOutputMetaTree_->SetDirectory(fOutputFile);
     nTotalEvents = 0;
     fOutputMetaTree_->Branch("nTotalEvents", &nTotalEvents);
     fOutputMetaTree_->Branch("isMC", &isMC);
@@ -269,6 +274,8 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
     fOutputMetaTree_->Branch("cutSet", &cutSet);
 
     fOutputTree_ = new TTree("tree", "Single candidate tree indexed with Run:Event.");
+    fOutputTree_->SetDirectory(fOutputFile);
+    fOutputTree_->AutoSave("Overwrite");
     fOutputTree_->Branch("Run"      , &Run);
     fOutputTree_->Branch("Event"    , &Event);
 
@@ -380,8 +387,6 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
         default:
             break;
     }
-
-    fOutput->AddAll(gDirectory->GetList()); 
 }//}}}
 
 bool SingleBuToKstarMuMuSelector::HasGoodDimuon(int i)
@@ -663,12 +668,17 @@ void SingleBuToKstarMuMuSelector::SlaveTerminate()
 {//{{{
     fOutputTree_->BuildIndex("Run", "Event");
 
-    TFile *fOutputFile = new TFile(ofilename.c_str(), "recreate"); 
-    fOutput->Write();
+    fOutputFile->cd();
+    fOutputTree_->Write();
     fOutputMetaTree_->Fill();
     fOutputMetaTree_->Write();
+
+    fOutputTree_->SetDirectory(0);
+    fOutputMetaTree_->SetDirectory(0);
     fOutputFile->Close();
 
+    fProofOutputFile->Print();
+    fOutput->Add(fProofOutputFile);
 }//}}}
 
 void SingleBuToKstarMuMuSelector::Terminate()

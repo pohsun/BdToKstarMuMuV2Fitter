@@ -20,7 +20,7 @@ queue {nJobs}
 jobIdToDataset = StdSelector.datasets.keys()
 setupBatchTask = copy(BatchTaskWrapper.templateCfg())
 setupBatchTask.update({
-    'queue': "workday",
+    'queue': "workday", # Next level: tomorrow
     'work_dir': jobIdToDataset,
     'nJobs': len(jobIdToDataset)
 })
