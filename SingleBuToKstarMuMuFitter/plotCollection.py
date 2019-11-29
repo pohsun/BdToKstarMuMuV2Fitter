@@ -9,6 +9,7 @@ import types
 import functools
 import shelve
 from array import array
+from argparse import ArgumentParser
 
 import ROOT
 
@@ -17,6 +18,7 @@ from v2Fitter.FlowControl.Path import Path
 from v2Fitter.Fitter.FitterCore import FitterCore
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins, modulePath, bMassRegions
 from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
+
 
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass, genCosThetaK, genCosThetaL
@@ -96,8 +98,9 @@ class Plotter(Path):
             self.logger.logDEBUG("Initialize pdfPlot {0}".format(p[0]))
             p[0] = self.process.sourcemanager.get(p[0])
             if p[0] == None:
-                self.logger.logERROR("pdfPlot not found in source manager.")
-                raise RuntimeError
+                errorMsg = "pdfPlot not found in source manager."
+                self.logger.logERROR(errorMsg)
+                raise RuntimeError("pdfPlot not found in source manager.")
         args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass))
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         return p
@@ -110,8 +113,9 @@ class Plotter(Path):
             self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
             p[0] = self.process.sourcemanager.get(p[0])
             if p[0] == None:
-                self.logger.logERROR("dataPlot not found in source manager.")
-                raise RuntimeError
+                errorMsg = "dataPlot not found in source manager."
+                self.logger.logERROR(errorMsg)
+                raise RuntimeError(errorMsg)
         return p
 
     @staticmethod
@@ -829,16 +833,24 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    # p.cfg['binKey'] = "jpsi"
-    # plotter.cfg['switchPlots'].append('simpleSpectrum')
-    # plotter.cfg['switchPlots'].append('dataMCComp')
-    # plotter.cfg['switchPlots'].append('effi')
-    # plotter.cfg['switchPlots'].append('angular3D_sigM')
-    # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-    # plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
-    # plotter.cfg['switchPlots'].append('angular3D_final')
-    # plotter.cfg['switchPlots'].append('angular3D_summary')
-    # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+    parser = ArgumentParser(prog='seqCollection')
+    parser.add_argument('-b', '--bin', dest='binKey', type=str, default=p.cfg['binKey'])
+    args = parser.parse_args()
+
+    if args.binKey in q2bins.keys():
+        p.cfg['binKey'] = args.binKey
+    else:
+        raise KeyError("Unknown binKey. Pick from {0}".format(q2bins.keys()))
+
+    plotter.cfg['switchPlots'].append('simpleSpectrum')
+    plotter.cfg['switchPlots'].append('effi')
+    plotter.cfg['switchPlots'].append('angular3D_sigM')
+    plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+    plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
+    plotter.cfg['switchPlots'].append('angular3D_final')
+    plotter.cfg['switchPlots'].append('angular3D_summary')
+    plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+
     # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
     # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
     # plotter.cfg['switchPlots'].append('plotOnX_Kstarmass')

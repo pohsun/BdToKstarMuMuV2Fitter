@@ -97,7 +97,7 @@ dataReaderCfg.update({
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['.*', 'noResVeto', 'antiResVeto'], extraCuts=cut_kshortWindow)
+customizeData = functools.partial(customizeOne, targetBMassRegion=['.*', 'noResVeto', 'antiResVeto'])
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
@@ -109,7 +109,7 @@ sigMCReaderCfg.update({
     'lumi': 16281.440 + 21097.189,
 })
 sigMCReader = DataReader(sigMCReaderCfg)
-customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])  # Assuming cut_kshortWindow makes no impact
+customizeSigMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$'])
 sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 
 # peakBkgMCReader

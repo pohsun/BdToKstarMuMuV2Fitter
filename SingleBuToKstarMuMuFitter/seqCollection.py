@@ -8,7 +8,9 @@ import SingleBuToKstarMuMuFitter.toyCollection as toyCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
 
+import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 from SingleBuToKstarMuMuFitter.StdProcess import p
+from argparse import ArgumentParser
 
 # Standard fitting procedures
 predefined_sequence = {}
@@ -28,18 +30,24 @@ predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.std
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
 
 if __name__ == '__main__':
-    #  p.cfg['binKey'] = "belowJpsi"
-    #  p.cfg['binKey'] = "jpsi"
-    #  p.cfg['binKey'] = "betweenPeaks"
-    #  p.cfg['binKey'] = "abovePsi2s"
-    #  p.setSequence(predefined_sequence['buildEfficiecyHist'])
-    #  p.setSequence(predefined_sequence['fitEfficiency'])
-    #  p.setSequence(predefined_sequence['fitBkgCombA'])
-    #  p.setSequence(predefined_sequence['fitFinal3D'])
-    p.setSequence(predefined_sequence['stdFit'])
+    parser = ArgumentParser(prog='seqCollection')
+    parser.add_argument('-b', '--bin', dest='binKey', type=str, default=p.cfg['binKey'])
+    parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None)
+    args = parser.parse_args()
 
-    #  p.setSequence(predefined_sequence['fitSig2D'])
-    #  p.setSequence(predefined_sequence['fitSigMCGEN'])
+    if args.binKey in anaSetup.q2bins.keys():
+        p.cfg['binKey'] = args.binKey
+    else:
+        raise KeyError("Unknown binKey. Pick from {0}".format(anaSetup.q2bins.keys()))
+
+    if args.seqKey is not None:
+        if args.seqKey in predefined_sequence.keys():
+            p.setSequence(predefined_sequence[args.seqKey])
+        else:
+            raise KeyError("Unknown setSequence. Pick from {0}".format(predefined_sequence.keys()))
+    else:
+        p.setSequence(predefined_sequence['stdFit'])
+
     try:
         p.beginSeq()
         p.runSeq()
