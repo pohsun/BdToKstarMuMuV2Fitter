@@ -103,6 +103,7 @@ int main(int argc, char* argv[]){
 
 void runKstarll(int nevent, EvtGen &myGenerator) {
     int     genBChg      = 999;
+    double  genBMass     = 0;
     double  genBPt       = 0;
     double  genBEta      = 0;
     double  genBPhi      = 0;
@@ -141,6 +142,7 @@ void runKstarll(int nevent, EvtGen &myGenerator) {
     TFile *file=new TFile("BuToKstarMuMu_NoFilter_E.root", "RECREATE");
     TTree *tree_ = new TTree("tree","tree");
     tree_->Branch("genBChg"      , &genBChg      , "genBChg/I"); 
+    tree_->Branch("genBMass"     , &genBMass     , "genBMass/D"); 
     tree_->Branch("genBPt"       , &genBPt       , "genBPt/D"); 
     tree_->Branch("genBEta"      , &genBEta      , "genBEta/D"); 
     tree_->Branch("genBPhi"      , &genBPhi      , "genBPhi/D"); 
@@ -213,7 +215,7 @@ void runKstarll(int nevent, EvtGen &myGenerator) {
         double motherP = 10.;
         double motherPx, motherPy, motherPz;
         rnd.Sphere(motherPx, motherPy, motherPz, motherP);
-        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+100.), motherPx, motherPy, motherPz);// Allowed to give some extra boost.
+        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+pow(motherP, 2)), motherPx, motherPy, motherPz);// Allowed to give some extra boost.
 
         EvtParticle* root_part=0;
         if (count < nevent/2){
@@ -274,6 +276,7 @@ void runKstarll(int nevent, EvtGen &myGenerator) {
         genPim_4vec.SetXYZM(pim.get(1)   , pim.get(2)   , pim.get(3)  , pim.mass());
         
         genBChg      = root_part->getPDGId()/abs(root_part->getPDGId());
+        genBMass     = genB_4vec.Mag();
         genBPt       = genB_4vec.Pt();
         genBEta      = genB_4vec.Eta();
         genBPhi      = genB_4vec.Phi();
@@ -342,6 +345,7 @@ void runKstarll(int nevent, EvtGen &myGenerator) {
 
 void runKstarJpsi(int nevent, EvtGen &myGenerator) {
     int     genBChg      = 999;
+    double  genBMass     = 0;
     double  genBPt       = 0;
     double  genBEta      = 0;
     double  genBPhi      = 0;
@@ -380,6 +384,7 @@ void runKstarJpsi(int nevent, EvtGen &myGenerator) {
     TFile *file=new TFile("BuToKstarJpsi_NoFilter_E.root", "RECREATE");
     TTree *tree_ = new TTree("tree","tree");
     tree_->Branch("genBChg"      , &genBChg      , "genBChg/I"); 
+    tree_->Branch("genBMass"     , &genBMass     , "genBMass/I"); 
     tree_->Branch("genBPt"       , &genBPt       , "genBPt/D"); 
     tree_->Branch("genBEta"      , &genBEta      , "genBEta/D"); 
     tree_->Branch("genBPhi"      , &genBPhi      , "genBPhi/D"); 
@@ -451,7 +456,7 @@ void runKstarJpsi(int nevent, EvtGen &myGenerator) {
         double motherP = 10.;
         double motherPx, motherPy, motherPz;
         rnd.Sphere(motherPx, motherPy, motherPz, motherP);
-        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+100.), motherPx, motherPy, motherPz);// Allowed to give some extra boost.
+        EvtVector4R p_init(sqrt(pow(EvtPDL::getMass(Bu),2)+pow(motherP, 2)), motherPx, motherPy, motherPz);// Allowed to give some extra boost.
 
         EvtParticle* root_part=0;
         if (count < nevent/2){
@@ -505,6 +510,7 @@ void runKstarJpsi(int nevent, EvtGen &myGenerator) {
             genMum_4vec.SetXYZM(l2.get(1)    , l2.get(2)    , l2.get(3)   , l2.mass());
             
             genBChg      = root_part->getPDGId()/abs(root_part->getPDGId());
+            genBMass     = genB_4vec.Mag();
             genBPt       = genB_4vec.Pt();
             genBEta      = genB_4vec.Eta();
             genBPhi      = genB_4vec.Phi();

@@ -4,7 +4,7 @@ import os
 import re
 import ROOT
 
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cut_kshortWindow, modulePath
+from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins, bMassRegions, cuts
 from SingleBuToKstarMuMuFitter.dataCollection import sigMCReader
 from SingleBuToKstarMuMuFitter.plotCollection import Plotter
 
@@ -28,16 +28,16 @@ def create_histo(cfg=None):
             treein.Add(f)
 
         df = ROOT.RDataFrame(treein)\
-                .Filter(setupEfficiencyBuildProcedure['baseString'])\
-                .Filter(bMassRegions['Fit']['cutString'])
+                .Filter(setupEfficiencyBuildProcedure['baseString'])
 
         for binKey in targetBins:
             hists.append(df.Filter(re.sub("Mumumass", "sqrt(genQ2)", q2bins[binKey]['cutString']))\
-                .Histo1D(("h_genPhi_{0}".format(binKey), "", 73, -3.15, 3.15), "genPhi"))
+                .Histo1D(("h_genPhi_{0}".format(binKey), "", 32, 0, 3.2), "genPhi"))
 
             hists.append(df.Filter(q2bins[binKey]['cutString'])\
                 .Filter(setupEfficiencyBuildProcedure['cutString'])\
-                .Histo1D(("h_Phi_{0}".format(binKey), "", 73, -3.15, 3.15), "Phi"))
+                .Filter(bMassRegions['SR']['cutString'])\
+                .Histo1D(("h_Phi_{0}".format(binKey), "", 32, 0, 3.2), "Phi"))
 
         fout = ROOT.TFile(foutName, "UPDATE")
         for h in hists:
@@ -49,23 +49,25 @@ def plot_histo():
     canvas = Plotter.canvas
     canvas.cd()
 
-    if os.path.exists(foutName):
-        fin = ROOT.TFile(foutName)
+    if not os.path.exists(foutName):
+        create_histo()
 
-        for binKey in targetBins:
-            h_rec = ROOT.TEfficiency(fin.Get("h_Phi_{0}".format(binKey)), fin.Get("h_genPhi_{0}".format(binKey)))
-            gr = h_rec.CreateGraph()
-            gr.SetMinimum(0)
-            gr.SetMaximum(1)
-            gr.GetXaxis().SetTitle("#phi")
-            gr.GetYaxis().SetTitle("Efficiency")
-            gr.Draw("AP")
-            canvas.Update()
-            canvas.Print("h_rec_Phi_{0}.pdf".format(q2bins[binKey]['label']))
-        fin.Close()
+    fin = ROOT.TFile(foutName)
+    for binKey in targetBins:
+        h_rec = ROOT.TEfficiency(fin.Get("h_Phi_{0}".format(binKey)), fin.Get("h_genPhi_{0}".format(binKey)))
+        gr = h_rec.CreateGraph()
+        gr.SetMinimum(0)
+        gr.SetMaximum(1e-2)
+        gr.GetXaxis().SetTitle("#phi")
+        gr.GetYaxis().SetTitle("Efficiency")
+        gr.Draw("AP")
+        canvas.Update()
+
+        Plotter.latexDataMarks(marks=['sim'])
+        Plotter.latexQ2(binKey)
+        canvas.Print("h_rec_Phi_{0}.pdf".format(q2bins[binKey]['label']))
+    fin.Close()
     pass
 
 if __name__ == "__main__":
-    create_histo()
     plot_histo()
-    pass

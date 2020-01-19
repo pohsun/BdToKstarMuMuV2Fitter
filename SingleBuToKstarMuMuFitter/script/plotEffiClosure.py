@@ -44,7 +44,7 @@ def create_histo_expc(kwargs):
     fout = ROOT.TFile("plotEffiClosure_expc.root", "RECREATE")
     h2_sigA_gen_fine = ROOT.TH2F("h2_sigA_gen_fine", "genCosThetaK:genCosThetaL", 20, -1, 1, 20, -1, 1)  # Y:X
     h2_sigA_expc_fine = h2_sigA_gen_fine.Clone("h2_sigA_expc_fine")
-    tree.Draw("genCosThetaK:genCosThetaL>>h2_sigA_gen_fine", "genQ2 > 8.68 && genQ2 < 10.09", wgtString)
+    tree.Draw("genCosThetaK:genCosThetaL>>h2_sigA_gen_fine", "genQ2 > 8.68 && genQ2 < 10.09")
 
     effiFile = ROOT.TFile(anaSetup.modulePath + "/input/wspace_bin2.root")
     effiWspace = effiFile.Get("wspace.bin2")
