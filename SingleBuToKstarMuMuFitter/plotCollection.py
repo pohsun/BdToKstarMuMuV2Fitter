@@ -714,6 +714,19 @@ plotterCfg['plots'] = {
             'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
             'marks': {'marks': ['sim']}}
     },
+    'plotOnXY_CosThetaK_CosThetaL_bkgComb': {
+        'func': [plotOnXYZ],
+        'kwargs': {
+            'pltName': "plotOnXY_CosThetaK_CosThetaL_bkgComb",
+            'dataName': "dataReader.SB",
+            'createHistogramArgs': (CosThetaK,
+                                    ROOT.RooFit.Binning(dataCollection.rAccXEffThetaKBins),
+                                    ROOT.RooFit.YVar(CosThetaL,
+                                                     ROOT.RooFit.Binning(dataCollection.rAccXEffThetaLBins))
+                                    ),
+            'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+            'marks': {}}
+    },
     'plotOnX_Kstarmass': {
         'func': [plotOnXYZ],
         'kwargs': {
@@ -741,6 +754,22 @@ plotterCfg['plots'] = {
             'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
             'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
                         ],
+            'marks': {'marks': ['sim']}}
+    },
+    'angular3D_bkgJpsiM': {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_bkgJpsiM",
+            'dataPlots': [["bkgJpsiMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [],
+            'marks': {'marks': ['sim']}}
+    },
+    'angular3D_bkgPsi2sM': {
+        'func': [functools.partial(plotSimpleBLK, frames='B')],
+        'kwargs': {
+            'pltName': "angular3D_bkgPsi2sM",
+            'dataPlots': [["bkgPsi2sMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+            'pdfPlots': [],
             'marks': {'marks': ['sim']}}
     },
     'angular3D_bkgCombA': {
@@ -820,6 +849,8 @@ plotterCfg['plots'] = {
 # plotterCfg['switchPlots'].append('simpleSpectrum')
 # plotterCfg['switchPlots'].append('effi')
 # plotterCfg['switchPlots'].append('angular3D_sigM')
+# plotterCfg['switchPlots'].append('angular3D_bkgJpsiM')
+# plotterCfg['switchPlots'].append('angular3D_bkgPsi2sM')
 # plotterCfg['switchPlots'].append('angular3D_bkgCombA')
 # plotterCfg['switchPlots'].append('angular3D_bkgCombAAltA')
 # plotterCfg['switchPlots'].append('angular3D_final')
@@ -828,6 +859,7 @@ plotterCfg['plots'] = {
 
 # plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
 # plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+# plotterCfg['switchPlots'].append('plotOnXY_CosThetaK_CosThetaL_bkgComb')
 # plotterCfg['switchPlots'].append('plotOnX_Kstarmass')
 
 plotter = Plotter(plotterCfg)
@@ -842,21 +874,29 @@ if __name__ == '__main__':
     else:
         raise KeyError("Unknown binKey. Pick from {0}".format(q2bins.keys()))
 
-    plotter.cfg['switchPlots'].append('simpleSpectrum')
-    plotter.cfg['switchPlots'].append('effi')
-    plotter.cfg['switchPlots'].append('angular3D_sigM')
-    plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-    plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
-    plotter.cfg['switchPlots'].append('angular3D_final')
-    plotter.cfg['switchPlots'].append('angular3D_summary')
-    plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+    # plotter.cfg['switchPlots'].append('simpleSpectrum')
+    # plotter.cfg['switchPlots'].append('effi')
+    # plotter.cfg['switchPlots'].append('angular3D_sigM')
+    # plotter.cfg['switchPlots'].append('angular3D_bkgJpsiM')
+    # plotter.cfg['switchPlots'].append('angular3D_bkgPsi2sM')
+    # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
+    # plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
+    # plotter.cfg['switchPlots'].append('angular3D_final')
+    # plotter.cfg['switchPlots'].append('angular3D_summary')
+    # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
     # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
     # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
+    # plotter.cfg['switchPlots'].append('plotOnXY_CosThetaK_CosThetaL_bkgComb')
     # plotter.cfg['switchPlots'].append('plotOnX_Kstarmass')
 
-    # p.setSequence([dataCollection.sigMCReader, dataCollection.dataReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, plotter])
-    p.setSequence([dataCollection.effiHistReader, dataCollection.sigMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, plotter])
+    p.setSequence([dataCollection.effiHistReader, 
+        dataCollection.sigMCReader,
+        dataCollection.bkgJpsiMCReader,
+        dataCollection.bkgPsi2sMCReader,
+        dataCollection.dataReader,
+        pdfCollection.stdWspaceReader,
+        plotter])
     p.beginSeq()
     p.runSeq()
     p.endSeq()
