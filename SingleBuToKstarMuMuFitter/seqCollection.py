@@ -46,7 +46,10 @@ if __name__ == '__main__':
         else:
             raise KeyError("Unknown setSequence. Pick from {0}".format(predefined_sequence.keys()))
     else:
-        p.setSequence(predefined_sequence['stdFit'])
+        if args.binKey not in ['jpsi', 'psi2s']:
+            p.setSequence(predefined_sequence['stdFit'])
+        else:
+            p.setSequence([dataCollection.effiHistReader, dataCollection.bkgJpsiMCReader, dataCollection.bkgPsi2sMCReader, dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.effiFitter])
 
     try:
         p.beginSeq()
