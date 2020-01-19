@@ -113,13 +113,6 @@ class EfficiencyFitter(FitterCore):
             arg.setVal(parVal)
             arg.setError(parErr)
 
-        # Check if efficiency is positive definite
-        f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
-        f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)
-        f2_effi_sigA.GetMaximumXY(f2_max_x, f2_max_y)
-        f2_effi_sigA.GetMinimumXY(f2_min_x, f2_min_y)
-        self.logger.logINFO("Sanitary check: Efficiency ranges from {0:.2e} to {1:.2e}".format(f2_effi_sigA.Eval(f2_min_x, f2_min_y), f2_effi_sigA.Eval(f2_max_x, f2_max_y)))
-
         # Plot comparison between fitting result to data
         if not self.cfg.get('noDraw', False):
             setStyle()
@@ -176,7 +169,31 @@ class EfficiencyFitter(FitterCore):
             latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
             canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+        
+        # Check if efficiency is positive definite
+        f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
+        f2_min_x, f2_min_y = ROOT.Double(0), ROOT.Double(0)
+        f2_effi_sigA.GetMaximumXY(f2_max_x, f2_max_y)
+        f2_effi_sigA.GetMinimumXY(f2_min_x, f2_min_y)
+        self.logger.logINFO("Sanitary check: Efficiency ranges from {0:.2e} to {1:.2e}".format(f2_effi_sigA.Eval(f2_min_x, f2_min_y), f2_effi_sigA.Eval(f2_max_x, f2_max_y)))
 
+        # Check if correction term is small
+        if not self.process.sourcemanager.get("effi_xTerm") is None:
+            effi_xTerm_formula = self.process.sourcemanager.get("effi_xTerm").formula().GetExpFormula().Data()
+            effi_xTerm_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_xTerm_formula)
+            effi_xTerm_formula = re.sub(r"CosThetaL", r"x", effi_xTerm_formula)
+            effi_xTerm_formula = re.sub(r"CosThetaK", r"y", effi_xTerm_formula)
+            effi_xTerm_formula = re.sub(r"hasXTerm", r"(1)", effi_xTerm_formula)
+
+            f2_effi_xTerm = ROOT.TF2("f2_effi_xTerm", effi_xTerm_formula, -1, 1, -1, 1)
+            for xIdx in range(nPar):
+                minuit.GetParameter(xIdx, parVal, parErr)
+                f2_effi_xTerm.SetParameter(xIdx, parVal)
+                f2_effi_xTerm.SetParError(xIdx, parErr)
+            f2_effi_xTerm.GetMaximumXY(f2_max_x, f2_max_y)
+            f2_effi_xTerm.GetMinimumXY(f2_min_x, f2_min_y)
+            self.logger.logDEBUG("Efficiency xTerm formula: {0}".format(effi_xTerm_formula))
+            self.logger.logINFO("Sanitary check: xTerm ranges from {0:.2e} to {1:.2e}".format(f2_effi_xTerm.Eval(f2_min_x, f2_min_y), f2_effi_xTerm.Eval(f2_max_x, f2_max_y)))
 
     @staticmethod
     def isPosiDef(formula2D):
