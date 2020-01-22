@@ -10,7 +10,8 @@ import SingleBuToKstarMuMuSelector.StdOptimizerBase as StdOptimizerBase
 def create_histo(kwargs):
     ofname = kwargs.get('ofname', "plotDataMCValidation.root")
     iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*.root"])
-    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)")
+    # wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)") # Local sideband
+    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.1) - (0.2/0.84)*(bmass>4.76)*(bmass<5.18) - (0.2/0.84)*(bmass>5.38)*(bmass<5.80)") # Full sideband
 
     tree = ROOT.TChain("tree")
     for tr in iTreeFiles:
@@ -128,22 +129,26 @@ def plot_histo():
             'label': "Bvtxcl",
             'xTitle': "B^{+} vtx. CL",
             'yTitle': None,
+            'cutPoints': [0.1],
         },
         'h_Blxysig': {
             'label': "Blxysig",
             'xTitle': "B^{+} L_{xy}/#sigma",
             'yTitle': None,
+            'cutPoints': [12.],
         },
         'h_Bcosalphabs2d': {
             'label': "Bcosalphabs2d",
             'xTitle': "cos#alpha_{xy}^{B^{+}}",
             'yTitle': None,
             'isLogY': True,
+            'cutPoints': [0.9994],
         },
         'h_Kshortpt': {
             'label': "Kshortpt",
             'xTitle': "K_{S} p_{T} [GeV]",
             'yTitle': None,
+            'cutPoints': [1.],
         },
         'h_CosThetaK': {
             'label': "CosThetaK",
@@ -159,11 +164,13 @@ def plot_histo():
             'label': "Trkpt",
             'xTitle': "#pi p_{T}",
             'yTitle': None,
+            'cutPoints': [0.4],
         },
         'h_Trkdcabssig': {
             'label': "Trkdcasigbs",
             'xTitle': "#pi DCA/#sigma",
             'yTitle': None,
+            'cutPoints': [0.2],
         },
     }
     def drawPlot(pName):
@@ -190,6 +197,12 @@ def plot_histo():
             h_mc.SetMinimum(0)
         h_mc.Draw("HIST")
         h_data.Draw("E SAME")
+        line = ROOT.TLine()
+        line.SetLineWidth(2)
+        line.SetLineStyle(10)
+        if pCfg.get('cutPoints', False):
+            for pt in pCfg.get('cutPoints'):
+                line.DrawLine(pt, h_mc.GetMinimum(), pt, h_mc.GetMaximum())
 
         legend.Clear()
         legend.AddEntry(h_data, "Data", "lep")
@@ -199,8 +212,55 @@ def plot_histo():
         plotCollection.Plotter.latexDataMarks()
         return h_data, h_mc
 
+    def drawRatioPlot(pName, h_data, h_mc):
+        pCfg = pConfig[pName]
+
+        h_ratio = ROOT.TRatioPlot(h_data, h_mc)
+        h_ratio.SetH1DrawOpt("E")
+        h_ratio.SetH2DrawOpt("HIST")
+        h_ratio.Draw()
+        if pCfg.get('isLogY', False):
+            h_ratio.GetUpperPad().SetLogy(1)
+        h_ratio.GetUpperRefYaxis().SetRangeUser(h_mc.GetMinimum(), h_mc.GetMaximum())
+        h_ratio.GetUpperRefYaxis().SetTitleOffset(1)
+        h_ratio.GetUpperRefYaxis().SetMaxDigits(3)
+        h_ratio.GetLowerRefYaxis().SetTitle("Data/MC")
+        h_ratio.GetLowerRefYaxis().SetTitleOffset(1)
+        h_ratio.GetLowerRefYaxis().SetNdivisions(2)
+        h_ratio.GetLowerRefYaxis().SetRangeUser(0.5, 1.5)
+        h_ratio.GetLowerPad().Update()
+
+        upperPad = h_ratio.GetUpperPad()
+        upperPad.cd()
+        h_data.Draw("E SAME")
+        upperPad.Update()
+        
+        legend = upperPad.BuildLegend(.65, .70, .85, .90)
+        legend.Clear()
+        legend.SetFillColor(0)
+        legend.SetBorderSize(0)
+        legend.AddEntry(h_data, "Data", "lep")
+        legend.AddEntry(h_mc, "J/#psi K^{*+} MC", "F")
+        legend.Draw()
+
+        line = ROOT.TLine()
+        line.SetLineWidth(2)
+        line.SetLineStyle(10)
+        if pCfg.get('cutPoints', False):
+            for pt in pCfg.get('cutPoints'):
+                line.DrawLine(pt, h_mc.GetMinimum(), pt, h_mc.GetMaximum())
+
+        canvas.cd()
+        plotCollection.Plotter.latexLumi()
+        plotCollection.Plotter.latexCMSMark(0.12, 0.89)
+        plotCollection.Plotter.latexCMSExtra(0.12, 0.85)
+        canvas.Update()
+        return h_ratio
+
     for p in pConfig.keys():
         h_data, h_mc = drawPlot(p)
+        canvas.Print("val_dataMC_jpsi_{0}_noRatio.pdf".format(pConfig[p]['label']))
+        h_ratio = drawRatioPlot(p, h_data, h_mc)
         canvas.Print("val_dataMC_jpsi_{0}.pdf".format(pConfig[p]['label']))
 
 if __name__ == '__main__':
