@@ -253,12 +253,12 @@ def table_paper_results():
     print("")
 
 if __name__ == '__main__':
-    #  table_AN_sysFL_sysAFB()
-    #  table_AN_yields()
-    #  table_AN_coverageAFBFL()
-    #  table_AN_dataresAFBFL()
-    #  table_AN_FinalDataresAFBFL()
+    # table_AN_sysFL_sysAFB()
+    # table_AN_yields()
+    # table_AN_coverageAFBFL()
+    # table_AN_dataresAFBFL()
+    # table_AN_FinalDataresAFBFL()
 
-    #  table_paper_sys()
-    #  table_paper_results()
+    # table_paper_sys()
+    # table_paper_results()
     pass
