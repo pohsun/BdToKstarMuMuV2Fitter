@@ -256,7 +256,6 @@ def plotEfficiency(self, dataName, pdfName):
     data_accXrec.SetMaximum(0.1 if self.process.cfg['binKey'] in ['jpsi', 'psi2s'] else 0.015)  # Z axis in percentage
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
     h2_effi_sigA_fine.Scale(100 * h2_effi_sigA_fine.GetNbinsX()/2 * h2_effi_sigA_fine.GetNbinsY()/2)
-    print(h2_effi_sigA_fine.GetMaximum())
 
     data_accXrec.SetTitleOffset(1.6, "X")
     data_accXrec.SetTitleOffset(1.8, "Y")
@@ -854,6 +853,7 @@ plotterCfg['plots'] = {
 # plotterCfg['switchPlots'].append('angular3D_bkgCombA')
 # plotterCfg['switchPlots'].append('angular3D_bkgCombAAltA')
 # plotterCfg['switchPlots'].append('angular3D_final')
+
 # plotterCfg['switchPlots'].append('angular3D_summary')
 # plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
 
@@ -865,8 +865,9 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
-    parser = ArgumentParser(prog='seqCollection')
+    parser = ArgumentParser(prog='plotCollection.py')
     parser.add_argument('-b', '--bin', dest='binKey', type=str, default=p.cfg['binKey'])
+    parser.add_argument('-p', '--plots', dest='switchPlots', type=str, default="", help="Switch plots from {0}.".format(",".join(plotterCfg['plots'].keys())))
     args = parser.parse_args()
 
     if args.binKey in q2bins.keys():
@@ -874,29 +875,37 @@ if __name__ == '__main__':
     else:
         raise KeyError("Unknown binKey. Pick from {0}".format(q2bins.keys()))
 
-    # plotter.cfg['switchPlots'].append('simpleSpectrum')
-    # plotter.cfg['switchPlots'].append('effi')
-    # plotter.cfg['switchPlots'].append('angular3D_sigM')
-    # plotter.cfg['switchPlots'].append('angular3D_bkgJpsiM')
-    # plotter.cfg['switchPlots'].append('angular3D_bkgPsi2sM')
-    # plotter.cfg['switchPlots'].append('angular3D_bkgCombA')
-    # plotter.cfg['switchPlots'].append('angular3D_bkgCombAAltA')
-    # plotter.cfg['switchPlots'].append('angular3D_final')
-    # plotter.cfg['switchPlots'].append('angular3D_summary')
-    # plotter.cfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+    if args.switchPlots == "":
+        defaultPlots = [
+            'simpleSpectrum',
+            'effi',
+            'angular3D_sigM',
+            'angular3D_bkgJpsiM',
+            'angular3D_bkgPsi2sM',
+            'angular3D_bkgCombA',
+            'angular3D_bkgCombAAltA',
+            'angular3D_final',
+        ]
+        for plt in defaultPlots:
+            plotter.cfg['switchPlots'].append(plt)
+    else:
+        for plt in args.switchPlots.split(','):
+            if plt in plotterCfg['plots'].keys():
+                if plt not in plotter.cfg['switchPlots']:
+                    plotter.cfg['switchPlots'].append(plt)
+            else:
+                raise KeyError("Unknown key {0} in plotterCfg, pick from {1}".format(p, ','.join(plotterCfg['plots'].keys())))
 
-    # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
-    # plotter.cfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
-    # plotter.cfg['switchPlots'].append('plotOnXY_CosThetaK_CosThetaL_bkgComb')
-    # plotter.cfg['switchPlots'].append('plotOnX_Kstarmass')
-
-    p.setSequence([dataCollection.effiHistReader, 
+    p.setSequence([dataCollection.effiHistReader,
         dataCollection.sigMCReader,
         dataCollection.bkgJpsiMCReader,
         dataCollection.bkgPsi2sMCReader,
         dataCollection.dataReader,
         pdfCollection.stdWspaceReader,
         plotter])
-    p.beginSeq()
-    p.runSeq()
-    p.endSeq()
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+    finally:
+        p.endSeq()
