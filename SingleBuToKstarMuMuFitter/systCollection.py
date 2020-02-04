@@ -15,6 +15,7 @@ from copy import copy, deepcopy
 import ROOT
 import SingleBuToKstarMuMuFitter.cpp
 
+from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.FitterCore import FitterCore
 from v2Fitter.Fitter.AbsToyStudier import AbsToyStudier
 from v2Fitter.Fitter.DataReader import DataReader
@@ -168,7 +169,7 @@ def func_dataMCDisc(args):
     for xBin, yBin in itertools.product(range(1, h2_weight.GetNbinsX()+1), range(1, h2_weight.GetNbinsY()+1)):
         iBin = h2_weight.GetBin(xBin, yBin)
         h2_weight.SetBinContent(iBin, h2_sigA_data.GetBinContent(iBin)/h2_sigA_expc.GetBinContent(iBin))
-        print("Weight in bin("+str(xBin)+","+str(yBin)+") = "+str(h2_weight.GetBinContent(iBin)))
+        # print("Weight in bin("+str(xBin)+","+str(yBin)+") = "+str(h2_weight.GetBinContent(iBin)))
 
     accXrecEffHistFile = ROOT.TFile(modulePath + "/data/accXrecEffHists_Run2012.root")
     h2_accXrec = accXrecEffHistFile.Get("h2_accXrec_{0}".format(args.binKey))
@@ -178,8 +179,6 @@ def func_dataMCDisc(args):
         iBin = h2_weight.GetBin(xBin, yBin)
         h2_accXrec_weight.SetBinContent(iBin, h2_accXrec.GetBinContent(iBin) * h2_weight.GetBinContent(iBin))
         h2_accXrec_weight.SetBinError(iBin, h2_accXrec.GetBinError(iBin))
-    h2_accXrec.Print()
-    h2_accXrec_weight.Print()
     p.sourcemanager.update("h2_accXrec_weight", h2_accXrec_weight)
     
     h_accXrec_ProjectionX = accXrecEffHistFile.Get("h_accXrec_{0}_ProjectionX".format(args.binKey))
@@ -226,6 +225,74 @@ def func_dataMCDisc(args):
         p.runSeq()
 
         updateToDB_altShape(args, "dataMCDisc")
+    finally:
+        p.endSeq()
+    accXrecEffHistFile.Close()
+    weightFile.Close()
+    pass
+
+# # Use histogram instead of smooth map.
+def func_dataMCDisc2(args):
+    if not os.path.exists(modulePath + "/systCollection_dataMCDisc.root"):
+        create_histo_data2expt()
+
+    weightFile= ROOT.TFile("systCollection_dataMCDisc.root")
+    h2_sigA_expc = weightFile.Get("h2_sigA_expc")
+    h2_sigA_data = weightFile.Get("h2_sigA_data")
+    h2_weight = h2_sigA_expc.Clone("h2_sigA_expc")
+    h2_weight.Reset("ICESM")
+    for xBin, yBin in itertools.product(range(1, h2_weight.GetNbinsX()+1), range(1, h2_weight.GetNbinsY()+1)):
+        iBin = h2_weight.GetBin(xBin, yBin)
+        h2_weight.SetBinContent(iBin, h2_sigA_data.GetBinContent(iBin)/h2_sigA_expc.GetBinContent(iBin))
+
+    accXrecEffHistFile = ROOT.TFile(modulePath + "/data/accXrecEffHists_Run2012.root")
+    h2_accXrec = accXrecEffHistFile.Get("h2_accXrec_{0}".format(args.binKey))
+    h2_accXrec_weight = h2_accXrec.Clone("h2_accXrec_{0}_weight".format(args.binKey))
+    h2_accXrec_weight.Reset("ICESM")
+    for xBin, yBin in itertools.product(range(1, h2_weight.GetNbinsX()+1), range(1, h2_weight.GetNbinsY()+1)):
+        iBin = h2_weight.GetBin(xBin, yBin)
+        h2_accXrec_weight.SetBinContent(iBin, h2_accXrec.GetBinContent(iBin) * h2_weight.GetBinContent(iBin))
+        h2_accXrec_weight.SetBinError(iBin, h2_accXrec.GetBinError(iBin))
+    accXrec_weight = ROOT.RooDataHist("accXrec_weight", "", ROOT.RooArgList(varCollection.CosThetaL, varCollection.CosThetaK), ROOT.RooFit.Import(h2_accXrec_weight))
+
+    def buildFinalAltDataMC(self):
+        effi_sigAAltDataMC = ROOT.RooHistFunc("effi_sigAAltDataMC", "", ROOT.RooArgSet(varCollection.CosThetaL, varCollection.CosThetaK), accXrec_weight)
+        f_sig2DAltDataMC = ROOT.RooEffProd("f_sig2DAltDataMC", "", self.process.sourcemanager.get('f_sigA'), effi_sigAAltDataMC)
+        f_sig3DAltDataMC = ROOT.RooProdPdf("f_sig3DAltDataMC", "", self.process.sourcemanager.get('f_sigM'), f_sig2DAltDataMC)
+        nSig = self.process.sourcemanager.get("nSig")
+        nBkgComb = self.process.sourcemanager.get("nBkgComb")
+        f_finalAltDataMC = ROOT.RooAddPdf("f_finalAltDataMC", "", ROOT.RooArgList(f_sig3DAltDataMC, self.process.sourcemanager.get('f_bkgComb')), ROOT.RooArgList(nSig, nBkgComb))
+        self.cfg['source']['effi_sigAAltDataMC'] = effi_sigAAltDataMC
+        self.cfg['source']['f_sig2DAltDataMC'] = f_sig2DAltDataMC
+        self.cfg['source']['f_sig3DAltDataMC'] = f_sig3DAltDataMC
+        self.cfg['source']['f_finalAltDataMC'] = f_finalAltDataMC
+
+    setupFinalAltDataMCBuilder = deepcopy(ObjProvider.templateConfig())
+    setupFinalAltDataMCBuilder.update({'name': "finalAltDataMCBuilder"})
+    setupFinalAltDataMCBuilder['obj']['f_finalAltDataMC'] = [buildFinalAltDataMC]
+    finalAltDataMCBuilder = ObjProvider(setupFinalAltDataMCBuilder)
+
+    setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalAltEffiFitter.update({
+        'pdf': 'f_finalAltDataMC',
+        'argAliasInDB': {'afb': 'afb_dataMCDisc2', 'fl': 'fl_dataMCDisc2', 'fs': 'fs_dataMCDisc2', 'as': 'as_dataMCDisc2'},
+        'saveToDB': False,
+    })
+    finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.effiHistReader,
+        finalAltDataMCBuilder,
+        dataCollection.dataReader,
+        finalAltEffiFitter,
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        updateToDB_altShape(args, "dataMCDisc2")
     finally:
         p.endSeq()
     accXrecEffHistFile.Close()
@@ -661,7 +728,7 @@ def func_makeLatexTable(args):
             'syst_randEffi': [r"Limited MC size"],
             'syst_altEffi': [r"Eff.\ mapping"],
             'syst_simMismodel': [r"Simu.\ mismodel"],
-            'syst_altSP': [r"$S$ - $P$ wave interf.\ "],
+            'syst_altSP': [r"$S$--$P$ wave interf.\ "],
             'syst_altBkgCombA': [r"Comb.\ Bkg.\ shape"],
             'syst_vetoJpsiX': [r"$B$ mass range"],
         }
@@ -722,6 +789,9 @@ if __name__ == '__main__':
     subparser_dataMCDisc = subparsers.add_parser('dataMCDisc')
     subparser_dataMCDisc.set_defaults(func=func_dataMCDisc)
 
+    subparser_dataMCDisc2 = subparsers.add_parser('dataMCDisc2')
+    subparser_dataMCDisc2.set_defaults(func=func_dataMCDisc2)
+    
     subparser_randEffi = subparsers.add_parser('randEffi')
     subparser_randEffi.set_defaults(func=func_randEffi)
 
