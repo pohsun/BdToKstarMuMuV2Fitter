@@ -102,7 +102,7 @@ setupFinalFitter.update({
     'createNLLOpt': [ROOT.RooFit.Extended(True), ],
     'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
     'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
-    'argAliasSaveToDB': False,
+    'argAliasWhenSaveToDB': False, # Init with argAlias, save to db without argAlias.
 })
 finalFitter = StdFitter(setupFinalFitter)
 

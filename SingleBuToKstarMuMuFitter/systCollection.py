@@ -207,8 +207,9 @@ def func_dataMCDisc(args):
 
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'afb': 'afb_dataMCDisc', 'fl': 'fl_dataMCDisc', 'fs': 'fs_dataMCDisc', 'as': 'as_dataMCDisc'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc', 'unboundFl': 'unboundFl_dataMCDisc', 'fs': 'fs_dataMCDisc', 'as': 'as_dataMCDisc', 'nSig': 'nSig_dataMCDisc', 'nBkgComb': 'nBkgComb_dataMCDisc'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
 
@@ -275,8 +276,9 @@ def func_dataMCDisc2(args):
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
         'pdf': 'f_finalAltDataMC',
-        'argAliasInDB': {'afb': 'afb_dataMCDisc2', 'fl': 'fl_dataMCDisc2', 'fs': 'fs_dataMCDisc2', 'as': 'as_dataMCDisc2'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc2', 'unboundFl': 'unboundFl_dataMCDisc2', 'fs': 'fs_dataMCDisc2', 'as': 'as_dataMCDisc2', 'nSig': 'nSig_dataMCDisc2', 'nBkgComb': 'nBkgComb_dataMCDisc2'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
 
@@ -306,8 +308,9 @@ def func_randEffi(args):
     setupFinalRandEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalRandEffiFitter.update({
         'FitMinos': [False, ()],
-        'argAliasInDB': {'afb': 'afb_randEffi', 'fl': 'fl_randEffi', 'fs': 'fs_randEffi', 'as': 'as_randEffi'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_randEffi', 'unboundFl': 'unboundFl_randEffi', 'fs': 'fs_randEffi', 'as': 'as_randEffi', 'nSig': 'nSig_randEffi', 'nBkgComb': 'nBkgComb_randEffi'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalRandEffiFitter = StdFitter(setupFinalRandEffiFitter)
 
@@ -425,24 +428,31 @@ def func_randEffi(args):
 
 # Alternate efficiency map
 # # Use uncorrelated efficiency map and compare the difference
-def updateToDB_altShape(args, tag):
+def updateToDB_altShape(args, tag, tagFiducial=None):
     """ Template db entry maker for syst """
-    db = shelve.open(p.dbplayer.odbfile)
-    nominal_fl = unboundFlToFl(db['unboundFl']['getVal'])
-    nominal_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], nominal_fl)
-    db.close()
+    try:
+        db = shelve.open(p.dbplayer.odbfile)
+        if tagFiducial is None:
+            fiducial_fl = unboundFlToFl(db['unboundFl']['getVal'])
+            fiducial_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fiducial_fl)
+        else:
+            fiducial_fl = db["fl_{0}".format(tagFiducial)]['getVal']
+            fiducial_afb = db["afb_{0}".format(tagFiducial)]['getVal']
+    finally:
+        db.close()
+
     afb = p.sourcemanager.get('afb').getVal()
     fl = p.sourcemanager.get('fl').getVal()
     syst_altShape = {}
     syst_altShape['syst_{0}_afb'.format(tag)] = {
-        'getError': math.fabs(afb - nominal_afb),
-        'getErrorHi': math.fabs(afb - nominal_afb),
-        'getErrorLo': -1 * math.fabs(afb - nominal_afb),
+        'getError': math.fabs(afb - fiducial_afb),
+        'getErrorHi': math.fabs(afb - fiducial_afb),
+        'getErrorLo': -1 * math.fabs(afb - fiducial_afb),
     }
     syst_altShape['syst_{0}_fl'.format(tag)] = {
-        'getError': math.fabs(fl - nominal_fl),
-        'getErrorHi': math.fabs(fl - nominal_fl),
-        'getErrorLo': -1 * math.fabs(fl - nominal_fl),
+        'getError': math.fabs(fl - fiducial_fl),
+        'getErrorHi': math.fabs(fl - fiducial_fl),
+        'getErrorLo': -1 * math.fabs(fl - fiducial_fl),
     }
     print(syst_altShape)
 
@@ -453,8 +463,9 @@ def func_altEffi(args):
     """ Typically less than 1% """
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'afb': 'afb_altEffi', 'fl': 'fl_altEffi', 'fs': 'fs_altEffi', 'as': 'as_altEffi'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi', 'unboundFl': 'unboundFl_altEffi', 'fs': 'fs_altEffi', 'as': 'as_altEffi', 'nSig': 'nSig_altEffi', 'nBkgComb': 'nBkgComb_altEffi'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
     def _preFitSteps_altEffi(self):
@@ -482,8 +493,9 @@ def func_altEffi2(args):
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
         'pdf': 'f_finalAltEffi',
-        'argAliasInDB': {'afb': 'afb_altEffi2', 'fl': 'fl_altEffi2', 'fs': 'fs_altEffi2', 'as': 'as_altEffi2'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi2', 'unboundFl': 'unboundFl_altEffi2', 'fs': 'fs_altEffi2', 'as': 'as_altEffi2', 'nSig': 'nSig_altEffi2', 'nBkgComb': 'nBkgComb_altEffi2'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
 
@@ -539,8 +551,9 @@ def func_altSigM(args):
     """ Not used """
     setupFinalAltSigMFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSigMFitter.update({
-        'argAliasInDB': {'afb': 'afb_altSigM', 'fl': 'fl_altSigM', 'fs': 'fs_altSigM', 'as': 'as_altSigM'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altSigM', 'unboundFl': 'unboundFl_altSigM', 'fs': 'fs_altSigM', 'as': 'as_altSigM', 'nSig': 'nSig_altSigM', 'nBkgComb': 'nBkgComb_altSigM'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltSigMFitter = StdFitter(setupFinalAltSigMFitter)
     def _preFitSteps_altSigM(self):
@@ -571,8 +584,9 @@ def func_altSP(args):
     """ Set fs to 5% instead of 0% """
     setupFinalAltSPFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSPFitter.update({
-        'argAliasInDB': {'afb': 'afb_altSP', 'fl': 'fl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altSP', 'unboundFl': 'unboundFl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP', 'nSig': 'nSig_altSP', 'nBkgComb': 'nBkgComb_altSP'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltSPFitter = StdFitter(setupFinalAltSPFitter)
     def _preFitSteps_vetoSmallFs_altSP(self):
@@ -608,8 +622,9 @@ def func_altBkgCombM(args):
     setupFinalAltBkgCombMFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombMFitter.update({
         'pdf': "f_finalAltBkgCombM",
-        'argAliasInDB': {'afb': 'afb_altBkgCombM', 'fl': 'fl_altBkgCombM', 'fs': 'fs_altBkgCombM', 'as': 'as_altBkgCombM'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombM', 'unboundFl': 'unboundFl_altBkgCombM', 'fs': 'fs_altBkgCombM', 'as': 'as_altBkgCombM', 'nSig': 'nSig_altBkgCombM', 'nBkgComb': 'nBkgComb_altBkgCombM'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltBkgCombMFitter = StdFitter(setupFinalAltBkgCombMFitter)
     p.setSequence([
@@ -633,8 +648,9 @@ def func_altBkgCombA(args):
     setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombAFitter.update({
         'pdf': "f_finalAltBkgCombA",
-        'argAliasInDB': {'afb': 'afb_altBkgCombA', 'fl': 'fl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'},
         'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
 
@@ -669,7 +685,8 @@ def func_altFitRange(args):
     fitterCfg = deepcopy(fitCollection.setupFinalFitter)
     fitterCfg.update({
         'data': "dataReader.altFit",
-        'saveToDB': False
+        'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     fitter = StdFitter(fitterCfg)
     p.setSequence([
@@ -703,7 +720,8 @@ def func_vetoJpsiX(args):
     fitterCfg = deepcopy(fitCollection.setupFinalFitter)
     fitterCfg.update({
         'data': "dataReader.altFit_vetoJpsiX",
-        'saveToDB': False
+        'saveToDB': False,
+        'argAliasWhenSaveToDB': True,
     })
     fitter = StdFitter(fitterCfg)
     p.setSequence([

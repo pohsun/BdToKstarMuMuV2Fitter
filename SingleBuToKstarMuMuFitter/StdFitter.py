@@ -29,7 +29,7 @@ class StdFitter(FitterCore):
             'argPattern': [r'^.+$', ],
             'argAliasInDB': {},
             'saveToDB': True,
-            'argAliasSaveToDB': True,
+            'argAliasWhenSaveToDB': True,
         })
         return cfg
 
@@ -89,7 +89,7 @@ class StdFitter(FitterCore):
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
-            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasSaveToDB'] else None)
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasWhenSaveToDB'] else None)
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):
