@@ -25,6 +25,7 @@ constexpr double MUON_MASS = 0.10565837;
 constexpr double KAON_MASS = 0.493677;
 constexpr double PION_MASS = 0.13957018;
 constexpr double KSHORT_MASS = 0.497614;
+constexpr double PROTON_MASS = 0.938272;
 constexpr int BIGNUMBER = 9999;
 
 // user defined variables
@@ -43,6 +44,8 @@ float Mumumass     ;
 float Mumumasserr  ;
 float Kstarmass    ;
 float Kshortmass   ;
+float Lambdabmass  ;
+float Lambdamass   ;
 
 int   nB           ;
 int   BIndex;  // Index in multicandidate ntuple
@@ -64,6 +67,8 @@ float Pimpt        ;
 float Pimeta       ;
 float Pimphi       ;
 float Trkpt        ;
+float Trketa       ;
+float Trkphi       ;
 float Trkdcasigbs  ;
 
 float Dimupt      ;
@@ -97,6 +102,7 @@ float genKPhi      ;
 float genKVtxX     ;
 float genKVtxY     ;
 float genKVtxZ     ;
+float genLambdaMass;//Fake lambda mass
 float genPipPt     ;//pion pair decayed from Kshort
 float genPipEta    ;
 float genPipPhi    ;
@@ -136,6 +142,8 @@ void ResetEventContent()
     Mumumasserr    = 0;
     Kstarmass      = 0;
     Kshortmass     = 0;
+    Lambdamass     = 0;
+    Lambdabmass    = 0;
 
     nB             = 0;
     BIndex         = -1;
@@ -157,6 +165,8 @@ void ResetEventContent()
     Pimphi         = 0;
     Pipphi         = 0;
     Trkpt          = 0;
+    Trketa         = 0;
+    Trkphi         = 0;
     Trkdcasigbs    = 0;
 
     Dimupt         = 0;
@@ -195,6 +205,7 @@ void ResetEventContent()
     genKVtxX = 0;
     genKVtxY = 0;
     genKVtxZ = 0;
+    genLambdaMass = 0;
     genPipPt = 0;//pion pair decayed from Kshort
     genPipEta= 0;
     genPipPhi= 0;
@@ -292,6 +303,8 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
         fOutputTree_->Branch("Mumumasserr"   , &Mumumasserr   , "Mumumasserr/F");
         fOutputTree_->Branch("Kstarmass"     , &Kstarmass     , "Kstarmass/F");
         fOutputTree_->Branch("Kshortmass"    , &Kshortmass    , "Kshortmass/F");
+        fOutputTree_->Branch("Lambdamass"    , &Lambdamass    , "Lambdamass/F");
+        fOutputTree_->Branch("Lambdabmass"   , &Lambdabmass   , "Lambdabmass/F");
 
         // Minimal for optimization and optimized cut
         fOutputTree_->Branch("nB"            , &nB            , "Nb/I");
@@ -314,6 +327,8 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
         fOutputTree_->Branch("Pipeta"        , &Pipeta        , "Pipeta/F");
         fOutputTree_->Branch("Pipphi"        , &Pipphi        , "Pipphi/F");
         fOutputTree_->Branch("Trkpt"         , &Trkpt         , "Trkpt/F");
+        fOutputTree_->Branch("Trketa"        , &Trketa        , "Trketa/F");
+        fOutputTree_->Branch("Trkphi"        , &Trkphi        , "Trkphi/F");
         fOutputTree_->Branch("Trkdcasigbs"   , &Trkdcasigbs   , "Trkdcasigbs/F");
 
         fOutputTree_->Branch("Dimupt"        , &Dimupt        , "Dimupt/F");
@@ -367,6 +382,7 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
             fOutputTree_->Branch("genKVtxX"     , &genKVtxX     , "genKVtxX/F");
             fOutputTree_->Branch("genKVtxY"     , &genKVtxY     , "genKVtxY/F");
             fOutputTree_->Branch("genKVtxZ"     , &genKVtxZ     , "genKVtxZ/F");
+            fOutputTree_->Branch("genLambdaMass", &genLambdaMass, "genLambdaMass/F");// As a fake K
             fOutputTree_->Branch("genPipPt"     , &genPipPt     , "genPipPt/F");
             fOutputTree_->Branch("genPipEta"    , &genPipEta    , "genPipEta/F");
             fOutputTree_->Branch("genPipPhi"    , &genPipPhi    , "genPipPhi/F");
@@ -466,7 +482,8 @@ int SingleBuToKstarMuMuSelector::SelectB()
 
 void SingleBuToKstarMuMuSelector::UpdateBranchData()
 {//{{{
-    TLorentzVector B_4vec, Kst_4vec, Mup_4vec, Mum_4vec, Tk_4vec, K_4vec, Pip_4vec, Pim_4vec, buff1, buff2, buff3;
+    TLorentzVector B_4vec, Kst_4vec, Mup_4vec, Mum_4vec, Tk_4vec, K_4vec, Pip_4vec, Pim_4vec;
+    TLorentzVector buff1, buff2, buff3;
     B_4vec.SetXYZM(bpx->at(BIndex),bpy->at(BIndex),bpz->at(BIndex),bmass->at(BIndex));
     Kst_4vec.SetXYZM(kspx->at(BIndex)+trkpx->at(BIndex),kspy->at(BIndex)+trkpy->at(BIndex),kspz->at(BIndex)+trkpz->at(BIndex),kstarmass->at(BIndex));
     Mup_4vec.SetXYZM(muppx->at(BIndex),muppy->at(BIndex),muppz->at(BIndex),MUON_MASS);
@@ -484,6 +501,17 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Mumumasserr = mumumasserr->at(BIndex);
     Kstarmass = kstarmass->at(BIndex);
     Kshortmass = K_4vec.Mag();
+    
+    // Lambda and LambdaB
+    if (Pip_4vec.Pt() > Pim_4vec.Pt()){
+        buff1.SetXYZM(pippx->at(BIndex),pippy->at(BIndex),pippz->at(BIndex),PROTON_MASS);
+        buff2 = Pim_4vec;
+    }else{
+        buff1.SetXYZM(pimpx->at(BIndex),pimpy->at(BIndex),pimpz->at(BIndex),PROTON_MASS);
+        buff2 = Pip_4vec;
+    }
+    Lambdamass = (buff1+buff2+Tk_4vec).M();
+    Lambdabmass = (buff1+buff2+Tk_4vec+Mup_4vec+Mum_4vec).M();
 
     Bchg = bchg->at(BIndex);
     Bpt = B_4vec.Pt();
@@ -502,7 +530,9 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Pimpt = Pim_4vec.Pt();
     Pimeta = Pim_4vec.Eta();
     Pimphi = Pim_4vec.Phi();
-    Trkpt = trkpt->at(BIndex);
+    Trkpt = Tk_4vec.Pt();
+    Trketa = Tk_4vec.Eta();
+    Trkphi = Tk_4vec.Phi();
     Trkdcasigbs = fabs( trkdcabs->at(BIndex)/trkdcabserr->at(BIndex) );
 
     buff1 = B_4vec;
@@ -552,6 +582,16 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC(bool keepMinimum=false)
     genMumPt     = genMum_4vec.Pt();
     genMumEta    = genMum_4vec.Eta();
     genMumPhi    = genMum_4vec.Phi();
+    
+    // Lambda and LambdaB
+    if (genPip_4vec.Pt() > genPim_4vec.Pt()){
+        buff1.SetXYZM(genpippx,genpippy,genpippz,PROTON_MASS);
+        buff2 = genPim_4vec;
+    }else{
+        buff1.SetXYZM(genpimpx,genpimpy,genpimpz,PROTON_MASS);
+        buff2 = genPip_4vec;
+    }
+    genLambdaMass = (buff1+buff2+genTk_4vec).M();
 
     buff1 = genB_4vec;
     buff2 = genMup_4vec+genMum_4vec;

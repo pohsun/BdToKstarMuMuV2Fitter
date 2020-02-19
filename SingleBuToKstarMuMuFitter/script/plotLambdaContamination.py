@@ -27,6 +27,13 @@ float Define_KshortMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, fl
     pip.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PION_MASS);
     return (pim+pip).Mag();
 }
+float Define_KstarMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, float Pimeta, float Pimphi, float Trkpt, float Trketa, float Trkphi){
+    TLorentzVector pip, pim, trk;
+    pim.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PION_MASS);
+    pip.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PION_MASS);
+    trk.SetPtEtaPhiM(Trkpt, Trketa, Trkphi, PION_MASS);
+    return (pim+pip+trk).Mag();
+}
 float Define_LambdaBMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, float Pimeta, float Pimphi, float Dimupt, float Dimueta, float Dimuphi, float Mumumass){
     TLorentzVector proton, pion;
     if (Pippt > Pimpt){
@@ -54,6 +61,7 @@ if __name__ == '__main__':
         .Filter(anaSetup.cuts[-1])\
         .Define("LambdaMass", "Define_LambdaMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
         .Define("KshortMass", "Define_KshortMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
+        .Define("KstarMass", "Define_KstarMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Trkpt, Trketa, Trkphi)")\
         .Define("LambdaBMass", "Define_LambdaBMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")
     df_LambdaSR = df.Filter("LambdaMass>1.11 && LambdaMass<1.12")
     df_vetoLambdaSR = df.Filter("LambdaMass<1.11 || LambdaMass>1.12")
@@ -62,6 +70,14 @@ if __name__ == '__main__':
     hists = {}
     hists['h_LambdaMass_bin0'] = {
         'hist': df.Histo1D(("h_LambdaMass_bin0", "", 50, 1.0, 1.5), "LambdaMass"),
+        'xTitle': "m_{p#pi} [GeV]"
+    }
+    hists['h_LambdaMass_SR_bin0'] = {
+        'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_LambdaMass_SR_bin0", "", 50, 1.0, 1.5), "LambdaMass"),
+        'xTitle': "m_{p#pi} [GeV]"
+    }
+    hists['h_LambdaMass_SB_bin0'] = {
+        'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_LambdaMass_SB_bin0", "", 50, 1.0, 1.5), "LambdaMass"),
         'xTitle': "m_{p#pi} [GeV]"
     }
     hists['h_LambdaBMass_LambdaSR_bin0'] = {
@@ -73,6 +89,21 @@ if __name__ == '__main__':
     hists['h_KshortMass_VetoLambda1p3x_bin0'] = {
         'hist': df_vetoLambda1330.Histo1D(("h_KshortMass_VetoLambda1p3x_bin0", "", 30, 0.468, 0.528), "KshortMass"),
         'xTitle': "m_{#pi#pi} [GeV]"}
+    hists['h_KshortMass_SR_bin0'] = {
+        'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_KshortMass_SR_bin0", "", 30, 0.468, 0.528), "KshortMass"),
+        'xTitle': "m_{#pi#pi} [GeV]"}
+    hists['h_KshortMass_SB_bin0'] = {
+        'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_KshortMass_SB_bin0", "", 30, 0.468, 0.528), "KshortMass"),
+        'xTitle': "m_{#pi#pi#pi} [GeV]"}
+    hists['h_KstarMass_bin0'] = {
+        'hist': df.Histo1D(("h_KstarMass_bin0", "", 30, 0.742, 1.042), "KstarMass"),
+        'xTitle': "m_{#pi^{+}#pi^{-}#pi^{#pm}} [GeV]"}
+    hists['h_KstarMass_SR_bin0'] = {
+        'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_KstarMass_SR_bin0", "", 30, 0.742, 1.042), "KstarMass"),
+        'xTitle': "m_{#pi^{+}#pi^{-}#pi^{#pm}} [GeV]"}
+    hists['h_KstarMass_SB_bin0'] = {
+        'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_KstarMass_SB_bin0", "", 30, 0.742, 1.042), "KstarMass"),
+        'xTitle': "m_{#pi^{+}#pi^{-}#pi^{#pm}} [GeV]"}
     hists['h_Bmass_LambdaSR_bin0'] = {
         'hist': df_LambdaSR.Histo1D(("h_Bmass_LambdaSR_bin0", "", 26, 4.76, 5.80), "Bmass"),
         'xTitle': "m_{B} [GeV]"}
