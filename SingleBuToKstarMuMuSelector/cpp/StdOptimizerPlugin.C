@@ -5,6 +5,8 @@
 #include "ROOT/RVec.hxx"
 #include "TLorentzVector.h"
 
+// constexpr int BIGNUMBER{9999};
+
 ROOT::VecOps::RVec<int> DefineBit_HasGoodDimuon(
     const ROOT::VecOps::RVec<bool> mumisgoodmuon,
     const ROOT::VecOps::RVec<bool> mupisgoodmuon,
@@ -113,6 +115,30 @@ ROOT::VecOps::RVec<int> DefineBit_kstarmass(const ROOT::VecOps::RVec<double> &ks
 ROOT::VecOps::RVec<int> DefineBit_bmass(const ROOT::VecOps::RVec<double> &bmass){
     auto checker = [](const double &p) -> int {return (p>4.5 && p<6.0) ? 1 : 0;};
     return ROOT::VecOps::Map(bmass, checker);
+}
+
+ROOT::VecOps::RVec<int> DefineBit_lambdaVeto(
+        const ROOT::VecOps::RVec<double> &pippx,
+        const ROOT::VecOps::RVec<double> &pippy,
+        const ROOT::VecOps::RVec<double> &pippz,
+        const ROOT::VecOps::RVec<double> &pimpx,
+        const ROOT::VecOps::RVec<double> &pimpy,
+        const ROOT::VecOps::RVec<double> &pimpz){
+    ROOT::VecOps::RVec<int> output(pippx.size(), -BIGNUMBER);
+    TLorentzVector pi_4vec, p_4vec;
+    auto calc_pt = [](const double &px, const double &py) -> double {return sqrt(pow(px,2)+pow(py,2));};
+    auto isLambdaVeto = [](double m) -> int {return (m<1.10 || m >1.13);};
+    for(unsigned int tkIndex =0; tkIndex < pippx.size(); tkIndex++){
+        if (calc_pt(pippx.at(tkIndex), pippy.at(tkIndex)) > calc_pt(pimpx.at(tkIndex), pimpy.at(tkIndex))){
+            p_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), 0.938272);
+            pi_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), 0.13957018);
+        }else{
+            p_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), 0.938272);
+            pi_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), 0.13957018);
+        }
+        output.at(tkIndex) = isLambdaVeto((pi_4vec+p_4vec).M());
+    }
+    return output;
 }
 
 ROOT::VecOps::RVec<double> Define_cosThetaL(
