@@ -18,6 +18,7 @@ def Define_AllCheckBits(df):
         .Define("bit_bmass"        , "DefineBit_bmass(bmass)")\
         .Define("bit_resRej", "((mumumass>(3.096916+3.5*mumumasserr))+(mumumass<(3.096916-5.5*mumumasserr)))*((mumumass>(3.686109+3.5*mumumasserr))+(mumumass<(3.686109-3.5*mumumasserr)))>0")\
         .Define("bit_antiRad", "(abs(bmass-mumumass-2.182)>0.09)*(abs(bmass-mumumass-1.593)>0.03)>0")\
+        .Define("bit_lambdaVeto", "DefineBit_lambdaVeto(pippx, pippy, pippz, pimpx, pimpy, pimpz)")\
         .Define("kspt", "sqrt(kspx*kspx + kspy*kspy)")\
         .Define("blsbssig", "blsbs/blsbserr")\
         .Define("trkdcabssig", "trkdcabs/trkdcabserr")\

@@ -7,11 +7,13 @@ import ROOT
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 import SingleBuToKstarMuMuSelector.StdOptimizerBase as StdOptimizerBase
 
+
+# Remark: additional to the reversed resRej and antiRad, lambdaVeto is performed for better check in jpsi CR.
 def create_histo(kwargs):
     ofname = kwargs.get('ofname', "plotDataMCValidation.root")
     iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*.root"])
-    # wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)") # Local sideband
-    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.1) - (0.2/0.84)*(bmass>4.76)*(bmass<5.18) - (0.2/0.84)*(bmass>5.38)*(bmass<5.80)") # Full sideband
+    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)") # Local sideband
+    # wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.1) - (0.2/0.84)*(bmass>4.76)*(bmass<5.18) - (0.2/0.84)*(bmass>5.38)*(bmass<5.80)") # Full sideband
 
     tree = ROOT.TChain("tree")
     for tr in iTreeFiles:
@@ -20,14 +22,14 @@ def create_histo(kwargs):
     df = ROOT.RDataFrame(tree).Filter("nb>0", "At least one B candidate")
     aug_df = StdOptimizerBase.Define_AllCheckBits(df)\
         .Define("weight", wgtString)\
-        .Define("PassAll", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
-        .Define("PassAllExcept_trkpt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * 1 * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
-        .Define("PassAllExcept_trkdcabssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * 1 * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
-        .Define("PassAllExcept_kspt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * 1 * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
-        .Define("PassAllExcept_blsbssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * 1 * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
-        .Define("PassAllExcept_bcosalphabs2d", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * 1 * bit_bvtxcl * bit_kstarmass")\
-        .Define("PassAllExcept_bvtxcl", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * 1 * bit_kstarmass")\
-        .Define("PassAllExcept_kstarmass", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * 1")
+        .Define("PassAll", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
+        .Define("PassAllExcept_trkpt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * 1 * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass  * bit_lambdaVeto")\
+        .Define("PassAllExcept_trkdcabssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * 1 * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
+        .Define("PassAllExcept_kspt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * 1 * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
+        .Define("PassAllExcept_blsbssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * 1 * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
+        .Define("PassAllExcept_bcosalphabs2d", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * 1 * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
+        .Define("PassAllExcept_bvtxcl", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * 1 * bit_kstarmass * bit_lambdaVeto")\
+        .Define("PassAllExcept_kstarmass", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * 1 * bit_lambdaVeto")
 
     h_Trkpt = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkpt)")\
@@ -115,6 +117,11 @@ def plot_histo():
     fin_mc = ROOT.TFile("plotDataMCValidation_jpsi.root")
 
     pConfig = {
+        'h_Bmass': {
+            'label': "Bmass",
+            'xTitle': "m_{B^{+}} [GeV]",
+            'yTitle': None,
+        },
         'h_Bpt': {
             'label': "Bpt",
             'xTitle': "B^{+} p_{T} [GeV]",

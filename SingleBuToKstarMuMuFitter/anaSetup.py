@@ -108,6 +108,7 @@ cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.182)>0.09 && abs(Bmass-Mumumass-1.593)>0.03"
+cut_lambdaVeto = "Lambdamass > 1.10 && Lambdamass < 1.13"
 cuts = [
     cut_passTrigger,
     cut_kshortWindow,

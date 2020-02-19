@@ -14,18 +14,22 @@ Mumumass = RooRealVar("Mumumass", "m_{#mu#mu} [GeV]", 0., 10.)
 Mumumasserr = RooRealVar("Mumumasserr", "Error of m_{#mu#mu} [GeV]", 0., 10.)
 Kstarmass = RooRealVar("Kstarmass", "m_{K^{*}} [GeV]", 0, 1.5)
 Kshortmass = RooRealVar("Kshortmass", "m_{K_{S}} [GeV]", 0.427, 0.577)
+Lambdamass = RooRealVar("Lambdamass", "m_{p#pi} [GeV]", 1., 1.5)
+Lambdabmass = RooRealVar("Lambdabmass", "m_{p#pi} [GeV]", 4.76, 5.80)
 Q2 = RooRealVar("Q2", "q^{2} [GeV^{2}]", 0.5, 20.)
 Triggers = RooRealVar("Triggers", "", 0, 100)
 dataArgs = RooArgSet(
     Bmass,
     CosThetaK,
-    CosThetaL,
-    Mumumass,
-    Mumumasserr,
-    Kstarmass,
-    Kshortmass,
-    Q2,
-    Triggers)
+    CosThetaL)
+dataArgs.add(Mumumass)
+dataArgs.add(Mumumasserr)
+dataArgs.add(Kstarmass)
+dataArgs.add(Kshortmass)
+dataArgs.add(Lambdamass)
+dataArgs.add(Lambdabmass)
+dataArgs.add(Q2)
+dataArgs.add(Triggers)
 
 genCosThetaK = RooRealVar("genCosThetaK", "cos#theta_{K}", -1., 1.)
 genCosThetaL = RooRealVar("genCosThetaL", "cos#theta_{l}", -1., 1.)

@@ -15,7 +15,7 @@ import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Kshortmass, dataArgsGEN
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cuts_antiResVeto, cut_kshortWindow, modulePath
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cuts_antiResVeto, cut_kshortWindow, cut_lambdaVeto, modulePath
 
 import ROOT
 from ROOT import TChain
@@ -33,13 +33,15 @@ CFG.update({
 })
 
 # dataReader
-def customizeOne(self, targetBMassRegion=None, extraCuts=None):
+def customizeOne(self, targetBMassRegion=None, extraCuts="1"):
     """Define datasets with arguments."""
     if targetBMassRegion is None:
         targetBMassRegion = []
     if not self.process.cfg['binKey'] in q2bins.keys():
         self.logger.logERROR("Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
         raise ValueError
+    if self.process.cfg['binKey'] in ['jpsi', 'psi2s']:
+        extraCuts =  "({0})&&({1})".format(extraCuts, cut_lambdaVeto)
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
@@ -52,7 +54,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                         val['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts[-1],
-                        "1" if not extraCuts else extraCuts,
+                        extraCuts,
                     )
                 )
             )
@@ -66,7 +68,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                         bMassRegions['Fit']['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts_noResVeto,
-                        "1" if not extraCuts else extraCuts,
+                        extraCuts,
                     )
                 )
             )
@@ -79,7 +81,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts=None):
                         bMassRegions['Fit']['cutString'],
                         q2bins[self.process.cfg['binKey']]['cutString'],
                         cuts_antiResVeto,
-                        "1" if not extraCuts else extraCuts,
+                        extraCuts,
                     )
                 )
             )
