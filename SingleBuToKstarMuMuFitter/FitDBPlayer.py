@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import os
+import sys
 import shutil
 import shelve
 import math
@@ -34,8 +35,25 @@ class FitDBPlayer(Service):
         self.odbfile = None
 
     @staticmethod
+    def PrintDB(dbfile):
+        def print_dict(dictionary, ident = '', braces=1):
+            """ Recursively prints nested dictionaries. Stolen from http://code.activestate.com/recipes/578094-recursively-print-nested-dictionaries/"""
+            for key, value in dictionary.items():
+                if isinstance(value, dict):
+                    print('%s%s%s%s' %(ident,braces*'[',key,braces*']'))
+                    print_dict(value, ident+'  ', braces+1)
+                else:
+                    print(ident+'%s = %s' %(key, value))
+        try:
+            db = shelve.open(dbfile)
+            print_dict(db)
+        finally:
+            db.close()
+        pass
+
+    @staticmethod
     def MergeDB(dblist, mode="Overwrite", outputName="MergedDB.db"):
-        """"""
+        """TODO"""
         if mode not in ["Overwrite", "Print", "Skip"]:
             print("Unknown mode for DB merging process. Take default mode.")
             mode = "Overwrite"
@@ -198,3 +216,7 @@ class FitDBPlayer(Service):
     def _beginSeq(self):
         # All fitting steps MUST share the same input db file to ensure consistency of output db file.
         self.resetDB(False)
+
+if __name__ == "__main__":
+    for iDB in [ s for s in sys.argv if s.endswith(".db")]:
+        FitDBPlayer.PrintDB(iDB)
