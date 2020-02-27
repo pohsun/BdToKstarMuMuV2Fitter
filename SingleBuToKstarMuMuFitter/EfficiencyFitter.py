@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# vim: set sw=4 ts=4 fdm=indent fdl=2 ft=python et:
+# vim: set sw=4 ts=4 fdm=indent fdl=0 fdn=2 ft=python et:
 
 from v2Fitter.Fitter.FitterCore import FitterCore
 
 import SingleBuToKstarMuMuFitter.cpp
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins
-from SingleBuToKstarMuMuFitter.StdProcess import setStyle
+from SingleBuToKstarMuMuFitter.StdProcess import setStyle, isDEBUG
 from SingleBuToKstarMuMuFitter.varCollection import CosThetaL, CosThetaK
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 
@@ -14,9 +14,12 @@ import re
 import itertools
 
 import ROOT
+setStyle()
 
 class EfficiencyFitter(FitterCore):
     """Implementation to standard efficiency fitting procdeure to BuToKstarMuMu angular analysis"""
+    canvas = ROOT.TCanvas()
+    latex = ROOT.TLatex()
 
     @classmethod
     def templateConfig(cls):
@@ -46,6 +49,7 @@ class EfficiencyFitter(FitterCore):
         args = self.pdf.getParameters(self.data)
         FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
         self.ToggleConstVar(args, isConst=True)
+        drawPreFitPlots = True if isDEBUG else False
 
         # Disable xTerm correction and fit to 1-D
         args.find('hasXTerm').setVal(0)
@@ -59,6 +63,16 @@ class EfficiencyFitter(FitterCore):
             self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
             pdf.chi2FitTo(hdata, ROOT.RooLinkedList())
             self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
+
+            # Draw runtime 1-D comparison
+            if drawPreFitPlots:
+                self.canvas.cd()
+                frame = var.frame()
+                hdata.plotOn(frame)
+                pdf.plotOn(frame)
+                frame.Draw()
+                self.canvas.Update()
+                self.canvas.Print("DEBUG_EfficiencyFitter_preFitSteps_{0}.pdf".format(var.GetName()))
 
         args.find('effi_norm').setConstant(False)
         self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
@@ -115,9 +129,7 @@ class EfficiencyFitter(FitterCore):
 
         # Plot comparison between fitting result to data
         if not self.cfg.get('noDraw', False):
-            setStyle()
-            canvas = ROOT.TCanvas()
-            latex = ROOT.TLatex()
+            self.canvas.cd()
             h2_effi_2D_comp = fitter.GetRatio()
             h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
             h2_effi_2D_comp.SetMinimum(0)
@@ -126,9 +138,9 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_comp.SetTitleOffset(1.8, "Y")
             h2_effi_2D_comp.SetTitleOffset(1.5, "Z")
             h2_effi_2D_comp.Draw("LEGO2")
-            latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
-            canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
+            self.canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
             # Plot numerator and denominator
             compTEXTScale = 1e6
@@ -147,8 +159,8 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_compText.SetMarkerColor(2)
             h2_effi_2D_compText.SetBarOffset(0.1)
             h2_effi_2D_compText.Draw("TEXT SAME")
-            latex.DrawLatexNDC(.19, .96, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.latex.DrawLatexNDC(.19, .96, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
             h2_accXrec.Scale(1. / compTEXTScale)
 
             # Plot pull between fitting result to data
@@ -158,17 +170,17 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_pull.SetMaximum(3.)
             h2_effi_2D_pull.SetFillColor(42)
             h2_effi_2D_pull.Draw("BOX1 TEXT")
-            latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
-            canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+            self.canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
             h_effi_pull.Fit("gaus", "", "", -2., 2.)
             h_effi_pull.SetXTitle("Pull")
             h_effi_pull.SetYTitle("# of bins")
             h_effi_pull.Draw("")
-            latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
-            canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+            self.canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
         
         # Check if efficiency is positive definite
         f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)

@@ -57,7 +57,7 @@ def create_histo_data2expt(kwargs=None):
         "weight"
     )
 
-    # (Unfiltered) MC
+    # (Unfiltered) MC(GEN)
     tree_expt = ROOT.TChain("tree")
     tree_expt.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/unfilteredJPSI_genonly/*.root")
     df_expt = ROOT.RDataFrame(tree_expt).Define('genWeight', "1").Filter("genQ2 > 8.68 && genQ2 < 10.09")
@@ -73,7 +73,7 @@ def create_histo_data2expt(kwargs=None):
         "genWeight"
     )
 
-    # Efficiency
+    # Efficiency from MC(GEN+SIM)
     effiFile = ROOT.TFile(modulePath + "/input/wspace_bin2.root")
     effiWspace = effiFile.Get("wspace.bin2")
     effi_sigA = effiWspace.function("effi_sigA")
@@ -113,8 +113,8 @@ def create_histo_data2expt(kwargs=None):
     for iBin in range(1, 20+1):
         h_cosl_expc.SetBinContent(iBin, ptr_h_CosThetaL_mc.GetValue().GetBinContent(iBin) * h_effi_cosl.GetBinContent(iBin))
         h_cosK_expc.SetBinContent(iBin, ptr_h_CosThetaK_mc.GetValue().GetBinContent(iBin) * h_effi_cosK.GetBinContent(iBin))
-    h_cosl_expc.Scale(ptr_h_CosThetaL_data.Integral()/h_cosl_expc.Integral())
-    h_cosK_expc.Scale(ptr_h_CosThetaK_data.Integral()/h_cosK_expc.Integral())
+    h_cosl_expc.Scale(ptr_h_CosThetaL_data.Integral(3,18)/h_cosl_expc.Integral(3,18))
+    h_cosK_expc.Scale(ptr_h_CosThetaK_data.Integral(3,18)/h_cosK_expc.Integral(3,18))
 
     # Ratio
     h2_sigA_ratio = h2_effi_sigA.Clone("h2_sigA_ratio")
@@ -160,6 +160,8 @@ def func_dataMCDisc(args):
         create_histo_data2expt()
 
     weightFile= ROOT.TFile("systCollection_dataMCDisc.root")
+    h_CosThetaL = weightFile.Get("h_CosThetaL")
+    h_CosThetaK = weightFile.Get("h_CosThetaK")
     h_cosl_ratio = weightFile.Get("h_cosl_ratio")
     h_cosK_ratio = weightFile.Get("h_cosK_ratio")
     h2_sigA_expc = weightFile.Get("h2_sigA_expc")
@@ -178,7 +180,9 @@ def func_dataMCDisc(args):
     for xBin, yBin in itertools.product(range(1, h2_weight.GetNbinsX()+1), range(1, h2_weight.GetNbinsY()+1)):
         iBin = h2_weight.GetBin(xBin, yBin)
         h2_accXrec_weight.SetBinContent(iBin, h2_accXrec.GetBinContent(iBin) * h2_weight.GetBinContent(iBin))
-        h2_accXrec_weight.SetBinError(iBin, h2_accXrec.GetBinError(iBin))
+        h2_accXrec_weight.SetBinError(iBin, h2_accXrec.GetBinContent(iBin) / math.sqrt(h2_sigA_data.GetBinContent(iBin)))
+        # h2_accXrec_weight.SetBinError(iBin, h2_accXrec.GetBinError(iBin)) # This is incorrect. The data-MC ratio has large error from data and it is dominent.
+
     p.sourcemanager.update("h2_accXrec_weight", h2_accXrec_weight)
     
     h_accXrec_ProjectionX = accXrecEffHistFile.Get("h_accXrec_{0}_ProjectionX".format(args.binKey))
@@ -190,8 +194,8 @@ def func_dataMCDisc(args):
     for iBin in range(1, 20+1):
         h_accXrec_ProjectionX_weight.SetBinContent(iBin, h_accXrec_ProjectionX.GetBinContent(iBin) * h_cosl_ratio.GetBinContent(iBin))
         h_accXrec_ProjectionY_weight.SetBinContent(iBin, h_accXrec_ProjectionY.GetBinContent(iBin) * h_cosK_ratio.GetBinContent(iBin))
-        h_accXrec_ProjectionX_weight.SetBinError(iBin, h_accXrec_ProjectionX.GetBinError(iBin))
-        h_accXrec_ProjectionY_weight.SetBinError(iBin, h_accXrec_ProjectionY.GetBinError(iBin))
+        h_accXrec_ProjectionX_weight.SetBinError(iBin, h_accXrec_ProjectionX_weight.GetBinContent(iBin)/math.sqrt(h_CosThetaL.GetBinError(iBin)))
+        h_accXrec_ProjectionY_weight.SetBinError(iBin, h_accXrec_ProjectionY_weight.GetBinContent(iBin)/math.sqrt(h_CosThetaK.GetBinError(iBin)))
     p.sourcemanager.update("h_accXrec_ProjectionX_weight", h_accXrec_ProjectionX_weight)
     p.sourcemanager.update("h_accXrec_ProjectionY_weight", h_accXrec_ProjectionY_weight)
 
@@ -200,8 +204,8 @@ def func_dataMCDisc(args):
         'hdata': "h2_accXrec_weight",
         'dataX': "h_accXrec_ProjectionX_weight",
         'dataY': "h_accXrec_ProjectionY_weight",
-        'noDraw': True,
-        'saveToDB': False
+        'noDraw': False, # True in uncertainty estimation.
+        'saveToDB': False, # No overwrite default values.
     })
     weightEffiFitter = EfficiencyFitter(setupWeightEffiFitter)
 
@@ -300,6 +304,8 @@ def func_dataMCDisc2(args):
     accXrecEffHistFile.Close()
     weightFile.Close()
     pass
+
+# # Fit the efficiency histogram produced by generator shape and sub
 
 # Limited MC size
 # # Determinded by varying efficiency map with FitDBPlayer.fluctuateFromDB.
@@ -457,6 +463,7 @@ def updateToDB_altShape(args, tag, tagFiducial=None):
     print(syst_altShape)
 
     if args.updateDB:
+        print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
         FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
 
 def func_altEffi(args):
