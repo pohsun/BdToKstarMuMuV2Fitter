@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim: set sts=4 sw=4 fdm=indent fdl=1 fdn=3 ft=python et:
+# vim: set sts=4 sw=4 fdm=indent fdl=0 fdn=2 ft=python et:
 
 import os
 
@@ -19,53 +19,54 @@ def create_histo(kwargs):
     for tr in iTreeFiles:
         tree.Add(tr)
 
+    hasLambdaVeto = "1" # 1 or bit_lambdaVeto
     df = ROOT.RDataFrame(tree).Filter("nb>0", "At least one B candidate")
     aug_df = StdOptimizerBase.Define_AllCheckBits(df)\
         .Define("weight", wgtString)\
-        .Define("PassAll", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
-        .Define("PassAllExcept_trkpt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * 1 * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass  * bit_lambdaVeto")\
-        .Define("PassAllExcept_trkdcabssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * 1 * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
-        .Define("PassAllExcept_kspt", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * 1 * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
-        .Define("PassAllExcept_blsbssig", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * 1 * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
-        .Define("PassAllExcept_bcosalphabs2d", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * 1 * bit_bvtxcl * bit_kstarmass * bit_lambdaVeto")\
-        .Define("PassAllExcept_bvtxcl", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * 1 * bit_kstarmass * bit_lambdaVeto")\
-        .Define("PassAllExcept_kstarmass", "(1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * 1 * bit_lambdaVeto")
+        .Define("PassAll"                     ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_trkpt"         ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * 1 * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_trkdcabssig"   ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * 1 * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_kspt"          ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * 1 * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_blsbssig"      ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * 1 * bit_bcosalphabs2d * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_bcosalphabs2d" ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * 1 * bit_bvtxcl * bit_kstarmass")\
+        .Define("PassAllExcept_bvtxcl"        ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * 1 * bit_kstarmass")\
+        .Define("PassAllExcept_kstarmass"     ,hasLambdaVeto + " * (1-bit_resRej) * (1-bit_antiRad) * bit_HasGoodDimuon * bit_trkpt * bit_trkdcabssig * bit_kspt * bit_blsbssig * bit_bcosalphabs2d * bit_bvtxcl * 1")
 
     h_Trkpt = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkpt)")\
         .Define("BestCand_trkpt", "Define_GetValAtArgMax(trkpt, bvtxcl, PassAllExcept_trkpt)")\
         .Define("BestCand_trkptW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_trkpt)")\
-        .Histo1D(("h_Trkpt", "", 50, 0, 5), "BestCand_trkpt", "BestCand_trkptW")
+        .Histo1D(("h_Trkpt", "", 20, 0, 5), "BestCand_trkpt", "BestCand_trkptW")
 
     h_Bvtxcl = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_bvtxcl)")\
         .Define("BestCand_bvtxcl", "Define_GetValAtArgMax(bvtxcl, bvtxcl, PassAllExcept_bvtxcl)")\
         .Define("BestCand_bvtxclW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_bvtxcl)")\
-        .Histo1D(("h_Bvtxcl", "", 100, 0, 1), "BestCand_bvtxcl", "BestCand_bvtxclW")
+        .Histo1D(("h_Bvtxcl", "", 20, 0, 1), "BestCand_bvtxcl", "BestCand_bvtxclW")
 
     h_Blxysig = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_blsbssig)")\
         .Define("BestCand_blsbssig", "Define_GetValAtArgMax(blsbssig, bvtxcl, PassAllExcept_blsbssig)")\
         .Define("BestCand_blsbssigW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_blsbssig)")\
-        .Histo1D(("h_Blxysig", "", 100, 0, 100), "BestCand_blsbssig", "BestCand_blsbssigW")
+        .Histo1D(("h_Blxysig", "", 20, 0, 100), "BestCand_blsbssig", "BestCand_blsbssigW")
 
     h_Bcosalphabs2d = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_bcosalphabs2d)")\
         .Define("BestCand_bcosalphabs2d", "Define_GetValAtArgMax(bcosalphabs2d, bvtxcl, PassAllExcept_bcosalphabs2d)")\
         .Define("BestCand_bcosalphabs2dW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_bcosalphabs2d)")\
-        .Histo1D(("h_Bcosalphabs2d", "", 70, 0.9993, 1), "BestCand_bcosalphabs2d", "BestCand_bcosalphabs2dW")
+        .Histo1D(("h_Bcosalphabs2d", "", 35, 0.9993, 1), "BestCand_bcosalphabs2d", "BestCand_bcosalphabs2dW")
 
     h_Trkdcabssig = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkdcabssig)")\
         .Define("BestCand_trkdcabssig", "Define_GetValAtArgMax(trkdcabssig, bvtxcl, PassAllExcept_trkdcabssig)")\
         .Define("BestCand_trkdcabssigW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_trkdcabssig)")\
-        .Histo1D(("h_Trkdcabssig", "", 100, 0, 50), "BestCand_trkdcabssig", "BestCand_trkdcabssigW")
+        .Histo1D(("h_Trkdcabssig", "", 20, 0, 40), "BestCand_trkdcabssig", "BestCand_trkdcabssigW")
 
     h_Kshortpt = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_kspt)")\
         .Define("BestCand_kspt", "Define_GetValAtArgMax(kspt, bvtxcl, PassAllExcept_kspt)")\
         .Define("BestCand_ksptW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_kspt)")\
-        .Histo1D(("h_Kshortpt", "", 100, 0, 10), "BestCand_kspt", "BestCand_ksptW")
+        .Histo1D(("h_Kshortpt", "", 20, 0, 10), "BestCand_kspt", "BestCand_ksptW")
 
     aug_df_PassAll = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAll)")\
@@ -73,11 +74,11 @@ def create_histo(kwargs):
 
     h_Bmass = aug_df_PassAll\
         .Define("BestCand_bmass", "Define_GetValAtArgMax(bmass, bvtxcl, PassAll)")\
-        .Histo1D(("h_Bmass", "", 52, 4.76, 5.80), "BestCand_bmass")
+        .Histo1D(("h_Bmass", "", 26, 4.76, 5.80), "BestCand_bmass")
     h_Bpt = aug_df_PassAll\
         .Define("bpt", "sqrt(bpx*bpx+bpy*bpy)")\
         .Define("BestCand_bpt", "Define_GetValAtArgMax(bpt, bvtxcl, PassAll)")\
-        .Histo1D(("h_Bpt", "", 100, 0, 100), "BestCand_bpt", "BestCand_weight")
+        .Histo1D(("h_Bpt", "", 20, 0, 100), "BestCand_bpt", "BestCand_weight")
     cimp_getPhi = """
 #include "math.h"
 ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const ROOT::VecOps::RVec<double> &px)
@@ -94,13 +95,13 @@ ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const RO
     h_Bphi = aug_df_PassAll\
         .Define("bphi", "getPhi(bpy, bpx)")\
         .Define("BestCand_bphi", "Define_GetValAtArgMax(bphi, bvtxcl, PassAll)")\
-        .Histo1D(("h_Bphi", "", 63, -3.15, 3.15), "BestCand_bphi", "BestCand_weight")
+        .Histo1D(("h_Bphi", "", 21, -3.15, 3.15), "BestCand_bphi", "BestCand_weight")
     h_CosThetaL = aug_df_PassAll\
         .Define("BestCand_cosThetaL", "Define_GetValAtArgMax(cosThetaL, bvtxcl, PassAll)")\
-        .Histo1D(("h_CosThetaL", "", 100, -1, 1), "BestCand_cosThetaL", "BestCand_weight")
+        .Histo1D(("h_CosThetaL", "", 20, -1, 1), "BestCand_cosThetaL", "BestCand_weight")
     h_CosThetaK = aug_df_PassAll\
         .Define("BestCand_cosThetaK", "Define_GetValAtArgMax(cosThetaK, bvtxcl, PassAll)")\
-        .Histo1D(("h_CosThetaK", "", 100, -1, 1), "BestCand_cosThetaK", "BestCand_weight")
+        .Histo1D(("h_CosThetaK", "", 20, -1, 1), "BestCand_cosThetaK", "BestCand_weight")
 
     hists = [h_Bmass, h_Trkpt, h_Bvtxcl, h_Blxysig, h_Bcosalphabs2d, h_Trkdcabssig, h_Kshortpt, h_Bpt, h_Bphi, h_CosThetaL, h_CosThetaK]
     fout = ROOT.TFile(ofname, "RECREATE")
