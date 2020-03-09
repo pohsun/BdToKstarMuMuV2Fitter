@@ -253,7 +253,7 @@ def plotEfficiency(self, dataName, pdfName):
     data_accXrec.SetZTitle("Efficiency [%]")
     data_accXrec.Scale(100)
     data_accXrec.SetMinimum(0)
-    data_accXrec.SetMaximum(0.1 if self.process.cfg['binKey'] in ['jpsi', 'psi2s'] else 0.015)  # Z axis in percentage
+    data_accXrec.SetMaximum(0.1 if self.process.cfg['binKey'] in ['jpsi', 'psi2s'] else 0.020)  # Z axis in percentage
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
     h2_effi_sigA_fine.Scale(100 * h2_effi_sigA_fine.GetNbinsX()/2 * h2_effi_sigA_fine.GetNbinsY()/2)
 
