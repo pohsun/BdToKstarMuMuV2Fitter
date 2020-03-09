@@ -110,7 +110,7 @@ class FitDBPlayer(Service):
                 raise ValueError("Input arguement of type {0} is not supported".format(type(args)))
         finally:
             db.close()
-            print("Updated to Database `{0}`.".format(dbfile))
+            print("Updated to Database `{0}`.".format(os.path.abspath(dbfile)))
 
     @staticmethod
     def initFromDB(dbfile, args, aliasDict=None):
@@ -138,7 +138,7 @@ class FitDBPlayer(Service):
                 else:
                     print("WARNING\t: Unable to initialize {0}, record {1} not found in {2}.".format(argName, aliasName, dbfile))
             FitterCore.ArgLooper(args, initFromDBImp)
-            print("Initialized parameters from `{0}`.".format(dbfile))
+            print("Initialized parameters from `{0}`.".format(os.path.abspath(dbfile)))
         finally:
             db.close()
 
