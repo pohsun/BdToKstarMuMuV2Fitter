@@ -2,10 +2,9 @@
 #include <cstdio>
 #include <stdexcept>
 
+#include "Constants.h"
 #include "ROOT/RVec.hxx"
 #include "TLorentzVector.h"
-
-// constexpr int BIGNUMBER{9999};
 
 ROOT::VecOps::RVec<int> DefineBit_HasGoodDimuon(
     const ROOT::VecOps::RVec<bool> mumisgoodmuon,
@@ -126,10 +125,10 @@ ROOT::VecOps::RVec<int> DefineBit_lambdaVeto(
         const ROOT::VecOps::RVec<double> &pimpz){
     ROOT::VecOps::RVec<int> output(pippx.size(), -BIGNUMBER);
     TLorentzVector pi_4vec, p_4vec;
-    auto calc_pt = [](const double &px, const double &py) -> double {return sqrt(pow(px,2)+pow(py,2));};
-    auto isLambdaVeto = [](double m) -> int {return (m<1.10 || m >1.13);};
+    auto calc_p = [](const double &px, const double &py, const double &pz) -> double {return sqrt(pow(px,2)+pow(py,2)+pow(pz,2));};
+    auto isLambdaVeto = [](double m) -> int {return (m<1.10 || m >1.14);};
     for(unsigned int tkIndex =0; tkIndex < pippx.size(); tkIndex++){
-        if (calc_pt(pippx.at(tkIndex), pippy.at(tkIndex)) > calc_pt(pimpx.at(tkIndex), pimpy.at(tkIndex))){
+        if (calc_p(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex)) > calc_p(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex))){
             p_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), 0.938272);
             pi_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), 0.13957018);
         }else{

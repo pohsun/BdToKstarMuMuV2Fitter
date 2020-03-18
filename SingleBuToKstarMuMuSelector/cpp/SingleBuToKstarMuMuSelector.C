@@ -17,17 +17,6 @@
 #include <TVector3.h>
 #include <TLorentzVector.h>
 
-// Global Constants
-constexpr double B_MASS = 5.279;
-constexpr double KSTAR_MASS = 0.89166;
-constexpr double KSTAR_WIDTH = 0.0508;
-constexpr double MUON_MASS = 0.10565837;
-constexpr double KAON_MASS = 0.493677;
-constexpr double PION_MASS = 0.13957018;
-constexpr double KSHORT_MASS = 0.497614;
-constexpr double PROTON_MASS = 0.938272;
-constexpr int BIGNUMBER = 9999;
-
 // user defined variables
 long long int nTotalEvents;
 int   Run;
@@ -503,7 +492,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Kshortmass = K_4vec.Mag();
     
     // Lambda and LambdaB
-    if (Pip_4vec.Pt() > Pim_4vec.Pt()){
+    if (Pip_4vec.P() > Pim_4vec.P()){
         buff1.SetXYZM(pippx->at(BIndex),pippy->at(BIndex),pippz->at(BIndex),PROTON_MASS);
         buff2 = Pim_4vec;
     }else{
@@ -584,7 +573,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC(bool keepMinimum=false)
     genMumPhi    = genMum_4vec.Phi();
     
     // Lambda and LambdaB
-    if (genPip_4vec.Pt() > genPim_4vec.Pt()){
+    if (genPip_4vec.P() > genPim_4vec.P()){
         buff1.SetXYZM(genpippx,genpippy,genpippz,PROTON_MASS);
         buff2 = genPim_4vec;
     }else{
