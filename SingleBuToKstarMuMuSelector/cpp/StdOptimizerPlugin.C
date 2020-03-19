@@ -129,11 +129,11 @@ ROOT::VecOps::RVec<int> DefineBit_lambdaVeto(
     auto isLambdaVeto = [](double m) -> int {return (m<1.10 || m >1.14);};
     for(unsigned int tkIndex =0; tkIndex < pippx.size(); tkIndex++){
         if (calc_p(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex)) > calc_p(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex))){
-            p_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), 0.938272);
-            pi_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), 0.13957018);
+            p_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), PROTON_MASS);
+            pi_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), PION_MASS);
         }else{
-            p_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), 0.938272);
-            pi_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), 0.13957018);
+            p_4vec.SetXYZM(pimpx.at(tkIndex), pimpy.at(tkIndex), pimpz.at(tkIndex), PROTON_MASS);
+            pi_4vec.SetXYZM(pippx.at(tkIndex), pippy.at(tkIndex), pippz.at(tkIndex), PION_MASS);
         }
         output.at(tkIndex) = isLambdaVeto((pi_4vec+p_4vec).M());
     }
@@ -190,7 +190,7 @@ ROOT::VecOps::RVec<double> Define_cosThetaK(
 	for(unsigned int BIndex =0; BIndex < bmass.size(); BIndex++){
 		B_4vec.SetXYZM(bpx.at(BIndex),bpy.at(BIndex),bpz.at(BIndex),bmass.at(BIndex));
         Kst_4vec.SetXYZM(kspx.at(BIndex)+trkpx.at(BIndex),kspy.at(BIndex)+trkpy.at(BIndex),kspz.at(BIndex)+trkpz.at(BIndex),kstarmass.at(BIndex));
-		Tk_4vec.SetXYZM(trkpx.at(BIndex),trkpy.at(BIndex),trkpz.at(BIndex),0.13957018);
+		Tk_4vec.SetXYZM(trkpx.at(BIndex),trkpy.at(BIndex),trkpz.at(BIndex),PION_MASS);
 
 		buff1 = B_4vec;
 		buff2 = Kst_4vec;

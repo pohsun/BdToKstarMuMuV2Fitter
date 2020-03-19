@@ -499,8 +499,8 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
         buff1.SetXYZM(pimpx->at(BIndex),pimpy->at(BIndex),pimpz->at(BIndex),PROTON_MASS);
         buff2 = Pip_4vec;
     }
-    Lambdamass = (buff1+buff2+Tk_4vec).M();
-    Lambdabmass = (buff1+buff2+Tk_4vec+Mup_4vec+Mum_4vec).M();
+    Lambdamass = (buff1+buff2).M();
+    Lambdabmass = (buff1+buff2+Mup_4vec+Mum_4vec).M();
 
     Bchg = bchg->at(BIndex);
     Bpt = B_4vec.Pt();
@@ -580,7 +580,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchMC(bool keepMinimum=false)
         buff1.SetXYZM(genpimpx,genpimpy,genpimpz,PROTON_MASS);
         buff2 = genPip_4vec;
     }
-    genLambdaMass = (buff1+buff2+genTk_4vec).M();
+    genLambdaMass = (buff1+buff2).M();
 
     buff1 = genB_4vec;
     buff2 = genMup_4vec+genMum_4vec;
