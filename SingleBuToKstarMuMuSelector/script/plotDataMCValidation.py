@@ -12,8 +12,8 @@ import SingleBuToKstarMuMuSelector.StdOptimizerBase as StdOptimizerBase
 def create_histo(kwargs):
     ofname = kwargs.get('ofname', "plotDataMCValidation.root")
     iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*.root"])
-    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)") # Local sideband
-    # wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.1) - (0.2/0.84)*(bmass>4.76)*(bmass<5.18) - (0.2/0.84)*(bmass>5.38)*(bmass<5.80)") # Full sideband
+    wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.1) - (0.2/0.84)*(bmass>4.76)*(bmass<5.18) - (0.2/0.84)*(bmass>5.38)*(bmass<5.80)") # Full sideband
+    # wgtString = kwargs.get('wgtString', "(abs(bmass-5.28)<0.06) - 0.5*(abs(bmass-5.11)<0.06) - 0.5*(abs(bmass-5.46)<0.06)") # Local sideband
 
     tree = ROOT.TChain("tree")
     for tr in iTreeFiles:
