@@ -176,6 +176,7 @@ class Plotter(Path):
             if pltName not in self.cfg['switchPlots']:
                 continue
             for func in pCfg['func']:
+                self.logger.logINFO("Plotting {0}".format(pltName))
                 func(self, **pCfg['kwargs'])
 
 
@@ -865,9 +866,20 @@ plotterCfg['plots'] = {
 plotter = Plotter(plotterCfg)
 
 if __name__ == '__main__':
+    defaultPlots = [
+        'simpleSpectrum',
+        'effi',
+        'angular3D_sigM',
+        'angular3D_bkgJpsiM',
+        'angular3D_bkgPsi2sM',
+        'angular3D_bkgCombA',
+        'angular3D_bkgCombAAltA',
+        'angular3D_final',
+    ]
+
     parser = ArgumentParser(prog='plotCollection.py')
-    parser.add_argument('-b', '--bin', dest='binKey', type=str, default=p.cfg['binKey'])
-    parser.add_argument('-p', '--plots', dest='switchPlots', type=str, default="", help="Switch plots from {0}.".format(",".join(plotterCfg['plots'].keys())))
+    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'])
+    parser.add_argument('-p', '--plots', dest='switchPlots', type=str, nargs='+', default=defaultPlots, help="Switch plots from {0}.".format(" ".join(plotterCfg['plots'].keys())))
     args = parser.parse_args()
 
     if args.binKey in q2bins.keys():
@@ -875,26 +887,12 @@ if __name__ == '__main__':
     else:
         raise KeyError("Unknown binKey. Pick from {0}".format(q2bins.keys()))
 
-    if args.switchPlots == "":
-        defaultPlots = [
-            'simpleSpectrum',
-            'effi',
-            'angular3D_sigM',
-            'angular3D_bkgJpsiM',
-            'angular3D_bkgPsi2sM',
-            'angular3D_bkgCombA',
-            'angular3D_bkgCombAAltA',
-            'angular3D_final',
-        ]
-        for plt in defaultPlots:
-            plotter.cfg['switchPlots'].append(plt)
-    else:
-        for plt in args.switchPlots.split(','):
-            if plt in plotterCfg['plots'].keys():
-                if plt not in plotter.cfg['switchPlots']:
-                    plotter.cfg['switchPlots'].append(plt)
-            else:
-                raise KeyError("Unknown key {0} in plotterCfg, pick from {1}".format(p, ','.join(plotterCfg['plots'].keys())))
+    for plt in args.switchPlots:
+        if plt in plotterCfg['plots'].keys():
+            if plt not in plotter.cfg['switchPlots']:
+                plotter.cfg['switchPlots'].append(plt)
+        else:
+            raise KeyError("Unknown key {0} in plotterCfg, pick from {1}".format(plt, ','.join(plotterCfg['plots'].keys())))
 
     p.setSequence([dataCollection.effiHistReader,
         dataCollection.sigMCReader,
