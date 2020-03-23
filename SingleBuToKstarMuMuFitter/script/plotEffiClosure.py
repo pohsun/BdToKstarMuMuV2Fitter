@@ -14,8 +14,8 @@ import SingleBuToKstarMuMuFitter.FitDBPlayer as FitDBPlayer
 #  wgtString = "2*((fabs(Bmass-5.28)<0.1)-0.5)*(fabs(Bmass-5.28)<0.2)"  # +1/-1 for SR/sideband
 wgtString = "1*(fabs(Bmass-5.28)<0.06) - 0.5*(fabs(Bmass-5.11)<0.06) - 0.5*(fabs(Bmass-5.46)<0.06)"  # +1/-1 for SR/sideband
 def create_histo_data(kwargs):
-    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/DATA/*.root"])
-    cutString = "({0}) && ({1}) && ({2})".format(anaSetup.cuts_antiResVeto, anaSetup.cut_lambdaVeto, anaSetup.q2bins['jpsi']['cutString'])
+    iTreeFiles = kwargs.get('iTreeFiles', ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv22/DATA/*.root"])
+    cutString = "({0}) && ({1})".format(anaSetup.cuts_antiResVeto, anaSetup.q2bins['jpsi']['cutString'])
 
     tree = ROOT.TChain("tree")
     for tr in iTreeFiles:

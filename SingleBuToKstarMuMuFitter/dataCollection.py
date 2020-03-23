@@ -15,7 +15,7 @@ import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Kshortmass, dataArgsGEN
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cuts_antiResVeto, cut_kshortWindow, cut_lambdaVeto, modulePath
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cuts_antiResVeto, cut_kshortWindow, modulePath
 
 import ROOT
 from ROOT import TChain
@@ -41,7 +41,8 @@ def customizeOne(self, targetBMassRegion=None, extraCuts="1"):
         self.logger.logERROR("Bin {0} is not defined.\n".format(self.process.cfg['binKey']))
         raise ValueError
     if self.process.cfg['binKey'] in ['jpsi', 'psi2s']:
-        extraCuts =  "({0})&&({1})".format(extraCuts, cut_lambdaVeto)
+        # If special treatment is needed.
+        pass
 
     # With shallow copied CFG, have to bind cfg['dataset'] to a new object.
     self.cfg['dataset'] = []
@@ -93,7 +94,7 @@ def customizeOne(self, targetBMassRegion=None, extraCuts="1"):
 dataReaderCfg = copy(CFG)
 dataReaderCfg.update({
     'name': "dataReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/DATA/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv22/DATA/sel_*.root"],
     #  'ifriend': ["/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/script/plotMatchCandPreSelector.root"],
     'preloadFile': modulePath + "/data/preload_dataReader_{binLabel}.root",
     'lumi': 19.98,
@@ -106,7 +107,7 @@ dataReader.customize = types.MethodType(customizeData, dataReader)
 sigMCReaderCfg = copy(CFG)
 sigMCReaderCfg.update({
     'name': "sigMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/SIG/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv22/SIG/sel_*.root"],
     'preloadFile': modulePath + "/data/preload_sigMCReader_{binLabel}.root",
     'lumi': 16281.440 + 21097.189,
 })
@@ -118,7 +119,7 @@ sigMCReader.customize = types.MethodType(customizeSigMC, sigMCReader)
 bkgJpsiMCReaderCfg = copy(CFG)
 bkgJpsiMCReaderCfg.update({
     'name': "bkgJpsiMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/JPSI/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv22/JPSI/sel_*.root"],
     'preloadFile': modulePath + "/data/preload_bkgJpsiMCReader_{binLabel}.root",
     'lumi': 295.761,
 })
@@ -129,7 +130,7 @@ bkgJpsiMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgJpsiMCReader
 bkgPsi2sMCReaderCfg = copy(CFG)
 bkgPsi2sMCReaderCfg.update({
     'name': "bkgPsi2sMCReader",
-    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/PSIP/sel_*.root"],
+    'ifile': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv22/PSIP/sel_*.root"],
     'preloadFile': modulePath + "/data/preload_bkgPsi2sMCReader_{binLabel}.root",
     'lumi': 218.472,
 })
@@ -294,7 +295,7 @@ effiHistReader = ObjProvider({
 })
 
 if __name__ == '__main__':
-    # p.setSequence([dataReader])
+    p.setSequence([dataReader])
     # p.setSequence([sigMCReader])
     # p.setSequence([effiHistReader])
     p.beginSeq()

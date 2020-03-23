@@ -106,18 +106,19 @@ bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassReg
 cut_passTrigger = "Triggers >= 1"
 cut_kshortWindow = "abs(Kshortmass-0.4975) < 3*0.00576"
 cut_kstarMassWindow = "Kstarmass>0.792 && Kstarmass < 0.992"
+cut_lambdaVeto = "Lambdamass < 1.11 || Lambdamass > 1.125"
 cut_resonanceRej = "(Mumumass > 3.096916+3.5*Mumumasserr || Mumumass < 3.096916-5.5*Mumumasserr) && (Mumumass > 3.686109+3.5*Mumumasserr || Mumumass < 3.686109-3.5*Mumumasserr)"
 cut_antiRadiation = "abs(Bmass-Mumumass-2.182)>0.09 && abs(Bmass-Mumumass-1.593)>0.03"
-cut_lambdaVeto = "Lambdamass > 1.10 && Lambdamass < 1.13"
 cuts = [
     cut_passTrigger,
     cut_kshortWindow,
+    cut_lambdaVeto,
     cut_kstarMassWindow,
     cut_resonanceRej,
     cut_antiRadiation,
 ]
 cuts.append("({0})".format(")&&(".join(cuts)))
-cuts_noResVeto = "({0}) && ({1}) && ({2})".format(cut_passTrigger, cut_kshortWindow, cut_kstarMassWindow)
+cuts_noResVeto = "({0}) && ({1}) && ({2}) && ({3})".format(cut_passTrigger, cut_kshortWindow, cut_lambdaVeto, cut_kstarMassWindow)
 cuts_antiResVeto = "({0}) && !({1}) && !({2})".format(cuts_noResVeto, cut_resonanceRej, cut_antiRadiation)
 
 # SM prediction

@@ -12,10 +12,9 @@ const float PION_MASS = 0.13957018;
 const float PROTON_MASS = 0.938272;
 float Define_LambdaMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, float Pimeta, float Pimphi){
     TLorentzVector proton, pion;
-    if (Pippt > Pimpt){
-        proton.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PROTON_MASS);
-        pion.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PION_MASS);
-    }else{
+    proton.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PROTON_MASS);
+    pion.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PION_MASS);
+    if (proton.P() < pion.P()){
         proton.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PROTON_MASS);
         pion.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PION_MASS);
     }
@@ -36,10 +35,9 @@ float Define_KstarMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, flo
 }
 float Define_LambdaBMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, float Pimeta, float Pimphi, float Dimupt, float Dimueta, float Dimuphi, float Mumumass){
     TLorentzVector proton, pion;
-    if (Pippt > Pimpt){
-        proton.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PROTON_MASS);
-        pion.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PION_MASS);
-    }else{
+    proton.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PROTON_MASS);
+    pion.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PION_MASS);
+    if (proton.P() < pion.P()){
         proton.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PROTON_MASS);
         pion.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PION_MASS);
     }
@@ -58,26 +56,31 @@ if __name__ == '__main__':
     df = ROOT.RDataFrame(tree)\
         .Filter(anaSetup.q2bins['summary']['cutString'])\
         .Filter(anaSetup.bMassRegions['Fit']['cutString'])\
-        .Filter(anaSetup.cuts[-1])\
-        .Define("LambdaMass", "Define_LambdaMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
+        .Filter(anaSetup.cut_passTrigger)\
+        .Filter(anaSetup.cut_kshortWindow)\
+        .Filter(anaSetup.cut_kstarMassWindow)\
+        .Filter(anaSetup.cut_resonanceRej)\
+        .Filter(anaSetup.cut_antiRadiation)\
+        .Alias("LambdaMass", "Lambdamass")\
         .Define("KshortMass", "Define_KshortMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
         .Define("KstarMass", "Define_KstarMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Trkpt, Trketa, Trkphi)")\
         .Define("LambdaBMass", "Define_LambdaBMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")
-    df_LambdaSR = df.Filter("LambdaMass>1.11 && LambdaMass<1.12")
-    df_vetoLambdaSR = df.Filter("LambdaMass<1.11 || LambdaMass>1.12")
+        #.Define("LambdaMass", "Define_LambdaMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
+    df_LambdaSR = df.Filter("LambdaMass>1.11 && LambdaMass<1.125")
+    df_vetoLambdaSR = df.Filter("LambdaMass<1.11 || LambdaMass>1.125")
     df_Lambda1330 = df.Filter("LambdaMass>1.32 && LambdaMass<1.34")
     df_vetoLambda1330 = df.Filter("LambdaMass<1.32 || LambdaMass>1.34")
     hists = {}
     hists['h_LambdaMass_bin0'] = {
-        'hist': df.Histo1D(("h_LambdaMass_bin0", "", 50, 1.0, 1.5), "LambdaMass"),
+        'hist': df.Histo1D(("h_LambdaMass_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
         'xTitle': "m_{p#pi} [GeV]"
     }
     hists['h_LambdaMass_SR_bin0'] = {
-        'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_LambdaMass_SR_bin0", "", 50, 1.0, 1.5), "LambdaMass"),
+        'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_LambdaMass_SR_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
         'xTitle': "m_{p#pi} [GeV]"
     }
     hists['h_LambdaMass_SB_bin0'] = {
-        'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_LambdaMass_SB_bin0", "", 50, 1.0, 1.5), "LambdaMass"),
+        'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_LambdaMass_SB_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
         'xTitle': "m_{p#pi} [GeV]"
     }
     hists['h_LambdaBMass_LambdaSR_bin0'] = {
