@@ -5,6 +5,7 @@ import os
 import abc
 import __main__
 import tempfile
+from copy import copy
 from subprocess import call
 
 import v2Fitter.Batch.batchConfig as batchConfig
@@ -41,7 +42,7 @@ class AbsBatchTaskWrapper:
         cfg = {
             'nJobs': 1,
             'queue': batchConfig.BATCH_QUEUE,
-            'work_dir': None
+            'work_dir': None,
         }
         return cfg
 
@@ -59,9 +60,10 @@ initialdir  = {initialdir}
 executable  = {executable}
 #  when_to_transfer_output = ON_EXIT
 #  transfer_output_files = job$(Process),job$(Process).tar.gz
-""".format(initialdir=self.task_dir,
-            JobFlavour=self.cfg['queue'],
-            executable=os.path.abspath(__main__.__file__),)
+""".format(
+        initialdir=self.task_dir,
+        JobFlavour=self.cfg['queue'],
+        executable=os.path.abspath(__main__.__file__),)
         return templateJdl
 
     @abc.abstractmethod
@@ -114,6 +116,7 @@ BatchTaskSubparserSubmit = BatchTaskSubparsers.add_parser('submit')
 BatchTaskSubparserSubmit.add_argument(
     "-q", "--queue",
     dest="queue",
+    type=str,
     help="JobFlavour of HTCondor.")
 BatchTaskSubparserSubmit.add_argument(
     "-n", "--nJobs",
@@ -123,8 +126,7 @@ BatchTaskSubparserSubmit.add_argument(
 BatchTaskSubparserSubmit.add_argument(
     "-s", "--submit",
     dest="doSubmit",
-    action="store_true",
-    default=False,
+    action="store_true", # Default: false
     help="Submit the jobs. By default only show submit script to stdout.")
 
 def submitTask(args):
@@ -156,3 +158,7 @@ def runJob(args):
     pass
 
 BatchTaskSubparserRun.set_defaults(func=runJob)
+
+def copyAndRegSubparser(subparsers, origSubcmdName, copiedSubcmdName):
+    subparsers.choices[copiedSubcmdName] = copy(subparsers.choices[origSubcmdName])
+    return subparsers.choices[copiedSubcmdName]
