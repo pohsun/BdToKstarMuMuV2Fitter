@@ -33,7 +33,8 @@ def table_AN_sysFL_sysAFB():
         dbKeyToLine['syst_simMismodel'] = [r"Simu.\ mismodel"]
         dbKeyToLine['syst_altSP'] = [r"$S$ - $P$ wave interf.\ "]
         dbKeyToLine['syst_altBkgCombA'] = [r"Comb.\ Bkg.\ shape"]
-        dbKeyToLine['syst_vetoJpsiX'] = [r"$B$ mass range\ "]
+        dbKeyToLine['syst_vetoJpsiX'] = [r"$B$ mass range"]
+        dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
         #  dbKeyToLine['syst_altFitRange'] = [r"$B$ mass range"]
         totalErrorLine = ["Total"]
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
@@ -180,6 +181,7 @@ def table_paper_sys():
     dbKeyToLine['syst_altSP'] = [r"$S$ - $P$ wave interf.\ "]
     dbKeyToLine['syst_altBkgCombA'] = [r"Comb.\ Bkg.\ shape"]
     dbKeyToLine['syst_vetoJpsiX'] = [r"$B$ mass range"]
+    dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
     #  dbKeyToLine['syst_altFitRange'] = [r"$B$ mass range"]
     totalErrorLine = ["Total systematic uncertainty"]
     for var in ["afb", "fl"]:

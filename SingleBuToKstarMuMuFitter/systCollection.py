@@ -43,7 +43,8 @@ def create_histo_data2expt(kwargs=None):
 
     # Data
     tree_data = ROOT.TChain("tree")
-    tree_data.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/ANv21/DATA/*.root")
+    for f in dataCollection.dataReaderCfg['ifile']:
+        tree_data.Add(f)
     df_data = ROOT.RDataFrame(tree_data).Define('weight', *wgtConfig).Filter(cuts_antiResVeto).Filter(q2bins['jpsi']['cutString'])
 
     ptr_h_CosThetaL_data = df_data.Histo1D(("h_CosThetaL", "", 20, -1, 1), "CosThetaL", "weight")
@@ -236,7 +237,7 @@ def func_dataMCDisc(args):
     weightFile.Close()
     pass
 
-# # Use histogram instead of smooth map.
+# # Use histogram instead of smooth map. This actually conclude multiple sources.
 def func_dataMCDisc2(args):
     if not os.path.exists(modulePath + "/systCollection_dataMCDisc.root"):
         create_histo_data2expt()
@@ -433,7 +434,6 @@ def func_randEffi(args):
         p.endSeq()
 
 # Alternate efficiency map
-# # Use uncorrelated efficiency map and compare the difference
 def updateToDB_altShape(args, tag, tagFiducial=None):
     """ Template db entry maker for syst """
     try:
@@ -466,6 +466,7 @@ def updateToDB_altShape(args, tag, tagFiducial=None):
         print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
         FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
 
+# # Use uncorrelated efficiency map and compare the difference
 def func_altEffi(args):
     """ Typically less than 1% """
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
@@ -748,6 +749,7 @@ def func_vetoJpsiX(args):
 # Make latex table
 def func_makeLatexTable(args):
     """ Make table. Force the input db files from StdProcess.dbplayer.absInputDir """
+    print("Create table from db files in {0}.".format(p.dbplayer.absInputDir))
     for var in ["fl", "afb"]:
         dbKeyToLine = {
             'syst_randEffi': [r"Limited MC size"],
@@ -756,6 +758,7 @@ def func_makeLatexTable(args):
             'syst_altSP': [r"$S$--$P$ wave interf.\ "],
             'syst_altBkgCombA': [r"Comb.\ Bkg.\ shape"],
             'syst_vetoJpsiX': [r"$B$ mass range"],
+            'syst_dataMCDisc': [r"Data-MC discrepancy"],
         }
         totalErrorLine = ["Total"]
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
@@ -814,9 +817,9 @@ if __name__ == '__main__':
     subparser_dataMCDisc = subparsers.add_parser('dataMCDisc')
     subparser_dataMCDisc.set_defaults(func=func_dataMCDisc)
 
-    subparser_dataMCDisc2 = subparsers.add_parser('dataMCDisc2')
-    subparser_dataMCDisc2.set_defaults(func=func_dataMCDisc2)
-    
+    # subparser_dataMCDisc2 = subparsers.add_parser('dataMCDisc2')
+    # subparser_dataMCDisc2.set_defaults(func=func_dataMCDisc2)
+
     subparser_randEffi = subparsers.add_parser('randEffi')
     subparser_randEffi.set_defaults(func=func_randEffi)
 
@@ -829,14 +832,14 @@ if __name__ == '__main__':
     subparser_simMismodel = subparsers.add_parser('simMismodel')
     subparser_simMismodel.set_defaults(func=func_simMismodel)
 
-    #  subparser_altSigM = subparsers.add_parser('altSigM')
-    #  subparser_altSigM.set_defaults(func=func_altSigM)
+    # subparser_altSigM = subparsers.add_parser('altSigM')
+    # subparser_altSigM.set_defaults(func=func_altSigM)
 
     subparser_altSP = subparsers.add_parser('altSP')
     subparser_altSP.set_defaults(func=func_altSP)
 
-    #  subparser_altBkgCombM = subparsers.add_parser('altBkgCombM')
-    #  subparser_altBkgCombM.set_defaults(func=func_altBkgCombM)
+    # subparser_altBkgCombM = subparsers.add_parser('altBkgCombM')
+    # subparser_altBkgCombM.set_defaults(func=func_altBkgCombM)
 
     subparser_altBkgCombA = subparsers.add_parser('altBkgCombA')
     subparser_altBkgCombA.set_defaults(func=func_altBkgCombA)
@@ -844,8 +847,8 @@ if __name__ == '__main__':
     subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
     subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
 
-    #  subparser_altFitRange = subparsers.add_parser('altFitRange')
-    #  subparser_altFitRange.set_defaults(func=func_altFitRange)
+    # subparser_altFitRange = subparsers.add_parser('altFitRange')
+    # subparser_altFitRange.set_defaults(func=func_altFitRange)
 
     subparser_makeLatexTable = subparsers.add_parser('makeLatexTable')
     subparser_makeLatexTable.set_defaults(func=func_makeLatexTable)
