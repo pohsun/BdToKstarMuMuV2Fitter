@@ -10,19 +10,19 @@ def create_histo():
     tree = ROOT.TChain("tree")
     tree.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarMuMu-data-2012*.root")
 
-    fout = ROOT.TFile("h_plotPreSelector.root", "RECREATE")
+    fout = ROOT.TFile("plotPreSelector.root", "RECREATE")
 
-    tree.Draw("sqrt(2*sqrt(pippx*pippx+pippy*pippy+pippz*pippz+0.13957*0.13957)*sqrt(pimpx*pimpx+pimpy*pimpy+pimpz*pimpz+0.13957*0.13957)-2*(pippx*pimpx+pippy*pimpy+pippz*pimpz)+2*0.13956*0.13957)>>h_kshortMass_presel(200,0.4,0.6)")
+    tree.Draw("sqrt(2*sqrt(pippx*pippx+pippy*pippy+pippz*pippz+0.13957*0.13957)*sqrt(pimpx*pimpx+pimpy*pimpy+pimpz*pimpz+0.13957*0.13957)-2*(pippx*pimpx+pippy*pimpy+pippz*pimpz)+2*0.13956*0.13957)>>preSel_KshortMass(200,0.4,0.6)")
 
     fout.Write()
     fout.Close()
 
-def plot_histo(fname="h_plotPreSelector.root"):
+def plot_histo(fname="plotPreSelector.root"):
     canvas = plotCollection.Plotter.canvas
 
     fin = ROOT.TFile(fname)
 
-    def _plot(hname):
+    def _plotAndFitKshort(hname):
         h = fin.Get(hname)
 
         # Take the value from single Gaussian for the Kshort window
@@ -57,10 +57,9 @@ def plot_histo(fname="h_plotPreSelector.root"):
         canvas.Update()
         canvas.Print("{0}.pdf".format(hname))
 
-    for hname in ["h_kshortMass_presel"]:
-        _plot(hname)
+    _plotAndFitKshort("preSel_KshortMass")
 
 if __name__ == '__main__':
-    if not os.path.exists("h_plotPreSelector.root"):
+    if not os.path.exists("plotPreSelector.root"):
         create_histo()
     plot_histo()
