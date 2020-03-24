@@ -36,37 +36,37 @@ def create_histo(kwargs):
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkpt)")\
         .Define("BestCand_trkpt", "Define_GetValAtArgMax(trkpt, bvtxcl, PassAllExcept_trkpt)")\
         .Define("BestCand_trkptW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_trkpt)")\
-        .Histo1D(("h_Trkpt", "", 20, 0, 5), "BestCand_trkpt", "BestCand_trkptW")
+        .Histo1D(("h_Trkpt", "", 50, 0, 5), "BestCand_trkpt", "BestCand_trkptW")
 
     h_Bvtxcl = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_bvtxcl)")\
         .Define("BestCand_bvtxcl", "Define_GetValAtArgMax(bvtxcl, bvtxcl, PassAllExcept_bvtxcl)")\
         .Define("BestCand_bvtxclW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_bvtxcl)")\
-        .Histo1D(("h_Bvtxcl", "", 20, 0, 1), "BestCand_bvtxcl", "BestCand_bvtxclW")
+        .Histo1D(("h_Bvtxcl", "", 100, 0, 1), "BestCand_bvtxcl", "BestCand_bvtxclW")
 
     h_Blxysig = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_blsbssig)")\
         .Define("BestCand_blsbssig", "Define_GetValAtArgMax(blsbssig, bvtxcl, PassAllExcept_blsbssig)")\
         .Define("BestCand_blsbssigW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_blsbssig)")\
-        .Histo1D(("h_Blxysig", "", 20, 0, 100), "BestCand_blsbssig", "BestCand_blsbssigW")
+        .Histo1D(("h_Blxysig", "", 50, 0, 100), "BestCand_blsbssig", "BestCand_blsbssigW")
 
     h_Bcosalphabs2d = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_bcosalphabs2d)")\
         .Define("BestCand_bcosalphabs2d", "Define_GetValAtArgMax(bcosalphabs2d, bvtxcl, PassAllExcept_bcosalphabs2d)")\
         .Define("BestCand_bcosalphabs2dW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_bcosalphabs2d)")\
-        .Histo1D(("h_Bcosalphabs2d", "", 35, 0.9993, 1), "BestCand_bcosalphabs2d", "BestCand_bcosalphabs2dW")
+        .Histo1D(("h_Bcosalphabs2d", "", 70, 0.9993, 1), "BestCand_bcosalphabs2d", "BestCand_bcosalphabs2dW")
 
     h_Trkdcabssig = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_trkdcabssig)")\
         .Define("BestCand_trkdcabssig", "Define_GetValAtArgMax(trkdcabssig, bvtxcl, PassAllExcept_trkdcabssig)")\
         .Define("BestCand_trkdcabssigW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_trkdcabssig)")\
-        .Histo1D(("h_Trkdcabssig", "", 20, 0, 40), "BestCand_trkdcabssig", "BestCand_trkdcabssigW")
+        .Histo1D(("h_Trkdcabssig", "", 40, 0, 40), "BestCand_trkdcabssig", "BestCand_trkdcabssigW")
 
     h_Kshortpt = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAllExcept_kspt)")\
         .Define("BestCand_kspt", "Define_GetValAtArgMax(kspt, bvtxcl, PassAllExcept_kspt)")\
         .Define("BestCand_ksptW", "Define_GetValAtArgMax(weight, bvtxcl, PassAllExcept_kspt)")\
-        .Histo1D(("h_Kshortpt", "", 20, 0, 10), "BestCand_kspt", "BestCand_ksptW")
+        .Histo1D(("h_Kshortpt", "", 40, 0, 10), "BestCand_kspt", "BestCand_ksptW")
 
     aug_df_PassAll = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAll)")\
@@ -78,7 +78,7 @@ def create_histo(kwargs):
     h_Bpt = aug_df_PassAll\
         .Define("bpt", "sqrt(bpx*bpx+bpy*bpy)")\
         .Define("BestCand_bpt", "Define_GetValAtArgMax(bpt, bvtxcl, PassAll)")\
-        .Histo1D(("h_Bpt", "", 20, 0, 100), "BestCand_bpt", "BestCand_weight")
+        .Histo1D(("h_Bpt", "", 50, 0, 100), "BestCand_bpt", "BestCand_weight")
     cimp_getPhi = """
 #include "math.h"
 ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const ROOT::VecOps::RVec<double> &px)
@@ -232,10 +232,12 @@ def plot_histo():
         h_ratio.GetUpperRefYaxis().SetRangeUser(h_mc.GetMinimum(), h_mc.GetMaximum())
         h_ratio.GetUpperRefYaxis().SetTitleOffset(1)
         h_ratio.GetUpperRefYaxis().SetMaxDigits(3)
+        h_ratio.GetLowerRefXaxis().SetTitleOffset(0.8)
         h_ratio.GetLowerRefYaxis().SetTitle("Data/MC")
         h_ratio.GetLowerRefYaxis().SetTitleOffset(1)
-        h_ratio.GetLowerRefYaxis().SetNdivisions(2)
+        # h_ratio.GetLowerRefYaxis().SetLabelSize(0.04)
         h_ratio.GetLowerRefYaxis().SetRangeUser(0.5, 1.5)
+        h_ratio.GetLowYaxis().SetNdivisions(502)
         h_ratio.GetLowerPad().Update()
 
         upperPad = h_ratio.GetUpperPad()
