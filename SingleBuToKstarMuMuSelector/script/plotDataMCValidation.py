@@ -118,11 +118,11 @@ def plot_histo():
     fin_mc = ROOT.TFile("plotDataMCValidation_jpsi.root")
 
     pConfig = {
-        'h_Bmass': {
-            'label': "Bmass",
-            'xTitle': "m_{B^{+}} [GeV]",
-            'yTitle': None,
-        },
+        # 'h_Bmass': {
+        #     'label': "Bmass",
+        #     'xTitle': "m_{B^{+}} [GeV]",
+        #     'yTitle': None,
+        # },
         'h_Bpt': {
             'label': "Bpt",
             'xTitle': "B^{+} p_{T} [GeV]",
