@@ -31,7 +31,7 @@ predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollecti
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog='seqCollection')
-    parser.add_argument('-b', '--bin', dest='binKey', type=str, default=p.cfg['binKey'])
+    parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'])
     parser.add_argument('-s', '--seq', dest='seqKey', type=str, default=None)
     args = parser.parse_args()
 
