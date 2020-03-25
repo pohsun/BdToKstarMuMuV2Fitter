@@ -86,6 +86,9 @@ if __name__ == '__main__':
     hists['h_LambdaBMass_LambdaSR_bin0'] = {
         'hist': df_LambdaSR.Histo1D(("h_LambdaBMass_LambdaSR_bin0", "", 26, 4.76, 5.80), "LambdaBMass"),
         'xTitle': "m_{#Lambda#pi#mu#mu} [GeV]"}
+    hists['h_KshortMass_bin0'] = {
+        'hist': df.Histo1D(("h_KshortMass_bin0", "", 30, 0.468, 0.528), "KshortMass"),
+        'xTitle': "m_{#pi#pi} [GeV]"}
     hists['h_KshortMass_Lambda1p3x_bin0'] = {
         'hist': df_Lambda1330.Histo1D(("h_KshortMass_Lambda1p3x_bin0", "", 30, 0.468, 0.528), "KshortMass"),
         'xTitle': "m_{#pi#pi} [GeV]"}
@@ -122,16 +125,24 @@ if __name__ == '__main__':
 
     h_Bmass_bin0 = df.Histo1D(("h_Bmass_bin0", "", 13, 4.76, 5.80), "Bmass")
     h_Bmass_VetoLambdaSR_bin0 = df_vetoLambdaSR.Histo1D(("h_Bmass_VetoLambdaSR_bin0", "", 13, 4.76, 5.80), "Bmass")
-    
+
     canvas = Plotter.canvas
     canvas.cd()
+    line = ROOT.TLine()
+    line.SetLineColor(2)
+    line.SetLineWidth(2)
+    line.SetLineStyle(10)
     for hName, hData in hists.items():
         hData['hist'].SetMinimum(0)
         hData['hist'].SetMaximum(hData['hist'].GetMaximum()*1.8)
         hData['hist'].GetXaxis().SetTitle(hData.get('xTitle', ""))
         hData['hist'].GetYaxis().SetTitle(hData.get('yTitle', "Events"))
         hData['hist'].Draw("E")
+	if hName in ['h_LambdaMass_bin0', 'h_LambdaMass_SR_bin0', 'h_LambdaMass_SB_bin0']:
+	    line.DrawLine(1.110, hData['hist'].GetMinimum(), 1.110, hData['hist'].GetMaximum())
+	    line.DrawLine(1.125, hData['hist'].GetMinimum(), 1.125, hData['hist'].GetMaximum())
         Plotter.latexDataMarks()
+	canvas.Update()
         canvas.Print(hName+".pdf")
 
     h_Bmass_bin0.GetXaxis().SetTitle("m_{B} [GeV]")
@@ -144,4 +155,5 @@ if __name__ == '__main__':
     h_Bmass_bin0.Draw("E")
     h_Bmass_VetoLambdaSR_bin0.Draw("E SAME")
     Plotter.latexDataMarks()
+    canvas.Update()
     canvas.Print(h_Bmass_VetoLambdaSR_bin0.GetName()+".pdf")
