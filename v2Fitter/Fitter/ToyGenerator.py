@@ -56,6 +56,10 @@ class ToyGenerator(Path):
             # Remark: 
             #   1. User is responsible for the positiveness of the PDF.
             #   2. Name of the generated dataset is pdf.GetName()+"Data"
+            #   3. Generation time is linear to scale and depend on the PDF, so don't use large scale
+            #       TODO: Parallel production with large scale
+            if (self.cfg['scale'] > 100):
+                self.logger.logWARNING("It may take longer time to generate a large sample. (Scale={0})".format(self.cfg['scale']))
             self.data = self.pdf.generate(self.argset, ROOT.gRandom.Poisson(self.cfg['expectedYields'] * self.cfg['scale']), *self.cfg.get('generateOpt', []))
         self.logger.logINFO("ToyGenerator {0} generates based on {1} with {2} events.".format(self.name, self.pdf.GetName(), self.data.sumEntries()))
 
