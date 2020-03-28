@@ -34,6 +34,41 @@ from SingleBuToKstarMuMuFitter.StdProcess import p
 
 from argparse import ArgumentParser
 
+# The standard format to keep the result in db file.
+def updateToDB_altShape(args, tag, tagFiducial=None):
+    """ Template db entry maker for syst """
+    try:
+        db = shelve.open(p.dbplayer.odbfile)
+        if tagFiducial is None:
+            fiducial_fl = unboundFlToFl(db['unboundFl']['getVal'])
+            fiducial_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fiducial_fl)
+        else:
+            fiducial_fl = db["fl_{0}".format(tagFiducial)]['getVal']
+            fiducial_afb = db["afb_{0}".format(tagFiducial)]['getVal']
+    finally:
+        db.close()
+
+    afb = p.sourcemanager.get('afb').getVal()
+    fl = p.sourcemanager.get('fl').getVal()
+    syst_altShape = {}
+    syst_altShape['syst_{0}_afb'.format(tag)] = {
+        'afb': afb,
+        'getError': math.fabs(afb - fiducial_afb),
+        'getErrorHi': math.fabs(afb - fiducial_afb),
+        'getErrorLo': -1 * math.fabs(afb - fiducial_afb),
+    }
+    syst_altShape['syst_{0}_fl'.format(tag)] = {
+        'fl': fl,
+        'getError': math.fabs(fl - fiducial_fl),
+        'getErrorHi': math.fabs(fl - fiducial_fl),
+        'getErrorLo': -1 * math.fabs(fl - fiducial_fl),
+    }
+    print(syst_altShape)
+
+    if args.updateDB:
+        print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
+        FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
+
 # Data-MC discrepancy in terms of efficiency map
 # # Determinded by reweight the efficiency map derived from MC with a data-MC ratio from Jpsi CR.
 # # Redo the whole fitting procedure using the modified efficiency map.
@@ -434,38 +469,6 @@ def func_randEffi(args):
         p.endSeq()
 
 # Alternate efficiency map
-def updateToDB_altShape(args, tag, tagFiducial=None):
-    """ Template db entry maker for syst """
-    try:
-        db = shelve.open(p.dbplayer.odbfile)
-        if tagFiducial is None:
-            fiducial_fl = unboundFlToFl(db['unboundFl']['getVal'])
-            fiducial_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fiducial_fl)
-        else:
-            fiducial_fl = db["fl_{0}".format(tagFiducial)]['getVal']
-            fiducial_afb = db["afb_{0}".format(tagFiducial)]['getVal']
-    finally:
-        db.close()
-
-    afb = p.sourcemanager.get('afb').getVal()
-    fl = p.sourcemanager.get('fl').getVal()
-    syst_altShape = {}
-    syst_altShape['syst_{0}_afb'.format(tag)] = {
-        'getError': math.fabs(afb - fiducial_afb),
-        'getErrorHi': math.fabs(afb - fiducial_afb),
-        'getErrorLo': -1 * math.fabs(afb - fiducial_afb),
-    }
-    syst_altShape['syst_{0}_fl'.format(tag)] = {
-        'getError': math.fabs(fl - fiducial_fl),
-        'getErrorHi': math.fabs(fl - fiducial_fl),
-        'getErrorLo': -1 * math.fabs(fl - fiducial_fl),
-    }
-    print(syst_altShape)
-
-    if args.updateDB:
-        print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
-        FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
-
 # # Use uncorrelated efficiency map and compare the difference
 def func_altEffi(args):
     """ Typically less than 1% """
