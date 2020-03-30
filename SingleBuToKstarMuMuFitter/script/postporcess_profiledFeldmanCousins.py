@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# vim: set sts=4 sw=4 fdm=indent fdn=3 et:
+# vim: set sts=4 sw=4 fdm=indent fdl=0 fdn=1 et:
 
 from __future__ import print_function
 
@@ -23,30 +23,38 @@ targetBinKeys = ["belowJpsi", "betweenPeaks", "abovePsi2s", "summary"]
 targetCoverage = 0.683
 
 def worker_mergeToys(task_dir):
+    print("INFO\t: Merge toys from {0}".format(task_dir))
     for binKey in targetBinKeys:
         for fileKey, wspaceKey in [("sigToyGenerator", "f_sig3DData"), ("bkgCombToyGenerator", "f_bkgCombData")]:
             files = glob.glob(args.batchDir + "/" + task_dir + "/*/{0}_{1}.root".format(fileKey, q2bins[binKey]['label']))
             merged_file = args.batchDir + "/" + task_dir + "/{0}_{1}.root".format(fileKey, q2bins[binKey]['label'])
-            if os.path.exists(merged_file) and args.mergeExists:
-                files.append(merged_file)
+            if os.path.exists(merged_file) and os.path.getsize(merged_file) > 1e3:
+                if args.mergeExists:
+                    files.append(merged_file)
+                else:
+                    # print("WARNING\t: A sizable {0}_{1}.root found under {2}. Skip!".format(fileKey, q2bins[binKey]['label'], task_dir))
+                    continue
 
             for fIdx, f in enumerate(files):
                 try:
                     fin = ROOT.TFile(f)
                     dataset = fin.Get(wspaceKey)
+
+                    if fIdx == 0:
+                        merged_dataset = dataset
+                    else:
+                        merged_dataset.append(dataset)
+
                 finally:
                     fin.Close()
 
-                if fIdx == 0:
-                    merged_dataset = dataset
-                else:
-                    merged_dataset.append(dataset)
-
             if len(files) > 0:
-                ofile = ROOT.TFile(merged_file, 'RECREATE')
-                #  print("DEBUG\t: Writing {0}_{1}.root under {2}".format(fileKey, q2bins[binKey]['label'], task_dir))
-                merged_dataset.Write()
-                ofile.Close()
+                try:
+                    ofile = ROOT.TFile(merged_file, 'RECREATE')
+                    #  print("DEBUG\t: Writing {0}_{1}.root under {2}".format(fileKey, q2bins[binKey]['label'], task_dir))
+                    merged_dataset.Write()
+                finally:
+                    ofile.Close()
             else:
                 print("WARNING\t: {0}_{1}.root not found under {2}".format(fileKey, q2bins[binKey]['label'], task_dir))
 
@@ -56,6 +64,7 @@ def func_mergeToys(args):
     pool.map(worker_mergeToys,
              filter(lambda i: re.match(args.taskDirPatn, i) or re.match("bestFit", i), os.listdir(args.batchDir)))
     pool.close()
+    pool.join()
 
 def worker_mergeSetSummary(task_dir):
     for binKey in targetBinKeys:
@@ -64,8 +73,7 @@ def worker_mergeSetSummary(task_dir):
         merged_file = args.batchDir + "/" + task_dir + "/{0}_{1}.root".format(fileKey, q2bins[binKey]['label'])
 
         if os.path.exists(merged_file):
-            #  print("WARNING\t: {0} exists. Skip!".format(merged_file))
-            pass
+            print("WARNING\t: {0} exists. Skip!".format(merged_file))
         elif len(files) > 0:
             call(["hadd", merged_file] + files)
         else:
@@ -77,6 +85,7 @@ def func_mergeSetSummary(args):
     pool.map(worker_mergeSetSummary,
              filter(lambda i: re.match(args.taskDirPatn, i) or re.match("bestFit", i), os.listdir(args.batchDir)))
     pool.close()
+    pool.join()
     os.system("ls -l " + args.batchDir + "/*/setSummary_*.root")
     print("INFO\t: Please check the merged filesize makes sense, and then delete work_dirs.")
 
@@ -394,7 +403,6 @@ if __name__ == '__main__':
         default=r"^(afb|fl)[+-]0\.\d{3}$",
         help="Regex pattern of task_dir under batchDir",
     )
-
 
     parser.add_argument(
         '-w', '--workDirPatn',
