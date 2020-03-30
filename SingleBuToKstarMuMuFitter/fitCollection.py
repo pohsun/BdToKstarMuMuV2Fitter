@@ -17,6 +17,9 @@ import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 
 setupTemplateFitter = StdFitter.templateConfig()
+setupTemplateFitter.update({
+    'createNLLOpt': [ROOT.RooFit.Range("Fit")], # This works only when the range is labelled during making wspace from `pdfCollection.py`.
+})
 
 setupEffiFitter = deepcopy(EfficiencyFitter.templateConfig())
 setupEffiFitter.update({
@@ -36,7 +39,6 @@ setupSigMFitter.update({
     'data': "sigMCReader.Fit",
     'pdf': "f_sigM",
     'argPattern': ['sigMGauss[12]_sigma', 'sigMGauss_mean', 'sigM_frac'],
-    'createNLLOpt': [],
     'argAliasInDB': {'sigMGauss1_sigma': 'sigMGauss1_sigma_RECO', 'sigMGauss2_sigma': 'sigMGauss2_sigma_RECO', 'sigMGauss_mean': 'sigMGauss_mean_RECO', 'sigM_frac': 'sigM_frac_RECO'},
 })
 sigMFitter = StdFitter(setupSigMFitter)
@@ -47,7 +49,6 @@ setupSigAFitter.update({
     'data': "sigMCGENReader.Fit",
     'pdf': "f_sigA",
     'argPattern': ['unboundAfb', 'unboundFl'],
-    'createNLLOpt': [],
     'argAliasInDB': {'unboundAfb': 'unboundAfb_GEN', 'unboundFl': 'unboundFl_GEN'},
 })
 sigAFitter = StdFitter(setupSigAFitter)
@@ -64,7 +65,6 @@ setupSig2DFitter.update({
     'data': "sigMCReader.Fit",
     'pdf': "f_sig2D",
     'argPattern': ['unboundAfb', 'unboundFl'],
-    'createNLLOpt': [],
     'argAliasInDB': {'unboundAfb': 'unboundAfb_RECO', 'unboundFl': 'unboundFl_RECO'},
 })
 sig2DFitter = StdFitter(setupSig2DFitter)
@@ -77,7 +77,6 @@ setupBkgCombAFitter.update({
     'argPattern': [r'bkgComb[KL]_c[\d]+', ],
     'FitHesse': False,
     'FitMinos': [True, ()],
-    'createNLLOpt': [],
 })
 bkgCombAFitter = StdFitter(setupBkgCombAFitter)
 
@@ -89,7 +88,6 @@ setupBkgCombMFitter.update({
     'argPattern': [r'bkgCombM_c[\d]+', ],
     'FitHesse': False,
     'FitMinos': [False, ()],
-    'createNLLOpt': [],
 })
 bkgCombMFitter = StdFitter(setupBkgCombMFitter)
 
@@ -99,10 +97,10 @@ setupFinalFitter.update({
     'data': "dataReader.Fit",
     'pdf': "f_final",
     'argPattern': ['nSig', 'unboundAfb', 'unboundFl', 'fs', 'transAs', 'nBkgComb', r'bkgCombM_c[\d]+'],
-    'createNLLOpt': [ROOT.RooFit.Extended(True), ],
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("Fit")],
     'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
-    'argAliasInDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
-    'argAliasWhenSaveToDB': False, # Init with argAlias, save to db without argAlias.
+    'argAliasFromDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
+    'argAliasInDB': {'nSig': 'nSig', 'unboundAfb': 'unboundAfb', 'unboundFl': 'unboundFl', 'fs': 'fs', 'transAs': 'transAs', 'nBkgComb': 'nBkgComb'},
 })
 finalFitter = StdFitter(setupFinalFitter)
 
@@ -121,6 +119,22 @@ setupBkgPsi2sMFitter.update({
     'argAliasInDB': {'sigMGauss1_sigma': 'sigMGauss1_sigma_bkgPsi2s', 'sigMGauss2_sigma': 'sigMGauss2_sigma_bkgPsi2s', 'sigMGauss_mean': 'sigMGauss_mean_bkgPsi2s', 'sigM_frac': 'sigM_frac_bkgPsi2s'},
 })
 bkgPsi2sMFitter = StdFitter(setupBkgPsi2sMFitter)
+
+
+# For additional tests
+setupFinalFitter_altFit0 = deepcopy(setupFinalFitter)
+setupFinalFitter_altFit0.update({
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("altFit0")],
+    'argAliasInDB': {'nSig': 'nSig_altFit0', 'unboundAfb': 'unboundAfb_altFit0', 'unboundFl': 'unboundFl_altFit0', 'fs': 'fs_altFit0', 'transAs': 'transAs_altFit0', 'nBkgComb': 'nBkgComb_altFit0'},
+})
+finalFitter_altFit0 = StdFitter(setupFinalFitter_altFit0)
+
+setupFinalFitter_altFit1 = deepcopy(setupFinalFitter)
+setupFinalFitter_altFit1.update({
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("altFit1")],
+    'argAliasInDB': {'nSig': 'nSig_altFit1', 'unboundAfb': 'unboundAfb_altFit1', 'unboundFl': 'unboundFl_altFit1', 'fs': 'fs_altFit1', 'transAs': 'transAs_altFit1', 'nBkgComb': 'nBkgComb_altFit1'},
+})
+finalFitter_altFit1 = StdFitter(setupFinalFitter_altFit1)
 
 if __name__ == '__main__':
     #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])

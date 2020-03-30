@@ -27,9 +27,9 @@ class StdFitter(FitterCore):
             'FitMinos': [True, ()],
             'createNLLOpt': [ROOT.RooFit.Extended(1), ],
             'argPattern': [r'^.+$', ],
-            'argAliasInDB': {},
+            'argAliasInDB': {}, # When writes result to DB.
+            'argAliasFromDB': {}, # Overwrite argAliasInDB only when initFromDB.
             'saveToDB': True,
-            'argAliasWhenSaveToDB': True,
         })
         return cfg
 
@@ -47,7 +47,11 @@ class StdFitter(FitterCore):
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
+        argAliasFromDB = {}
+        for d in [self.cfg['argAliasInDB'], self.cfg['argAliasFromDB']]:
+            for k, v in d.items():
+                argAliasFromDB[k] = v
+        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, argAliasFromDB)
         self.ToggleConstVar(self.args, True)
         self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
 
@@ -89,7 +93,7 @@ class StdFitter(FitterCore):
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
-            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'] if self.cfg['argAliasWhenSaveToDB'] else None)
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 
     def _runFitSteps(self):

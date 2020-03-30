@@ -21,11 +21,11 @@ from collections import OrderedDict
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.WspaceReader import WspaceReader
 
-from SingleBuToKstarMuMuFitter.StdProcess import isDEBUG
-from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL
 import SingleBuToKstarMuMuFitter.cpp
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
+from SingleBuToKstarMuMuFitter.StdProcess import isDEBUG
+from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins, bMassRegions
+from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL
 
 import ROOT
 from ROOT import RooWorkspace

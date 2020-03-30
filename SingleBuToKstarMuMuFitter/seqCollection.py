@@ -29,6 +29,10 @@ predefined_sequence['stdFit'] = [dataCollection.effiHistReader, dataCollection.s
 predefined_sequence['fitSig2D'] = [dataCollection.sigMCReader, pdfCollection.stdWspaceReader, fitCollection.sig2DFitter]
 predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollection.stdWspaceReader, fitCollection.sigAFitter]
 
+# More tests on range
+predefined_sequence['fitFinal3D_altFit0'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_altFit0]
+predefined_sequence['fitFinal3D_altFit1'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_altFit1]
+
 if __name__ == '__main__':
     parser = ArgumentParser(prog='seqCollection')
     parser.add_argument('-b', '--binKey', dest='binKey', type=str, default=p.cfg['binKey'])
@@ -38,7 +42,7 @@ if __name__ == '__main__':
     if args.binKey in anaSetup.q2bins.keys():
         p.cfg['binKey'] = args.binKey
     else:
-        raise KeyError("Unknown binKey. Pick from {0}".format(anaSetup.q2bins.keys()))
+        raise KeyError("Unknown binKey {0}. Pick from {1}".format(args.binKey, anaSetup.q2bins.keys()))
 
     if args.seqKey is not None:
         if args.seqKey in predefined_sequence.keys():

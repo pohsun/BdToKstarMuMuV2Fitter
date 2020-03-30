@@ -6,8 +6,14 @@
 
 from ROOT import RooRealVar
 from ROOT import RooArgSet
+from SingleBuToKstarMuMuFitter.anaSetup import bMassRegions
 
-Bmass = RooRealVar("Bmass","m_{K^{*}#mu#mu} [GeV]", 4.76, 5.80)
+# Bmass = RooRealVar("Bmass","m_{K^{*}#mu#mu} [GeV]", 4.76, 5.80)
+Bmass = RooRealVar("Bmass","m_{K^{*}#mu#mu} [GeV]", 4.50, 6.00)
+for regName, regCfg in bMassRegions.items():
+    # Remark: Only regions defined while running pdfCollection could be used in ROOT.RooFit(regionName)
+    Bmass.setRange(regName, regCfg['range'][0], regCfg['range'][1])
+
 CosThetaK = RooRealVar("CosThetaK", "cos#theta_{K}", -1., 1.)
 CosThetaL = RooRealVar("CosThetaL", "cos#theta_{l}", -1., 1.)
 Mumumass = RooRealVar("Mumumass", "m_{#mu#mu} [GeV]", 0., 10.)

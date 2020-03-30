@@ -70,7 +70,8 @@ def createBmassTemplate(name, lowerBd, upperBd):
     }
     return template
 
-bMassRegions['Fit'] = createBmassTemplate("Fit", 4.76, 5.80)
+bMassRegions['Full'] = createBmassTemplate("Full", 4.5, 6.00) # Cut off below 4.68
+bMassRegions['Fit'] = createBmassTemplate("Fit", 4.76, 5.80) # Cut off below 4.68
 bMassRegions['SR'] = createBmassTemplate("SR", 5.18, 5.38)
 bMassRegions['LSB'] = createBmassTemplate("LSB", 4.76, 5.18)
 bMassRegions['USB'] = createBmassTemplate("USB", 5.38, 5.80)
@@ -87,7 +88,7 @@ bMassRegions['outerUSB'] = createBmassTemplate("outerUSB", 5.59, 5.80)
 bMassRegions['outerSB'] = createBmassTemplate("outerSB", 4.76, 5.80)
 bMassRegions['outerSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['outerSB']['cutString'], "Bmass > 4.97 && Bmass < 5.59")
 
-# systematics
+# Systematics
 bMassRegions['altFit'] = createBmassTemplate("altFit", 4.68, 5.88)
 bMassRegions['altSR'] = createBmassTemplate("altSR", 5.18, 5.38)
 bMassRegions['altLSB'] = createBmassTemplate("altLSB", 4.68, 5.18)
@@ -101,6 +102,10 @@ bMassRegions['altLSB_vetoJpsiX'] = createBmassTemplate("altLSB_vetoJpsiX", 5.18,
 bMassRegions['altUSB_vetoJpsiX'] = createBmassTemplate("altUSB_vetoJpsiX", 5.38, 5.80)
 bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5.80)
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
+
+# More tests
+bMassRegions['altFit0'] = createBmassTemplate("altFit0", 4.68, 5.88)
+bMassRegions['altFit1'] = createBmassTemplate("altFit1", 5.00, 5.64)
 
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
