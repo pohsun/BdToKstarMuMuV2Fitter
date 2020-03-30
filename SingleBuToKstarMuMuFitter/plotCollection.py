@@ -71,7 +71,7 @@ class Plotter(Path):
             Plotter.latexLumi()
             Plotter.latexCMSExtra(**extraArgs)
 
-    frameB = Bmass.frame()
+    frameB = Bmass.frame(ROOT.RooFit.Range("Fit"))
     frameB.SetMinimum(0)
     frameB.SetTitle("")
     frameB_binning = 13
@@ -187,7 +187,6 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     wspace = ROOT.RooWorkspace("wspace")
     getattr(wspace, 'import')(Bmass)
     Bmass.setRange("Fit", 4.76, 5.80)
-    #  Bmass.setRange("Fit", 5.08, 5.48)
     wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.04])")
     wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.04,0.40])")
     wspace.factory("SUM::sigM(sigFrac[0.8,0,1]*gauss1,gauss2)")
@@ -633,6 +632,8 @@ def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt=None, marks=
     hist = super(data.__class__, data).createHistogram(pltName, *createHistogramArgs)
 
     hist.SetFillColor(2)
+    hist.SetMinimum(0)
+    hist.SetMaximum(1.5 * hist.GetMaximum())
     for opt in drawOpt:
         if re.match("LEGO", opt.upper()):
             hist.SetTitleOffset(1.4, "X")
@@ -662,6 +663,7 @@ types.MethodType(plotOnXYZ, None, Plotter)
 plotterCfg = {
     'name': "plotter",
     'switchPlots': [],
+    'plots': {},
 }
 plotterCfg_dataStyle = ()
 plotterCfg_mcStyle = ()
@@ -669,199 +671,257 @@ plotterCfg_allStyle = (ROOT.RooFit.MarkerColor(1), ROOT.RooFit.LineColor(1),)
 plotterCfg_sigStyleNoFill = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4),)
 plotterCfg_sigStyle = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
 plotterCfg_bkgStyle = (ROOT.RooFit.MarkerColor(2), ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
-plotterCfg['plots'] = {
-    'simpleSpectrum': {
-        'func': [plotSpectrumWithSimpleFit],
-        'kwargs': {
-            'pltName': "h_Bmass",
-            'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ], # Standard
-            # 'dataPlots': [["dataReader.Fit_noResVeto", plotterCfg_dataStyle, None], ],
-            # 'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ],
-            # 'dataPlots': [["bkgJpsiMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "J/#psi K^{*+}"], ],
-            # 'dataPlots': [["bkgPsi2sMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "#psi(2S) K^{*+}"], ],
-            'marks': {}
-        }
-    },
-    'effi': {
-        'func': [plotEfficiency],
-        'kwargs': {
-            'dataName': "effiHistReader.accXrec",
-            'pdfName': "effi_sigA"}
-    },
-    'plotOnXY_Bmass_CosThetaK': {
-        'func': [plotOnXYZ],
-        'kwargs': {
-            'pltName': "plotOnXY_Bmass_CosThetaK",
-            'dataName': "sigMCReader.Fit",
-            'createHistogramArgs': (Bmass,
-                                    ROOT.RooFit.Binning(20, 5.18, 5.38),
-                                    ROOT.RooFit.YVar(CosThetaK,
-                                                     ROOT.RooFit.Binning(20, -1., 1.))
-                                    ),
-            'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
-            'marks': {'marks': ['sim']}}
-    },
-    'plotOnXY_Bmass_CosThetaL': {
-        'func': [plotOnXYZ],
-        'kwargs': {
-            'pltName': "plotOnXY_Bmass_CosThetaL",
-            'dataName': "sigMCReader.Fit",
-            'createHistogramArgs': (Bmass,
-                                    ROOT.RooFit.Binning(20, 5.18, 5.38),
-                                    ROOT.RooFit.YVar(CosThetaL,
-                                                     ROOT.RooFit.Binning(20, -1., 1.))
-                                    ),
-            'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
-            'marks': {'marks': ['sim']}}
-    },
-    'plotOnXY_CosThetaK_CosThetaL_bkgComb': {
-        'func': [plotOnXYZ],
-        'kwargs': {
-            'pltName': "plotOnXY_CosThetaK_CosThetaL_bkgComb",
-            'dataName': "dataReader.SB",
-            'createHistogramArgs': (CosThetaK,
-                                    ROOT.RooFit.Binning(dataCollection.rAccXEffThetaKBins),
-                                    ROOT.RooFit.YVar(CosThetaL,
-                                                     ROOT.RooFit.Binning(dataCollection.rAccXEffThetaLBins))
-                                    ),
-            'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
-            'marks': {}}
-    },
-    'plotOnX_Kstarmass': {
-        'func': [plotOnXYZ],
-        'kwargs': {
-            'pltName': "plotOnX_Kstarmass",
-            'dataName': "dataReader.Fit",
-            'createHistogramArgs': (Kstarmass,
-                                    ROOT.RooFit.Binning(30, 0.742, 1.042),
-                                    ),
-            'drawOpt': [""],
-            'marks': {}}
-    },
-    'angular3D_sigM': {
-        'func': [functools.partial(plotSimpleBLK, frames='B')],
-        'kwargs': {
-            'pltName': "angular3D_sigM",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
-                        ],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_sig2D': {
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
-        'kwargs': {
-            'pltName': "angular3D_sig2D",
-            'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
-                        ],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_bkgJpsiM': {
-        'func': [functools.partial(plotSimpleBLK, frames='B')],
-        'kwargs': {
-            'pltName': "angular3D_bkgJpsiM",
-            'dataPlots': [["bkgJpsiMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_bkgPsi2sM': {
-        'func': [functools.partial(plotSimpleBLK, frames='B')],
-        'kwargs': {
-            'pltName': "angular3D_bkgPsi2sM",
-            'dataPlots': [["bkgPsi2sMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
-            'pdfPlots': [],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_bkgCombA': {
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
-        'kwargs': {
-            'pltName': "angular3D_bkgCombA",
-            'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
-            'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
-                        ],
-            'marks': {}}
-    },
-    'angular3D_bkgCombAAltA': {
-        'func': [functools.partial(plotSimpleBLK, frames='LK')],
-        'kwargs': {
-            'pltName': "angular3D_bkgCombAAltA",
-            'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
-            'pdfPlots': [["f_bkgCombAAltA", plotterCfg_bkgStyle, None, "Smooth Bkg."],
-                        ],
-            'marks': {}}
-    },
-    'simpleBLK': {  # Most general case, to be customized by user
-        'func': [functools.partial(plotSimpleBLK, frames='BLK')],
-        'kwargs': {
-            'pltName': "simpleBLK",
-            'dataPlots': [["ToyGenerator.mixedToy", plotterCfg_mcStyle, "Toy"], ],
-            'pdfPlots': [["f_sigM", plotterCfg_sigStyle, None, None],
-                        ],
-            'marks': {'marks': ['sim']}}
-    },
-    'angular3D_final': {
-        'func': [plotPostfitBLK],
-        'kwargs': {
-            'pltName': "angular3D_final",
-            'dataReader': "dataReader",
-            'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit"],
-                         ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
-                         ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
-                        ],
-        }
-    },
-    'angular3D_summary': {
-        'func': [plotSummaryAfbFl],
-        'kwargs': {
-            'pltName': "angular3D_summary",
-            'dbSetup': [{'title': "Data",
-                         'statErrorKey': 'FeldmanCousins',
-                         'legendOpt': "LPE",
-                         'fillColor': 1,
-                         },
-                        {'title': "Data",
-                         'statErrorKey': 'FeldmanCousins',
-                         'fillColor': 1,
-                         'withSystError': True,
-                         },
-                        ],
-            'drawSM': True,
-        },
-    },
-    'angular2D_summary_RECO2GEN': {
-        'func': [plotSummaryAfbFl],
-        'kwargs': {
-            'pltName': "angular2D_summary_RECO2GEN",
-            'dbSetup': [{'title': "RECO",
-                         'argAliasInDB': {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
-                         'legendOpt': "LPE",
-                         },
-                        {'title': "GEN",
-                         'argAliasInDB': {'unboundFl': 'unboundFl_GEN', 'unboundAfb': 'unboundAfb_GEN'},
-                         'fillColor': 4,
-                         'legendOpt': "LPE",
-                         },
-                        ],
-            'marks': {'marks': ['sim']},
-        },
+
+plotterCfg_allStyle_Alt0 = (ROOT.RooFit.MarkerColor(1), ROOT.RooFit.LineColor(1), ROOT.RooFit.LineStyle(9))
+plotterCfg_sigStyle_Alt0 = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
+
+plotterCfg['plots']['simpleBLK'] = { # Most general case, to be customized by user
+    'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "simpleBLK",
+        'dataPlots': [["ToyGenerator.mixedToy", plotterCfg_mcStyle, "Toy"], ],
+        'pdfPlots': [["f_sigM", plotterCfg_sigStyle, None, None],
+                    ],
+        'marks': {'marks': ['sim']}},
+}
+plotterCfg['plots']['simpleSpectrum'] = {
+    'func': [plotSpectrumWithSimpleFit],
+    'kwargs': {
+        'pltName': "h_Bmass",
+        'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ], # Standard
+        # 'dataPlots': [["dataReader.Fit_noResVeto", plotterCfg_dataStyle, None], ],
+        # 'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ],
+        # 'dataPlots': [["bkgJpsiMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "J/#psi K^{*+}"], ],
+        # 'dataPlots': [["bkgPsi2sMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "#psi(2S) K^{*+}"], ],
+        'marks': {}
+    }
+}
+
+# Standard fitting procedure
+plotterCfg['plots']['effi'] = {
+    'func': [plotEfficiency],
+    'kwargs': {
+        'dataName': "effiHistReader.accXrec",
+        'pdfName': "effi_sigA",
     },
 }
-# plotterCfg['switchPlots'].append('simpleSpectrum')
-# plotterCfg['switchPlots'].append('effi')
-# plotterCfg['switchPlots'].append('angular3D_sigM')
-# plotterCfg['switchPlots'].append('angular3D_bkgJpsiM')
-# plotterCfg['switchPlots'].append('angular3D_bkgPsi2sM')
-# plotterCfg['switchPlots'].append('angular3D_bkgCombA')
-# plotterCfg['switchPlots'].append('angular3D_bkgCombAAltA')
-# plotterCfg['switchPlots'].append('angular3D_final')
+plotterCfg['plots']['angular3D_sigM'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='B')],
+    'kwargs': {
+        'pltName': "angular3D_sigM",
+        'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+        'pdfPlots': [["f_sigM", plotterCfg_sigStyle, fitCollection.setupSigMFitter['argAliasInDB'], "Total fit"],
+                    ],
+        'marks': {'marks': ['sim']}}
+}
+plotterCfg['plots']['angular3D_sig2D'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='LK')],
+    'kwargs': {
+        'pltName': "angular3D_sig2D",
+        'dataPlots': [["sigMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+        'pdfPlots': [["f_sig2D", plotterCfg_sigStyle, fitCollection.setupSig2DFitter['argAliasInDB'], None],
+                    ],
+        'marks': {'marks': ['sim']}}
+}
+plotterCfg['plots']['angular2D_summary_RECO2GEN'] = {
+    'func': [plotSummaryAfbFl],
+    'kwargs': {
+        'pltName': "angular2D_summary_RECO2GEN",
+        'dbSetup': [{'title': "RECO",
+                     'argAliasInDB': {'unboundFl': 'unboundFl_RECO', 'unboundAfb': 'unboundAfb_RECO'},
+                     'legendOpt': "LPE",
+                     },
+                    {'title': "GEN",
+                     'argAliasInDB': {'unboundFl': 'unboundFl_GEN', 'unboundAfb': 'unboundAfb_GEN'},
+                     'fillColor': 4,
+                     'legendOpt': "LPE",
+                     },
+                    ],
+        'marks': {'marks': ['sim']},
+    },
+}
+plotterCfg['plots']['angular3D_bkgJpsiM'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='B')],
+    'kwargs': {
+        'pltName': "angular3D_bkgJpsiM",
+        'dataPlots': [["bkgJpsiMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+        'pdfPlots': [],
+        'marks': {'marks': ['sim']}}
+}
+plotterCfg['plots']['angular3D_bkgPsi2sM'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='B')],
+    'kwargs': {
+        'pltName': "angular3D_bkgPsi2sM",
+        'dataPlots': [["bkgPsi2sMCReader.Fit", plotterCfg_mcStyle, "Simulation"], ],
+        'pdfPlots': [],
+        'marks': {'marks': ['sim']}}
+}
+plotterCfg['plots']['angular3D_bkgCombA'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='LK')],
+    'kwargs': {
+        'pltName': "angular3D_bkgCombA",
+        'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
+        'pdfPlots': [["f_bkgCombA", plotterCfg_bkgStyle, None, "Analytic Bkg."],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_final'] = {
+    'func': [plotPostfitBLK],
+    'kwargs': {
+        'pltName': "angular3D_final",
+        'dataReader': "dataReader",
+        'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit"],
+                     ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
+                     ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
+                    ],
+    }
+}
+plotterCfg['plots']['angular3D_summary'] = {
+    'func': [plotSummaryAfbFl],
+    'kwargs': {
+        'pltName': "angular3D_summary",
+        'dbSetup': [{'title': "Data",
+                     'statErrorKey': 'FeldmanCousins',
+                     'legendOpt': "LPE",
+                     'fillColor': 1,
+                     },
+                    {'title': "Data",
+                     'statErrorKey': 'FeldmanCousins',
+                     'fillColor': 1,
+                     'withSystError': True,
+                     },
+                    ],
+        'drawSM': True,
+    },
+}
 
-# plotterCfg['switchPlots'].append('angular3D_summary')
-# plotterCfg['switchPlots'].append('angular2D_summary_RECO2GEN')
+# Syst uncertainty
+plotterCfg['plots']['angular3D_bkgCombAAltA'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='LK')],
+    'kwargs': {
+        'pltName': "angular3D_bkgCombAAltA",
+        'dataPlots': [["dataReader.SB", plotterCfg_dataStyle, "Data"], ],
+        'pdfPlots': [["f_bkgCombAAltA", plotterCfg_bkgStyle, None, "Smooth Bkg."],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_finalAltBkgCombA'] = {
+    'func': [plotPostfitBLK],
+    'kwargs': {
+        'pltName': "angular3D_finalAltBkgCombA",
+        'dataReader': "dataReader",
+        'pdfPlots': [["f_finalAltBkgCombA", plotterCfg_allStyle, None, "Total fit"],
+                     ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
+                     ["f_bkgCombAltA", plotterCfg_bkgStyle, None, "Background"],
+                    ],
+    }
+}
 
-# plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaK')
-# plotterCfg['switchPlots'].append('plotOnXY_Bmass_CosThetaL')
-# plotterCfg['switchPlots'].append('plotOnXY_CosThetaK_CosThetaL_bkgComb')
-# plotterCfg['switchPlots'].append('plotOnX_Kstarmass')
+# More tests
+plotterCfg['plots']['plotOnX_Kstarmass'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnX_Kstarmass",
+        'dataName': "dataReader.Fit",
+        'createHistogramArgs': (Kstarmass,
+                                ROOT.RooFit.Binning(30, 0.742, 1.042),
+                                ),
+        'drawOpt': [""],
+        'marks': {}}
+}
+plotterCfg['plots']['plotOnX_CosThetaK_USB'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnX_CosThetaK_USB",
+        'dataName': "dataReader.USB",
+        'createHistogramArgs': (CosThetaK,
+                                ROOT.RooFit.Binning(Plotter.frameK_binning),
+                                ),
+        'drawOpt': [""],
+        'marks': {}}
+}
+plotterCfg['plots']['plotOnX_CosThetaL_USB'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnX_CosThetaL_USB",
+        'dataName': "dataReader.USB",
+        'createHistogramArgs': (CosThetaL,
+                                ROOT.RooFit.Binning(Plotter.frameL_binning),
+                                ),
+        'drawOpt': [""],
+        'marks': {}}
+}
+plotterCfg['plots']['plotOnX_CosThetaK_LSB'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnX_CosThetaK_LSB",
+        'dataName': "dataReader.LSB",
+        'createHistogramArgs': (CosThetaK,
+                                ROOT.RooFit.Binning(Plotter.frameK_binning),
+                                ),
+        'drawOpt': [""],
+        'marks': {}}
+}
+plotterCfg['plots']['plotOnX_CosThetaL_LSB'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnX_CosThetaL_LSB",
+        'dataName': "dataReader.LSB",
+        'createHistogramArgs': (CosThetaL,
+                                ROOT.RooFit.Binning(Plotter.frameL_binning),
+                                ),
+        'drawOpt': [""],
+        'marks': {}}
+}
+plotterCfg['plots']['plotOnXY_Bmass_CosThetaK'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnXY_Bmass_CosThetaK",
+        'dataName': "sigMCReader.Fit",
+        'createHistogramArgs': (Bmass,
+                                ROOT.RooFit.Binning(20, 5.18, 5.38),
+                                ROOT.RooFit.YVar(CosThetaK,
+                                                 ROOT.RooFit.Binning(20, -1., 1.))
+                                ),
+        'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+        'marks': {'marks': ['sim']}}
+}
+plotterCfg['plots']['plotOnXY_Bmass_CosThetaL'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnXY_Bmass_CosThetaL",
+        'dataName': "sigMCReader.Fit",
+        'createHistogramArgs': (Bmass,
+                                ROOT.RooFit.Binning(20, 5.18, 5.38),
+                                ROOT.RooFit.YVar(CosThetaL,
+                                                 ROOT.RooFit.Binning(20, -1., 1.))
+                                ),
+        'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+        'marks': {'marks': ['sim']}}
+}
+plotterCfg['plots']['plotOnXY_CosThetaK_CosThetaL_bkgComb'] = {
+    'func': [plotOnXYZ],
+    'kwargs': {
+        'pltName': "plotOnXY_CosThetaK_CosThetaL_bkgComb",
+        'dataName': "dataReader.SB",
+        'createHistogramArgs': (CosThetaK,
+                                ROOT.RooFit.Binning(dataCollection.rAccXEffThetaKBins),
+                                ROOT.RooFit.YVar(CosThetaL,
+                                                 ROOT.RooFit.Binning(dataCollection.rAccXEffThetaLBins))
+                                ),
+        'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_final_compAltFit'] = { # TODO: Show two PDF with different parameter.
+    'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "angular3D_final_compAltFit",
+        'dataPlots': [["dataReader.Full", plotterCfg_dataStyle, "Data"], ],
+        'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit"],
+                     ["f_final", plotterCfg_sigStyle, fitCollection.setupFinalFitter_altFit0['argAliasInDB'], "Alt Total fit"],
+                    ],
+        'marks': {}}
+}
 
 plotter = Plotter(plotterCfg)
 
@@ -892,7 +952,7 @@ if __name__ == '__main__':
             if plt not in plotter.cfg['switchPlots']:
                 plotter.cfg['switchPlots'].append(plt)
         else:
-            raise KeyError("Unknown key {0} in plotterCfg, pick from {1}".format(plt, ','.join(plotterCfg['plots'].keys())))
+            raise KeyError("Unknown key {0} in plotterCfg, pick from {1}".format(plt, ' '.join(plotterCfg['plots'].keys())))
 
     p.setSequence([dataCollection.effiHistReader,
         dataCollection.sigMCReader,
