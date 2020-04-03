@@ -28,14 +28,13 @@ def table_AN_sysFL_sysAFB():
     baseIndentLevel = 2
     for var in ["fl", "afb"]:
         dbKeyToLine = OrderedDict()
-        dbKeyToLine['syst_randEffi'] = [r"Limited MC size"]
-        dbKeyToLine['syst_altEffi'] = [r"Eff.\ mapping"]
-        dbKeyToLine['syst_simMismodel'] = [r"Simu.\ mismodel"]
-        dbKeyToLine['syst_altSP'] = [r"$S$ - $P$ wave interf.\ "]
-        dbKeyToLine['syst_altBkgCombA'] = [r"Comb.\ Bkg.\ shape"]
-        dbKeyToLine['syst_vetoJpsiX'] = [r"$B$ mass range"]
+        dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
+        dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
+        dbKeyToLine['syst_altEffi'] = [r"Efficiency shape"]
+        dbKeyToLine['syst_altBkgCombA'] = [r"Combinatorial Background shape"]
+        dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
+        dbKeyToLine['syst_vetoJpsiX'] = [r"\PBp mass fit range"]
         dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
-        #  dbKeyToLine['syst_altFitRange'] = [r"$B$ mass range"]
         totalErrorLine = ["Total"]
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
             db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
@@ -64,7 +63,7 @@ def table_AN_sysFL_sysAFB():
         print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
         print("")
 
-def table_AN_yields():
+def table_AN_yields(): # Not used anymore
     baseIndentLevel = 2
     print("[table_AN_yields] Printing table of yields")
     print("")
@@ -142,7 +141,7 @@ def table_AN_dataresAFBFL():
         'syst_altSP',
         'syst_altBkgCombA',
         'syst_vetoJpsiX',
-        #  'syst_altFitRange',
+        'syst_dataMCDisc',
     ]
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
@@ -171,18 +170,17 @@ def table_AN_FinalDataresAFBFL():
     table_AN_dataresAFBFL()
 
 def table_paper_sys():
-    baseIndentLevel = 3
+    baseIndentLevel = 2
     binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
 
     dbKeyToLine = OrderedDict()
-    dbKeyToLine['syst_randEffi'] = [r"Limited MC size"]
-    dbKeyToLine['syst_altEffi'] = [r"Eff.\ mapping"]
-    dbKeyToLine['syst_simMismodel'] = [r"Simu.\ mismodel"]
-    dbKeyToLine['syst_altSP'] = [r"$S$ - $P$ wave interf.\ "]
-    dbKeyToLine['syst_altBkgCombA'] = [r"Comb.\ Bkg.\ shape"]
-    dbKeyToLine['syst_vetoJpsiX'] = [r"$B$ mass range"]
+    dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
+    dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
+    dbKeyToLine['syst_altEffi'] = [r"Efficiency shape"]
+    dbKeyToLine['syst_altBkgCombA'] = [r"Combinatorial Background shape"]
+    dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
+    dbKeyToLine['syst_vetoJpsiX'] = [r"\PBp mass fit range"]
     dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
-    #  dbKeyToLine['syst_altFitRange'] = [r"$B$ mass range"]
     totalErrorLine = ["Total systematic uncertainty"]
     for var in ["afb", "fl"]:
         for binKey in binKeys:
@@ -215,7 +213,7 @@ def table_paper_results():
     print("[table_paper_results] Printing table of final result")
     print("")
     print(indent * (baseIndentLevel + 0) + r"\begin{scotch}{cccc}")
-    print(indent * (baseIndentLevel + 1) + r"$q^2$ (${\GeVns}^2$) & $Y_{\mathrm{S}}$ & \afb & \fl \\")
+    print(indent * (baseIndentLevel + 1) + r"\qq{}(\GeVV) & $Y_{\mathrm{S}}$ & \afb & \fl \\")
     print(indent * (baseIndentLevel + 1) + r"\hline")
 
     binKeyToLine = OrderedDict()
@@ -226,12 +224,12 @@ def table_paper_results():
 
     syst_sources = [
         'syst_randEffi',
-        'syst_altEffi',
         'syst_simMismodel',
-        'syst_altSP',
+        'syst_altEffi',
         'syst_altBkgCombA',
+        'syst_altSP',
         'syst_vetoJpsiX',
-        #  'syst_altFitRange',
+        'syst_dataMCDisc',
     ]
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
@@ -255,12 +253,11 @@ def table_paper_results():
     print("")
 
 if __name__ == '__main__':
-    # table_AN_sysFL_sysAFB()
-    # table_AN_yields()
-    # table_AN_coverageAFBFL()
-    # table_AN_dataresAFBFL()
-    # table_AN_FinalDataresAFBFL()
+    table_AN_sysFL_sysAFB()
+    table_AN_coverageAFBFL()
+    table_AN_dataresAFBFL()
+    table_AN_FinalDataresAFBFL()
 
-    # table_paper_sys()
-    # table_paper_results()
+    table_paper_sys()
+    table_paper_results()
     pass
