@@ -732,7 +732,7 @@ def func_vetoJpsiX(args):
     fitterCfg.update({
         'data': "dataReader.altFit_vetoJpsiX",
         'saveToDB': False,
-        'createNLLOpt': [ROOT.RooFit.Range("altFit_vetoJpsiX")],
+        'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("altFit_vetoJpsiX")],
     })
     fitter = StdFitter(fitterCfg)
     p.setSequence([
