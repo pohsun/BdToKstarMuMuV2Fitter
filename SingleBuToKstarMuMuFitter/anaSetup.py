@@ -19,7 +19,7 @@ def createBinTemplate(name, lowerBd, upperBd):
         'q2range': (lowerBd, upperBd),
         'cutString': "Mumumass > {0} && Mumumass < {1}".format(sqrt(lowerBd), sqrt(upperBd)),
         'label': "{0}".format(name),
-        'latexLabel': "{upperBd:.2f} > q^{{2}} > {lowerBd:.2f}".format(upperBd=upperBd, lowerBd=lowerBd),
+        'latexLabel': "{upperBd:.2f} > #font[12]{{q^{{2}}}} > {lowerBd:.2f}".format(upperBd=upperBd, lowerBd=lowerBd),
     }
     return template
 
@@ -82,6 +82,7 @@ bMassRegions['innerLSB'] = createBmassTemplate("innerLSB", 4.97, 5.18)
 bMassRegions['innerUSB'] = createBmassTemplate("innerUSB", 5.38, 5.59)
 bMassRegions['innerSB'] = createBmassTemplate("innerSB", 4.97, 5.59)
 bMassRegions['innerSB']['cutString'] = "({0}) && !({1})".format(bMassRegions['innerSB']['cutString'], bMassRegions['SR']['cutString'])
+bMassRegions['innerFit'] = createBmassTemplate("Fit", 4.97, 5.18)
 
 bMassRegions['outerLSB'] = createBmassTemplate("outerLSB", 4.76, 4.97)
 bMassRegions['outerUSB'] = createBmassTemplate("outerUSB", 5.59, 5.80)
@@ -105,7 +106,14 @@ bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassReg
 
 # More tests
 bMassRegions['altFit0'] = createBmassTemplate("altFit0", 4.68, 5.88)
+
 bMassRegions['altFit1'] = createBmassTemplate("altFit1", 5.00, 5.64)
+
+bMassRegions['altFit2'] = createBmassTemplate("altFit2", 4.98, 5.58)
+bMassRegions['altLSB2'] = createBmassTemplate("altLSB2", 4.98, 5.18)
+bMassRegions['altUSB2'] = createBmassTemplate("altLSB2", 5.38, 5.58)
+bMassRegions['altSB2'] = createBmassTemplate("altSB2", 4.98, 5.58)
+bMassRegions['altSB2']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB2']['cutString'], bMassRegions['SR']['cutString'])
 
 # Cut strings
 cut_passTrigger = "Triggers >= 1"
