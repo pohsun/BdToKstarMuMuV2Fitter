@@ -105,6 +105,10 @@ def func_getFCConfInterval(args):
                 try:
                     fin = ROOT.TFile(args.batchDir + "/" + taskDir + "/setSummary_{0}.root".format(q2bins[binKey]['label']))
                     tree = fin.Get("tree")
+                    if not tree:
+                        print("WARNING\t: Unable to find the tree in " + args.batchDir + "/" + taskDir + "/setSummary_{0}.root".format(q2bins[binKey]['label']))
+                        continue
+
                     if varName == "afb":
                         pdf = ROOT.TF1("pdf_{0}".format(setTag), "gaus(0)+[3]*exp(-0.5*(x/[4])**2)+[5]*exp(-0.5*((x-0.745)/[6])**2)+[7]*exp(-0.5*((x+0.745)/[8])**2)", -0.75, 0.75)
                         pdf.SetParameter(1, varVal)
@@ -157,6 +161,8 @@ def func_getFCConfInterval(args):
                 finally:
                     fin.Close()
 
+            fout.cd() # Associate TGraph and TH1 to a directory.
+            
             # Prepare likelihood ratio map for later use
             LRatioAfb = ROOT.TH2F("LRatioAfb", "", 150, -0.75, 0.75, 150, -0.75, 0.75)
             for afbMeas in afbFitResults.keys():
@@ -273,8 +279,9 @@ def func_fitFCConfInterval(args):
             Plotter.latexCMSExtra()
             Plotter.latexLumi()
 
-        db = shelve.open(args.dbDirPath + "/fitResults_{0}.db".format(q2bins[binKey]['label']),
-                         writeback=True if args.saveToDB else False)
+        dbName = args.dbDirPath + "/fitResults_{0}.db".format(q2bins[binKey]['label'])
+        print("Work with DB file: {0}".format(dbName))
+        db = shelve.open(dbName, writeback=True if args.saveToDB else False)
         fl = unboundFlToFl(db['unboundFl']['getVal'])
         afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fl)
         fin = ROOT.TFile(args.batchDir + "/FCConfInterval_{0}.root".format(q2bins[binKey]['label']))

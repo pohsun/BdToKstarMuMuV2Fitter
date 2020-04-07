@@ -274,9 +274,9 @@ if __name__ == '__main__':
             plotCollection.plotter.cfg['switchPlots'] = ['simpleBLK']
             plotCollection.plotter.cfg['plots']['simpleBLK']['kwargs'].update({
                 'dataPlots': [["dataReader.Fit", ()], ],
-                'pdfPlots': [["f_final", plotCollection.plotterCfg_allStyle],
-                             ["f_final", (ROOT.RooFit.Components('f_sig3D'), ) + plotCollection.plotterCfg_sigStyle],
-                             ["f_final", (ROOT.RooFit.Components('f_bkgComb'), ) + plotCollection.plotterCfg_bkgStyle],
+                'pdfPlots': [["f_final", plotCollection.plotterCfg_allStyle + (ROOT.RooFit.ProjectionRange("Fit"), ROOT.RooFit.Range("Fit"))],
+                             ["f_final", plotCollection.plotterCfg_sigStyle + (ROOT.RooFit.ProjectionRange("Fit"), ROOT.RooFit.Range("Fit"), ROOT.RooFit.Components('f_sig3D'))],
+                             ["f_final", plotCollection.plotterCfg_bkgStyle + (ROOT.RooFit.ProjectionRange("Fit"), ROOT.RooFit.Range("Fit"), ROOT.RooFit.Components('f_bkgComb'))],
                              ],
                 'marks': [],
             })
