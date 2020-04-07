@@ -252,19 +252,7 @@ f_analyticBkgCombA_format['abovePsi2s'] = [
         pdfK="1.+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)",
         args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3}")
 ]
-f_analyticBkgCombA_format['summary'] = [
-    "bkgCombL_c1[0.01,1]",
-    "bkgCombL_c2[0.1,20]",
-    "bkgCombL_c3[-1,1]",
-    "bkgCombL_c4[0.05,1]",
-    "bkgCombK_c1[-10,0]",
-    "bkgCombK_c2[0,20]",
-    "bkgCombK_c3[0,10]",
-    "EXPR::f_bkgCombA('({pdfL})*({pdfK})',{args})".format(
-        pdfL="1-pow(pow(CosThetaL,2)-bkgCombL_c1,2)+bkgCombL_c2*exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))",
-        pdfK="exp(bkgCombK_c1*CosThetaK)+bkgCombK_c2*exp(bkgCombK_c3*CosThetaK)",
-        args="{CosThetaL,CosThetaK,bkgCombL_c1,bkgCombL_c2,bkgCombL_c3,bkgCombL_c4,bkgCombK_c1,bkgCombK_c2,bkgCombK_c3}")
-]
+f_analyticBkgCombA_format['summary'] = f_analyticBkgCombA_format['belowJpsi']
 f_analyticBkgCombA_format['DEFAULT'] = f_analyticBkgCombA_format['summary']
 
 setupBuildAnalyticBkgCombA = {
@@ -309,7 +297,6 @@ def buildSmoothBkgCombA(self):
         frac_bkgCombAAltA = wspace.var("frac_bkgCombAAltA")
         frac_bkgCombAAltA.setVal(self.process.sourcemanager.get('dataReader.LSB').sumEntries() / (self.process.sourcemanager.get('dataReader.LSB').sumEntries() + self.process.sourcemanager.get('dataReader.USB').sumEntries()))
         frac_bkgCombAAltA.setConstant(True)
-
     self.cfg['source']['frac_bkgCombAAltA'] = frac_bkgCombAAltA
     self.cfg['source']['f_bkgCombAAltA'] = f_bkgCombAAltA
 
@@ -360,6 +347,57 @@ def buildFinal(self):
 
         self.cfg['source'][p] = f_final
 
+# For Additional tests
+def buildFinal_altFit2(self):
+    """ Smooth function from combined data in range altFit2"""
+    wspace = self.getWspace()
+
+    f_final_altFit2 = wspace.pdf("f_final_altFit2")
+    if f_final_altFit2 == None:
+        f_bkgCombAAltK = RooKeysPdf("f_bkgCombAAltK_altFit2",
+                                    "f_bkgCombAAltK_altFit2",
+                                    CosThetaK,
+                                    self.process.sourcemanager.get('dataReader.altSB2'),
+                                    RooKeysPdf.MirrorBoth, 1.0)
+        f_bkgCombAAltL = RooKeysPdf("f_bkgCombAAltL_altFit2",
+                                    "f_bkgCombAAltL_altFit2",
+                                    CosThetaL,
+                                    self.process.sourcemanager.get('dataReader.altSB2'),
+                                    RooKeysPdf.MirrorBoth, 1.0)
+        for f in f_bkgCombAAltK, f_bkgCombAAltL:
+            getattr(wspace, 'import')(f)
+        wspace.factory("PROD::f_bkgCombAAltA_altFit2(f_bkgCombAAltK_altFit2,f_bkgCombAAltL_altFit2)")
+        wspace.factory("PROD::f_bkgComb_altFit2(f_bkgCombM, f_bkgCombAAltA_altFit2)")
+        wspace.factory("SUM::{0}(nSig*{1},nBkgComb*{2})".format("f_final_altFit2", "f_sig3D", "f_bkgComb_altFit2"))
+        f_final_altFit2 = wspace.pdf("f_final_altFit2")
+
+    self.cfg['source']['f_final_altFit2'] = f_final_altFit2
+
+def buildFinal_altFit3(self):
+    """ Smooth function from combined data in range altFit3"""
+    wspace = self.getWspace()
+
+    f_final_altFit3 = wspace.pdf("f_final_altFit3")
+    if f_final_altFit3 == None:
+        f_bkgCombAAltK = RooKeysPdf("f_bkgCombAAltK_altFit3",
+                                    "f_bkgCombAAltK_altFit3",
+                                    CosThetaK,
+                                    self.process.sourcemanager.get('dataReader.SB'),
+                                    RooKeysPdf.MirrorBoth, 1.0)
+        f_bkgCombAAltL = RooKeysPdf("f_bkgCombAAltL_altFit3",
+                                    "f_bkgCombAAltL_altFit3",
+                                    CosThetaL,
+                                    self.process.sourcemanager.get('dataReader.SB'),
+                                    RooKeysPdf.MirrorBoth, 1.0)
+        for f in f_bkgCombAAltK, f_bkgCombAAltL:
+            getattr(wspace, 'import')(f)
+        wspace.factory("PROD::f_bkgCombAAltA_altFit3(f_bkgCombAAltK_altFit3,f_bkgCombAAltL_altFit3)")
+        wspace.factory("PROD::f_bkgComb_altFit3(f_bkgCombM, f_bkgCombAAltA_altFit3)")
+        wspace.factory("SUM::{0}(nSig*{1},nBkgComb*{2})".format("f_final_altFit3", "f_sig3D", "f_bkgComb_altFit3"))
+        f_final_altFit3 = wspace.pdf("f_final_altFit3")
+
+    self.cfg['source']['f_final_altFit3'] = f_final_altFit3
+
 sharedWspaceTagString = "{binLabel}"
 CFG_WspaceReader = copy(WspaceReader.templateConfig())
 CFG_WspaceReader.update({
@@ -396,6 +434,8 @@ def customizePDFBuilder(self):
             ('f_bkgCombMAltM', [buildBkgCombMAltM]),
             ('f_bkgComb', [buildBkgComb]),  # Include all variations
             ('f_final', [buildFinal]),  # Include all variations
+            ('f_final_altFit2', [buildFinal_altFit2]),
+            ('f_final_altFit3', [buildFinal_altFit3]),
         ])
     })
 stdPDFBuilder.customize = types.MethodType(customizePDFBuilder, stdPDFBuilder)
