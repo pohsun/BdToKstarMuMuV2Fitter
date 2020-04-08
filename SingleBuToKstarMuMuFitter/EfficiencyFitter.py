@@ -110,6 +110,8 @@ class EfficiencyFitter(FitterCore):
 
         fitter = ROOT.EfficiencyFitter()
         h2_accXrec = self.process.sourcemanager.get(self.cfg.get('hdata'))
+        h2_accXrec.SetXTitle(CosThetaL.GetTitle())
+        h2_accXrec.SetYTitle(CosThetaK.GetTitle())
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
         h_effi_pull = ROOT.TH1F("h_effi_pull", "", 30, -3, 3)
         fitter.SetPull(h_effi_pull)
@@ -131,11 +133,13 @@ class EfficiencyFitter(FitterCore):
         if not self.cfg.get('noDraw', False):
             self.canvas.cd()
             h2_effi_2D_comp = fitter.GetRatio()
+            h2_effi_2D_comp.SetXTitle(CosThetaL.GetTitle())
+            h2_effi_2D_comp.SetYTitle(CosThetaK.GetTitle())
             h2_effi_2D_comp.SetZTitle("#varepsilon_{fit}/#varepsilon_{measured}")
             h2_effi_2D_comp.SetMinimum(0)
             h2_effi_2D_comp.SetMaximum(1.5)
-            h2_effi_2D_comp.SetTitleOffset(1.6, "X")
-            h2_effi_2D_comp.SetTitleOffset(1.8, "Y")
+            h2_effi_2D_comp.SetTitleOffset(1.3, "X")
+            h2_effi_2D_comp.SetTitleOffset(1.5, "Y")
             h2_effi_2D_comp.SetTitleOffset(1.5, "Z")
             h2_effi_2D_comp.Draw("LEGO2")
             self.latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
@@ -165,6 +169,8 @@ class EfficiencyFitter(FitterCore):
 
             # Plot pull between fitting result to data
             h2_effi_2D_pull = fitter.GetPull2D()
+            h2_effi_2D_pull.SetXTitle(CosThetaL.GetTitle())
+            h2_effi_2D_pull.SetYTitle(CosThetaK.GetTitle())
             h2_effi_2D_pull.SetZTitle("Pull")
             h2_effi_2D_pull.SetMinimum(-3.)
             h2_effi_2D_pull.SetMaximum(3.)

@@ -28,6 +28,7 @@ import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
 
+defaultPlotRegion = "Fit"
 class Plotter(Path):
     """The plotter"""
     setStyle()
@@ -71,10 +72,13 @@ class Plotter(Path):
             Plotter.latexLumi()
             Plotter.latexCMSExtra(**extraArgs)
 
-    frameB = Bmass.frame(ROOT.RooFit.Range("Fit"))
+    frameB = Bmass.frame(ROOT.RooFit.Range(defaultPlotRegion))
     frameB.SetMinimum(0)
     frameB.SetTitle("")
-    frameB_binning = 13
+    frameB_binning_array = array('d', [4.52, 4.60, 4.68] + [4.76 + 0.08*i for i in range(14)] + [5.88, 5.96])
+    frameB_binning = ROOT.RooBinning(len(frameB_binning_array)-1, frameB_binning_array)
+    frameB_binning_fine_array = array('d', [4.52 + 0.04*i for i in range(38)])
+    frameB_binning_fine = ROOT.RooBinning(len(frameB_binning_fine_array)-1, frameB_binning_fine_array)
 
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
@@ -157,7 +161,7 @@ class Plotter(Path):
     plotFrameB = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning}))
     plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
     plotFrameL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))
-    plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning * 2}))
+    plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning_fine}))
     plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning * 2}))
     plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning * 2}))
 
@@ -198,11 +202,11 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     wspace.factory("SUM::model(tmp_nSig[0,1e5]*sigM,tmp_nBkg[0,1e5]*bkgCombM)")
     pdfPlots = [
         [wspace.pdf('model'), plotterCfg_allStyle, None, "Total fit"],
-        [wspace.pdf('model'), (ROOT.RooFit.Components('sigM'),) + plotterCfg_sigStyle, None, "Signal"],
-        [wspace.pdf('model'), (ROOT.RooFit.Components('bkgCombM'),) + plotterCfg_bkgStyle, None, "Background"],
+        [wspace.pdf('model'), plotterCfg_sigStyle + (ROOT.RooFit.Components('sigM'),), None, "Signal"],
+        [wspace.pdf('model'), plotterCfg_bkgStyle + (ROOT.RooFit.Components('bkgCombM'),), None, "Background"],
     ]
 
-    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Range("Fit"), ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
+    pdfPlots[0][0].fitTo(dataPlots[0][0], ROOT.RooFit.Range(defaultPlotRegion), ROOT.RooFit.Minos(True), ROOT.RooFit.Extended(True))
 
     def avgWidth(fr, w1, w2):
         return math.sqrt(fr * w1**2 + (1. - fr) * w2**2)
@@ -250,16 +254,18 @@ def plotEfficiency(self, dataName, pdfName):
     binningK = ROOT.RooBinning(len(dataCollection.accXEffThetaKBins) - 1, dataCollection.accXEffThetaKBins)
 
     data_accXrec = self.process.sourcemanager.get("effiHistReader.h2_accXrec")
-    data_accXrec.SetZTitle("Efficiency [%]")
     data_accXrec.Scale(100)
     data_accXrec.SetMinimum(0)
     data_accXrec.SetMaximum(0.1 if self.process.cfg['binKey'] in ['jpsi', 'psi2s'] else 0.020)  # Z axis in percentage
     h2_effi_sigA_fine = pdf.createHistogram("h2_effi_sigA_fine", CosThetaL, ROOT.RooFit.Binning(20), ROOT.RooFit.YVar(CosThetaK, ROOT.RooFit.Binning(20)))
     h2_effi_sigA_fine.Scale(100 * h2_effi_sigA_fine.GetNbinsX()/2 * h2_effi_sigA_fine.GetNbinsY()/2)
 
-    data_accXrec.SetTitleOffset(1.6, "X")
-    data_accXrec.SetTitleOffset(1.8, "Y")
-    data_accXrec.SetTitleOffset(1.8, "Z")
+    data_accXrec.SetXTitle(CosThetaL.GetTitle())
+    data_accXrec.SetYTitle(CosThetaK.GetTitle())
+    data_accXrec.SetZTitle("Efficiency [%]")
+    data_accXrec.SetTitleOffset(1.3, "X")
+    data_accXrec.SetTitleOffset(1.5, "Y")
+    data_accXrec.SetTitleOffset(1.5, "Z")
     data_accXrec.Draw("LEGO2")
     h2_effi_sigA_fine.SetLineColor(2)
     h2_effi_sigA_fine.Draw("SURF SAME0")
@@ -274,7 +280,7 @@ def plotEfficiency(self, dataName, pdfName):
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
     data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100))
     pdfL = self.process.sourcemanager.get("effi_cosl")
-    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)
+    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFillBase)
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
     cloned_frameL.Draw()
@@ -288,7 +294,7 @@ def plotEfficiency(self, dataName, pdfName):
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
     data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100))
     pdfK = self.process.sourcemanager.get("effi_cosK")
-    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFill)
+    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_sigStyleNoFillBase)
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
     cloned_frameK.Draw()
@@ -300,6 +306,7 @@ types.MethodType(plotEfficiency, None, Plotter)
 
 def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     """Specification of plotSimpleBLK for post-fit plots"""
+
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
 
@@ -320,14 +327,12 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
 
         # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
         obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
-        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
         sigFrac[regionName] = pdfPlots[1][0].createIntegral(
             obs,
             ROOT.RooFit.NormSet(obs),
             ROOT.RooFit.Range(regionName)).getVal()
 
         obs = pdfPlots[2][0].getObservables(dataPlots[0][0])
-        FitterCore.ArgLooper(obs, lambda p: p.setRange(regionName, *bMassRegions[regionName]['range']), ["Bmass"])
         bkgCombFrac[regionName] = pdfPlots[2][0].createIntegral(
             obs,
             ROOT.RooFit.NormSet(obs),
@@ -343,23 +348,19 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             bkgCombFrac[regionName] -= bkgCombFrac['innerSB']
 
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
-        #  print(regionName, sigFrac[regionName], bkgCombFrac[regionName], nTotal_local)
-
-        # Correct the shape of f_final
-        args.find("nSig").setVal(nSigDB * sigFrac[regionName])
-        args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
+        # print(regionName, sigFrac[regionName], bkgCombFrac[regionName], nTotal_local)
 
         modified_pdfPlots = [
             [pdfPlots[0][0],
-             pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+             pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Range(regionName)),
              None,
              "Total fit"],
             [pdfPlots[0][0],
-             pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+             pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Range(regionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
              None,
              "Sigal"],
             [pdfPlots[0][0],
-             pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+             pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Range(regionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
              None,
              "Background"],
         ]
@@ -666,14 +667,17 @@ plotterCfg = {
     'plots': {},
 }
 plotterCfg_dataStyle = ()
-plotterCfg_mcStyle = ()
-plotterCfg_allStyle = (ROOT.RooFit.MarkerColor(1), ROOT.RooFit.LineColor(1),)
-plotterCfg_sigStyleNoFill = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4),)
-plotterCfg_sigStyle = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
-plotterCfg_bkgStyle = (ROOT.RooFit.MarkerColor(2), ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
+plotterCfg_mcStyleBase = ()
+plotterCfg_allStyleBase = (ROOT.RooFit.LineColor(1),)
+plotterCfg_sigStyleNoFillBase = (ROOT.RooFit.LineColor(4),)
+plotterCfg_sigStyleBase = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
+plotterCfg_bkgStyleBase = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
 
-plotterCfg_allStyle_Alt0 = (ROOT.RooFit.MarkerColor(1), ROOT.RooFit.LineColor(1), ROOT.RooFit.LineStyle(9))
-plotterCfg_sigStyle_Alt0 = (ROOT.RooFit.MarkerColor(4), ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
+plotterCfg_mcStyle = plotterCfg_mcStyleBase + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_allStyle = plotterCfg_allStyleBase + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_sigStyle = plotterCfg_sigStyleBase + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_sigStyleNoFill = plotterCfg_sigStyleNoFillBase + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_bkgStyle = plotterCfg_bkgStyleBase + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 
 plotterCfg['plots']['simpleBLK'] = { # Most general case, to be customized by user
     'func': [functools.partial(plotSimpleBLK, frames='BLK')],
@@ -770,9 +774,9 @@ plotterCfg['plots']['angular3D_final'] = {
     'kwargs': {
         'pltName': "angular3D_final",
         'dataReader': "dataReader",
-        'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit"],
-                     ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
-                     ["f_bkgComb", plotterCfg_bkgStyle, None, "Background"],
+        'pdfPlots': [["f_final", plotterCfg_allStyleBase, None, "Total fit"],
+                     ["f_sig3D", plotterCfg_sigStyleBase, None, "Sigal"],
+                     ["f_bkgComb", plotterCfg_bkgStyleBase, None, "Background"],
                     ],
     }
 }
@@ -810,9 +814,9 @@ plotterCfg['plots']['angular3D_finalAltBkgCombA'] = {
     'kwargs': {
         'pltName': "angular3D_finalAltBkgCombA",
         'dataReader': "dataReader",
-        'pdfPlots': [["f_finalAltBkgCombA", plotterCfg_allStyle, None, "Total fit"],
-                     ["f_sig3D", plotterCfg_sigStyle, None, "Sigal"],
-                     ["f_bkgCombAltA", plotterCfg_bkgStyle, None, "Background"],
+        'pdfPlots': [["f_finalAltBkgCombA", plotterCfg_allStyleBase, None, "Total fit"],
+                     ["f_sig3D", plotterCfg_sigStyleBase, None, "Sigal"],
+                     ["f_bkgCombAltA", plotterCfg_bkgStyleBase, None, "Background"],
                     ],
     }
 }
@@ -912,13 +916,61 @@ plotterCfg['plots']['plotOnXY_CosThetaK_CosThetaL_bkgComb'] = {
         'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
         'marks': {}}
 }
-plotterCfg['plots']['angular3D_final_compAltFit'] = { # TODO: Show two PDF with different parameter.
+plotterCfg['plots']['angular3D_final_altFit0'] = {
     'func': [functools.partial(plotSimpleBLK, frames='BLK')],
     'kwargs': {
-        'pltName': "angular3D_final_compAltFit",
+        'pltName': "angular3D_final_altFit0",
         'dataPlots': [["dataReader.Full", plotterCfg_dataStyle, "Data"], ],
-        'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit"],
-                     ["f_final", plotterCfg_sigStyle, fitCollection.setupFinalFitter_altFit0['argAliasInDB'], "Alt Total fit"],
+        'pdfPlots': [["f_final", plotterCfg_allStyle, fitCollection.setupFinalFitter_altFit0['argAliasInDB'], "Total fit[4.68, 5.88]"],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_final_altFit1'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "angular3D_final_altFit1",
+        'dataPlots': [["dataReader.Full", plotterCfg_dataStyle, "Data"], ],
+        'pdfPlots': [["f_final", plotterCfg_allStyle, fitCollection.setupFinalFitter_altFit1['argAliasInDB'], "Total fit[5.00, 5.64]"],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_final_altFit2'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "angular3D_final_altFit2",
+        'dataPlots': [["dataReader.altFit2", plotterCfg_dataStyle, "Data"],],
+        'pdfPlots': [["f_final_altFit2", plotterCfg_allStyleBase + (ROOT.RooFit.ProjectionRange("altFit2"), ROOT.RooFit.NormRange("altFit2"),), fitCollection.setupFinalFitter_altFit2['argAliasInDB'], "Total fit[4.98, 5.58]"],
+                     ["f_final_altFit2", plotterCfg_sigStyleBase + (ROOT.RooFit.ProjectionRange("altFit2"), ROOT.RooFit.NormRange("altFit2"), ROOT.RooFit.Components("f_sig3D"),), fitCollection.setupFinalFitter_altFit2['argAliasInDB'], "Signal"],
+                     ["f_final_altFit2", plotterCfg_bkgStyleBase + (ROOT.RooFit.ProjectionRange("altFit2"), ROOT.RooFit.NormRange("altFit2"), ROOT.RooFit.Components("f_bkgCombAAltA_altFit2"),), fitCollection.setupFinalFitter_altFit2['argAliasInDB'], "Smooth Bkg."],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_bkgComb_altFit2'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='LK')],
+    'kwargs': {
+        'pltName': "angular3D_bkgComb_altFit2",
+        'dataPlots': [["dataReader.Full", plotterCfg_dataStyle, "Data"], ],
+        'pdfPlots': [["f_bkgCombAAltA_altFit2", plotterCfg_bkgStyle, None, "Smooth Bkg."],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['angular3D_final_altFit3'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "angular3D_final_altFit3",
+        'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, "Data"],],
+        'pdfPlots': [["f_final_altFit3", plotterCfg_allStyle,  fitCollection.setupFinalFitter_altFit3['argAliasInDB'], "Total fit"],
+                     ["f_final_altFit3", plotterCfg_sigStyle + (ROOT.RooFit.Components("f_sig3D"),), fitCollection.setupFinalFitter_altFit3['argAliasInDB'], "Signal"],
+                     ["f_final_altFit3", plotterCfg_bkgStyle + (ROOT.RooFit.Components("f_bkgCombAAltA_altFit3"),), fitCollection.setupFinalFitter_altFit3['argAliasInDB'], "Smooth Bkg."],
+                    ],
+        'marks': {}}
+}
+plotterCfg['plots']['test'] = { # TODO: Show two PDF with different parameter.
+    'func': [functools.partial(plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "test",
+        'dataPlots': [["dataReader.Full", plotterCfg_dataStyle, "Data"], ],
+        'pdfPlots': [["f_final", plotterCfg_allStyle, None, "Total fit[4.76, 5.80]"],
                     ],
         'marks': {}}
 }
@@ -935,6 +987,9 @@ if __name__ == '__main__':
         'angular3D_bkgCombA',
         'angular3D_bkgCombAAltA',
         'angular3D_final',
+        'plotOnX_Kstarmass',
+        'plotOnXY_Bmass_CosThetaK',
+        'plotOnXY_Bmass_CosThetaL',
     ]
 
     parser = ArgumentParser(prog='plotCollection.py')

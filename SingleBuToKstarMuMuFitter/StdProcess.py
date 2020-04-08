@@ -17,7 +17,7 @@ from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 
 # Shared global settings
 isDEBUG = True
-isPreliminary = False
+isPreliminary = True
 def setStyle():
     """ Ref: https://twiki.cern.ch/twiki/bin/viewauth/CMS/Internal/FigGuidelines """
     ROOT.gROOT.SetBatch(1)

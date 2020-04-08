@@ -32,6 +32,8 @@ predefined_sequence['fitSigMCGEN'] = [dataCollection.sigMCGENReader, pdfCollecti
 # More tests on range
 predefined_sequence['fitFinal3D_altFit0'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_altFit0]
 predefined_sequence['fitFinal3D_altFit1'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_altFit1]
+predefined_sequence['fitFinal3D_altFit2'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_altFit2]
+predefined_sequence['fitFinal3D_altFit3'] = [dataCollection.dataReader, pdfCollection.stdWspaceReader, fitCollection.finalFitter_altFit3]
 
 if __name__ == '__main__':
     parser = ArgumentParser(prog='seqCollection')

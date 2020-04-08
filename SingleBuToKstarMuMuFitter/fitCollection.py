@@ -136,6 +136,22 @@ setupFinalFitter_altFit1.update({
 })
 finalFitter_altFit1 = StdFitter(setupFinalFitter_altFit1)
 
+setupFinalFitter_altFit2 = deepcopy(setupFinalFitter)
+setupFinalFitter_altFit2.update({
+    'pdf': "f_final_altFit2",
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("Fit")],
+    'argAliasInDB': {'nSig': 'nSig_altFit2', 'unboundAfb': 'unboundAfb_altFit2', 'unboundFl': 'unboundFl_altFit2', 'fs': 'fs_altFit2', 'transAs': 'transAs_altFit2', 'nBkgComb': 'nBkgComb_altFit2'},
+})
+finalFitter_altFit2 = StdFitter(setupFinalFitter_altFit2)
+
+setupFinalFitter_altFit3 = deepcopy(setupFinalFitter)
+setupFinalFitter_altFit3.update({
+    'pdf': "f_final_altFit3",
+    'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("Fit")],
+    'argAliasInDB': {'nSig': 'nSig_altFit3', 'unboundAfb': 'unboundAfb_altFit3', 'unboundFl': 'unboundFl_altFit3', 'fs': 'fs_altFit3', 'transAs': 'transAs_altFit3', 'nBkgComb': 'nBkgComb_altFit3'},
+})
+finalFitter_altFit3 = StdFitter(setupFinalFitter_altFit3)
+
 if __name__ == '__main__':
     #  p.setSequence([dataCollection.effiHistReader, pdfCollection.stdWspaceReader, effiFitter])
     #  p.setSequence([dataCollection.sigMCReader, pdfCollection.stdWspaceReader, sigMFitter])
