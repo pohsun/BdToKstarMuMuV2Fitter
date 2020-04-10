@@ -7,6 +7,7 @@ import itertools
 import ROOT
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 from SingleBuToKstarMuMuFitter.StdProcess import setStyle
+import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 import SingleBuToKstarMuMuFitter.varCollection as varCollection
 
@@ -17,7 +18,8 @@ psi2s_range = anaSetup.q2bins['psi2s']['q2range']
 
 def create_histo():
     tree = ROOT.TChain("tree")
-    tree.Add("/eos/cms/store/user/pchen/BToKstarMuMu/dat/sel/v3p5/DATA/*.root")
+    for f in dataCollection.dataReaderCfg['ifile']:
+        tree.Add(f)
 
     #  treeFriend = ROOT.TChain("tree")
     #  treeFriend.Add("./plotMatchCandPreSelector.root")
