@@ -15,7 +15,7 @@ import SingleBuToKstarMuMuFitter.cpp
 from v2Fitter.Fitter.DataReader import DataReader
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from SingleBuToKstarMuMuFitter.varCollection import dataArgs, Bmass, CosThetaL, CosThetaK, Kshortmass, dataArgsGEN
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cuts_antiResVeto, cut_kshortWindow, modulePath
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions, cuts, cuts_noResVeto, cuts_antiSignal, cuts_antiResVeto, cut_kshortWindow, modulePath
 
 import ROOT
 from ROOT import TChain
@@ -62,30 +62,43 @@ def customizeOne(self, targetBMassRegion=None, extraCuts="1"):
 
     # Additional Fit_noResVeto, Fit_antiResVeto for resonance
     if "noResVeto" in targetBMassRegion:
-            self.cfg['dataset'].append(
-                (
-                    "{0}.Fit_noResVeto".format(self.cfg['name'], key),
-                    "({0}) && ({1}) && ({2}) && ({3})".format(
-                        bMassRegions['Fit']['cutString'],
-                        q2bins[self.process.cfg['binKey']]['cutString'],
-                        cuts_noResVeto,
-                        extraCuts,
-                    )
+        self.cfg['dataset'].append(
+            (
+                "{0}.Fit_noResVeto".format(self.cfg['name'], key),
+                "({0}) && ({1}) && ({2}) && ({3})".format(
+                    bMassRegions['Fit']['cutString'],
+                    q2bins[self.process.cfg['binKey']]['cutString'],
+                    cuts_noResVeto,
+                    extraCuts,
                 )
             )
+        )
+
+    if "antiSignal" in targetBMassRegion:
+        self.cfg['dataset'].append(
+            (
+                "{0}.Fit_antiSignal".format(self.cfg['name'], key),
+                "({0}) && ({1}) && ({2}) && ({3})".format(
+                    bMassRegions['Fit']['cutString'],
+                    q2bins[self.process.cfg['binKey']]['cutString'],
+                    cuts_antiSignal,
+                    extraCuts,
+                )
+            )
+        )
 
     if "antiResVeto" in targetBMassRegion:
-            self.cfg['dataset'].append(
-                (
-                    "{0}.Fit_antiResVeto".format(self.cfg['name'], key),
-                    "({0}) && ({1}) && ({2}) && ({3})".format(
-                        bMassRegions['Fit']['cutString'],
-                        q2bins[self.process.cfg['binKey']]['cutString'],
-                        cuts_antiResVeto,
-                        extraCuts,
-                    )
+        self.cfg['dataset'].append(
+            (
+                "{0}.Fit_antiResVeto".format(self.cfg['name'], key),
+                "({0}) && ({1}) && ({2}) && ({3})".format(
+                    bMassRegions['Fit']['cutString'],
+                    q2bins[self.process.cfg['binKey']]['cutString'],
+                    cuts_antiResVeto,
+                    extraCuts,
                 )
             )
+        )
     
     # Customize preload TFile
     if self.cfg['preloadFile']:
@@ -100,7 +113,7 @@ dataReaderCfg.update({
     'lumi': 19.98,
 })
 dataReader = DataReader(dataReaderCfg)
-customizeData = functools.partial(customizeOne, targetBMassRegion=['.*', 'noResVeto', 'antiResVeto'])
+customizeData = functools.partial(customizeOne, targetBMassRegion=['.*', 'noResVeto', 'antiSignal', 'antiResVeto'])
 dataReader.customize = types.MethodType(customizeData, dataReader)
 
 # sigMCReader
@@ -124,7 +137,7 @@ bkgJpsiMCReaderCfg.update({
     'lumi': 295.761,
 })
 bkgJpsiMCReader = DataReader(bkgJpsiMCReaderCfg)
-customizeBkgPeakMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'noResVeto', 'antiResVeto'])
+customizeBkgPeakMC = functools.partial(customizeOne, targetBMassRegion=['^Fit$', 'noResVeto', 'antiSignal', 'antiResVeto'])
 bkgJpsiMCReader.customize = types.MethodType(customizeBkgPeakMC, bkgJpsiMCReader)
 
 bkgPsi2sMCReaderCfg = copy(CFG)

@@ -694,7 +694,8 @@ plotterCfg['plots']['simpleSpectrum'] = {
         'pltName': "h_Bmass",
         'dataPlots': [["dataReader.Fit", plotterCfg_dataStyle, None], ], # Standard
         # 'dataPlots': [["dataReader.Fit_noResVeto", plotterCfg_dataStyle, None], ],
-        # 'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ],
+        # 'dataPlots': [["dataReader.Fit_antiSignal", plotterCfg_dataStyle, None], ],
+        # 'dataPlots': [["dataReader.Fit_antiResVeto", plotterCfg_dataStyle, None], ], # No tail
         # 'dataPlots': [["bkgJpsiMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "J/#psi K^{*+}"], ],
         # 'dataPlots': [["bkgPsi2sMCReader.Fit_antiResVeto", plotterCfg_mcStyle, "#psi(2S) K^{*+}"], ],
         'marks': {}
