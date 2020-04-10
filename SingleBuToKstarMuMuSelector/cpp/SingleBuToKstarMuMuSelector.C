@@ -489,7 +489,7 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Mumumass = mumumass->at(BIndex);
     Mumumasserr = mumumasserr->at(BIndex);
     Kstarmass = kstarmass->at(BIndex);
-    Kshortmass = K_4vec.Mag();
+    Kshortmass = (Pip_4vec+Pim_4vec).Mag(); // Don't take K_4vec.Mag() or it will be just a fixed value.
     
     // Lambda and LambdaB
     if (Pip_4vec.P() > Pim_4vec.P()){
