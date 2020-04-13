@@ -367,12 +367,12 @@ def func_fitFCConfInterval(args):
 
             drawAfbPlot(gr_afbCILo, gr_afbCIHi, afb)
             Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}}".format(afb, stat_FC_afb_getErrorHi, stat_FC_afb_getErrorLo))
-            Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_afb_coverage))
+            # Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_afb_coverage))
             Plotter.canvas.Print(args.batchDir + "/FCConfInterval_afb_global_{0}.pdf".format(q2bins[binKey]['label']))
 
             drawFlPlot(gr_flCILo, gr_flCIHi, fl)
             Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}}".format(fl, stat_FC_fl_getErrorHi, stat_FC_fl_getErrorLo))
-            Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_fl_coverage))
+            # Plotter.latex.DrawLatexNDC(.19, .70, "Coverage: {0:.1f}%".format(100*stat_FC_fl_coverage))
             Plotter.canvas.Print(args.batchDir + "/FCConfInterval_fl_global_{0}.pdf".format(q2bins[binKey]['label']))
 
         if args.saveToDB:
