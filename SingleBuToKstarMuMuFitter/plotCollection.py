@@ -128,7 +128,7 @@ class Plotter(Path):
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """
         # Major plot
-        cloned_frame = frame.emptyClone("cloned_frame")
+        cloned_frame = frame.emptyClone("cloned_frame") # No need to call RefreshNorm
         marks = {} if marks is None else marks
         dataPlots = [] if dataPlots is None else dataPlots
         pdfPlots = [] if pdfPlots is None else pdfPlots
@@ -321,11 +321,13 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     sigFrac = {}
     bkgCombFrac = {}
     for regionName in ["Fit", "SR", "LSB", "USB", "SB", "innerSB", "outerSB"]:
-        dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_dataStyle, "Data"], ]
+        drawRegionName = {'SB': "LSB,USB", 'innerSB': "innerLSB,innerUSB", 'outerSB': "outerLSB,outerUSB"}.get(regionName, regionName)
+        dataPlots = [["{0}.{1}".format(dataReader, "Full"), plotterCfg_dataStyle + (ROOT.RooFit.CutRange(drawRegionName), ), "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
 
         # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
+        # WARNING: Integral to multiple ranges with RooExtendPdf seems to be buggy, be very careful!
         obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
         sigFrac[regionName] = pdfPlots[1][0].createIntegral(
             obs,
@@ -348,19 +350,23 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             bkgCombFrac[regionName] -= bkgCombFrac['innerSB']
 
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
-        # print(regionName, sigFrac[regionName], bkgCombFrac[regionName], nTotal_local)
+        self.logger.logINFO("{0}: {1}, {2}, {3}".format(regionName, sigFrac[regionName], bkgCombFrac[regionName], nTotal_local))
+
+        # Correct the shape of f_final
+        args.find("nSig").setVal(nSigDB * sigFrac[regionName])
+        args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
 
         modified_pdfPlots = [
             [pdfPlots[0][0],
-             pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Range(regionName)),
+             pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ),
              None,
              "Total fit"],
             [pdfPlots[0][0],
-             pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Range(regionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+             pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
              None,
              "Sigal"],
             [pdfPlots[0][0],
-             pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Range(regionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+             pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
              None,
              "Background"],
         ]
