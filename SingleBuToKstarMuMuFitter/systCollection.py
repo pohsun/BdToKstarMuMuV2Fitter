@@ -28,7 +28,7 @@ from SingleBuToKstarMuMuFitter.anaSetup import modulePath, q2bins, bMassRegions,
 from SingleBuToKstarMuMuFitter.StdFitter import StdFitter, unboundFlToFl, unboundAfbToAfb
 from SingleBuToKstarMuMuFitter.EfficiencyFitter import EfficiencyFitter
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.plotCollection import Plotter, plotter
+from SingleBuToKstarMuMuFitter.Plotter import Plotter
 
 
 from argparse import ArgumentParser
@@ -374,9 +374,9 @@ def func_randEffi(args):
     class effiStudier(AbsToyStudier):
         def _preSetsLoop(self):
             self.hist_afb = ROOT.TH1F("hist_afb", "", 300, -0.75, 0.75)
-            self.hist_afb.GetXaxis().SetTitle("A_{{FB}}")
+            self.hist_afb.GetXaxis().SetTitle("A_{FB}")
             self.hist_fl = ROOT.TH1F("hist_fl", "", 200, 0., 1.)
-            self.hist_fl.GetXaxis().SetTitle("F_{{L}}")
+            self.hist_fl.GetXaxis().SetTitle("F_{L}")
 
         def _preRunFitSteps(self, setIndex):
             pass
@@ -450,13 +450,14 @@ def func_randEffi(args):
 
         if args.updatePlot:
             canvas = Plotter.canvas.cd()
+            hist_afb.GetXaxis().SetTitle("A_{FB}")
             hist_afb.Draw("HIST")
             Plotter.latexCMSMark()
             Plotter.latexCMSExtra()
             Plotter.latexCMSSim()
             canvas.Print("syst_randEffi_afb_{0}.pdf".format(q2bins[args.binKey]['label']))
 
-            hist_fl.GetXaxis().SetTitle("F_{{L}}")
+            hist_fl.GetXaxis().SetTitle("F_{L}")
             hist_fl.Draw("HIST")
             Plotter.latexCMSMark()
             Plotter.latexCMSExtra()

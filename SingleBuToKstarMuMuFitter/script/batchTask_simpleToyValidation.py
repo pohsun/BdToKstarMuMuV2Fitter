@@ -77,11 +77,11 @@ if __name__ == '__main__':
         fitCollection.finalFitter.cfg['data'] = "ToyGenerator.mixedToy"
         plotCollection.plotter.cfg['plots']['simpleBLK']['kwargs'].update({
             'pltName': "angular3D_final",
-            'dataPlots': [["ToyGenerator.mixedToy", plotCollection.plotterCfg_dataStyle, "Toy"]],
+            'dataPlots': [["ToyGenerator.mixedToy", plotCollection.plotterCfg_styles['dataStyle'], "Toy"]],
             'pdfPlots': [
-                ["f_final", plotCollection.plotterCfg_allStyle, None, "Total fit"],
-                ["f_final", (ROOT.RooFit.Components('f_sig3D'),) + plotCollection.plotterCfg_sigStyle, None, "Signal"],
-                ["f_final", (ROOT.RooFit.Components('f_bkgComb'),) + plotCollection.plotterCfg_bkgStyle, None, "Background"],
+                ["f_final", plotCollection.plotterCfg_styles['allStyle'], None, "Total fit"],
+                ["f_final", (ROOT.RooFit.Components('f_sig3D'),) + plotCollection.plotterCfg_styles['sigStyle'], None, "Signal"],
+                ["f_final", (ROOT.RooFit.Components('f_bkgComb'),) + plotCollection.plotterCfg_styles['bkgStyle'], None, "Background"],
             ],
             'marks': ['toy'],
         })
