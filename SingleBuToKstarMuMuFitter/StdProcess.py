@@ -201,6 +201,7 @@ msgService.getStream(0).removeTopic(64)  # Eval
 msgService.getStream(0).removeTopic(4)  # Plotting
 msgService.getStream(0).removeTopic(2)  # Minimization
 msgService.getStream(1).removeTopic(64)
+msgService.getStream(1).removeTopic(16384)  # NumIntegration
 msgService.getStream(1).removeTopic(4)
 msgService.getStream(1).removeTopic(2)
 msgService.addStream(4,
