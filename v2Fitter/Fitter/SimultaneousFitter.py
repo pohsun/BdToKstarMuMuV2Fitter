@@ -27,6 +27,7 @@ Following functions to be overloaded to customize the full procedure...
         self.minimizer = None
 
     def _bookPdfData(self):
+        """ """
         self.category = ROOT.RooCategory("{0}.category".format(self.name), "")
         dataWithCategoriesCmdArgs = (ROOT.RooFit.Index(self.category),)
         if len(self.cfg['category']) == len(self.cfg['data']) == len(self.cfg['pdf']):
@@ -35,14 +36,14 @@ Following functions to be overloaded to customize the full procedure...
                 if not hasattr(dataName, "__iter__"):
                     self.data.append(self.process.sourcemanager.get(dataName))
                 else:
-                    # TODO: Alternative way to merge list of input data/toy
+                    # Alternative way to merge list of input data/toy
                     for dataIdx, dataNameInList in enumerate(dataName):
                         if dataIdx != 0:
                             self.data[-1].append(self.process.sourcemanager.get(data))
                         else:
                             self.data.append(self.process.sourcemanager.get(data).Clone())
                 dataWithCategoriesCmdArgs += (ROOT.RooFit.Import(category, self.data[-1]))
-            self.dataWithCategories = ROOT.RooDataSet("{0}.dataWithCategories".format(self.name), "", *dataWithCategoriesCmdArgs)
+            self.dataWithCategories = ROOT.RooDataSet("{0}.dataWithCategories".format(self.name), "", self.pdf[-1].getObservables(self.data[-1]), *dataWithCategoriesCmdArgs)
         else:
             raise RuntimeError("Number of category/data/pdf doesn't match")
 
