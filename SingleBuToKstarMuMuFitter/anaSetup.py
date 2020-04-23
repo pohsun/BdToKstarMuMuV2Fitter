@@ -41,22 +41,22 @@ q2bins['full'] = createBinTemplate("full", 1., 19.)
     # SM prediction
 q2bins['belowJpsi']['sm'] = {
     'afb': {
-        'getVal': 0.077,
+        'getVal': 0.076,
         'getError': 0.097,
     },
     'fl': {
-        'getVal': 0.673,
-        'getError': 0.306,
+        'getVal': 0.676,
+        'getError': 0.299,
     }
 }
 q2bins['abovePsi2s']['sm'] = {
     'afb': {
         'getVal': 0.366,
-        'getError': 0.030,
+        'getError': 0.029,
     },
     'fl': {
         'getVal': 0.346,
-        'getError': 0.035,
+        'getError': 0.034,
     }
 }
 
