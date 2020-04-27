@@ -159,33 +159,34 @@ def setStyle():
     # My preferences:
     ROOT.gStyle.SetCanvasDefH(600)           # Height of canvas
     ROOT.gStyle.SetCanvasDefW(800)           # Width of canvas
-    ROOT.gStyle.SetPadTopMargin(0.05)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
-    ROOT.gStyle.SetPadBottomMargin(0.13)     # default:0.13, avoid to overlap with label
+    ROOT.gStyle.SetPadTopMargin(0.07)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
+    ROOT.gStyle.SetPadBottomMargin(0.18)     # default:0.13, avoid to overlap with label
     ROOT.gStyle.SetPadLeftMargin(0.16)       # default:0.16, avoid to overlap with label
-    ROOT.gStyle.SetPadRightMargin(0.02)      # default:0.02
+    ROOT.gStyle.SetPadRightMargin(0.05)      # default:0.02
     ROOT.gStyle.SetPalette(57)               # default(0), rainbow palette is much prettier.
-    ROOT.gStyle.SetPaintTextFormat("5.2f")   # precision if plotted with "TEXT"
+    ROOT.gStyle.SetPaintTextFormat("4.2f")   # precision if plotted with "TEXT"
 
     ROOT.gStyle.SetOptTitle(0)               # turn off the title
 
-    ROOT.gStyle.SetTitleSize(0.05, "XYZ")    # title of axis
-    ROOT.gStyle.SetTitleOffset(1.0, "X")
-    ROOT.gStyle.SetTitleOffset(1.2, "YZ")
+    ROOT.gStyle.SetTitleSize(0.08, "XYZ")    # title of axis
+    ROOT.gStyle.SetTitleOffset(0.95, "X")
+    ROOT.gStyle.SetTitleOffset(1., "YZ")
     ROOT.gStyle.SetLabelOffset(0.01, "XYZ")  # label of axis
-    ROOT.gStyle.SetLabelSize(0.04, "X")
-    ROOT.gStyle.SetLabelSize(0.04, "YZ")
-    ROOT.gStyle.SetNdivisions(505, "X")
+    ROOT.gStyle.SetLabelSize(0.06, "X")
+    ROOT.gStyle.SetLabelSize(0.06, "YZ")
+    ROOT.gStyle.SetNdivisions(505, "XYZ")
 
     ROOT.gStyle.SetHistFillColor(0)
     ROOT.gStyle.SetHistLineWidth(2)
     ROOT.gStyle.SetMarkerStyle(21)           # x(5),.(1),triangle(22),square(21),circle(20)
     ROOT.gStyle.SetMarkerSize(0.8)
+    ROOT.gStyle.SetEndErrorSize(5)
 
     ROOT.gStyle.SetOptStat(0)
     ROOT.gStyle.SetStatFontSize(0.04)
 
     ROOT.gStyle.SetOptFit(0)                 # default:1
-    ROOT.gStyle.SetTextSize(0.05)            # default:1, won't affect TLegend until ROOT 5.34
+    ROOT.gStyle.SetTextSize(0.08)            # default:1, won't affect TLegend until ROOT 5.34
     ROOT.gStyle.SetFuncWidth(2)
 
     ROOT.gStyle.SetLegendBorderSize(0)       # default:4

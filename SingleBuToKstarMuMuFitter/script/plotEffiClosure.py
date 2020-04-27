@@ -97,7 +97,7 @@ def plot_histo():
         h_expc.Scale(h_data.GetSumOfWeights() / h_expc.GetSumOfWeights())  # Scale to data yields
         h_expc.SetLineColor(2)
         h_expc.SetFillColor(2)
-        h_expc.SetFillStyle(3001)
+        h_expc.SetFillStyle(3003)
 
         h_expc.SetMaximum(1.8 * h_data.GetMaximum())
         h_expc.SetMinimum(0)

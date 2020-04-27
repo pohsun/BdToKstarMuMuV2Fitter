@@ -17,15 +17,16 @@ import SingleBuToKstarMuMuFitter.cpp
 from SingleBuToKstarMuMuFitter.anaSetup import q2bins
 from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
 
-from SingleBuToKstarMuMuFitter.Plotter import Plotter, plotterCfg_styles
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
-from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass, genCosThetaK, genCosThetaL
+from SingleBuToKstarMuMuFitter.varCollection import Bmass, CosThetaK, CosThetaL, Mumumass, Q2, Kstarmass, Kshortmass, genCosThetaK, genCosThetaL
 
 from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle, isPreliminary
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
 import SingleBuToKstarMuMuFitter.systCollection as systCollection
+
+from SingleBuToKstarMuMuFitter.Plotter import Plotter, defaultPlotRegion, plotterCfg_styles
 
 def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     """ Assuming len(dataPlots) == 1, fit to the data. """
@@ -58,7 +59,7 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     if dataPlots[0][0].sumEntries() > 2e3:
         Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     else:
-        Plotter.plotFrameB(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
     self.canvasPrint(pltName)
 
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
@@ -148,7 +149,7 @@ def plotEfficiency(self, dataName, pdfName):
 types.MethodType(plotEfficiency, None, Plotter)
 
 def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
-    """Specification of plotSimpleBLK for post-fit plots"""
+    """ Specification of plotSimpleBLK for post-fit plots. WARNING: Order of pdfPlots matters! """
 
     for pIdx, plt in enumerate(pdfPlots):
         pdfPlots[pIdx] = self.initPdfPlotCfg(plt)
@@ -165,12 +166,13 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     bkgCombFrac = {}
     for regionName in ["Fit", "SR", "LSB", "USB", "SB", "innerSB", "outerSB"]:
         drawRegionName = {'SB': "LSB,USB", 'innerSB': "innerLSB,innerUSB", 'outerSB': "outerLSB,outerUSB"}.get(regionName, regionName)
-        dataPlots = [["{0}.{1}".format(dataReader, "Full"), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.CutRange(drawRegionName), ), "Data"], ]
+        dataPlots = [["{0}.{1}".format(dataReader, "Full"), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.CutRange(drawRegionName),), "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
 
         # Bind the 'Bmass' defined in PDF with 'getObservables' to createIntegral
         # WARNING: Integral to multiple ranges with RooExtendPdf seems to be buggy, be very careful!
+        #          Order of pdfPlots[0,1,2] do matters.
         obs = pdfPlots[1][0].getObservables(dataPlots[0][0])
         sigFrac[regionName] = pdfPlots[1][0].createIntegral(
             obs,
@@ -193,36 +195,66 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             bkgCombFrac[regionName] -= bkgCombFrac['innerSB']
 
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
-        self.logger.logINFO("{0}: {1}, {2}, {3}".format(regionName, sigFrac[regionName], bkgCombFrac[regionName], nTotal_local))
+        self.logger.logINFO("{0}: {1}, {2}, {3}".format(regionName, nSigDB * sigFrac[regionName], nBkgCombDB * bkgCombFrac[regionName], nTotal_local))
 
-        # Correct the shape of f_final
-        args.find("nSig").setVal(nSigDB * sigFrac[regionName])
-        args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
+        if regionName not in ['SB', 'innerSB', 'outerSB']:
+            modified_pdfPlots = [
+                [pdfPlots[0][0],
+                 # pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                 pdfPlots[0][2],
+                 pdfPlots[0][3]],
+                [pdfPlots[0][0],
+                 # pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][2],
+                 pdfPlots[1][3]],
+                [pdfPlots[0][0],
+                 # pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][2],
+                 pdfPlots[2][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                 pdfPlots[0][2],
+                 None], # Duplication of the Total fit to overwrite components. Legend is ignored.
+            ]
+        else:
+            # WARNING: An expedient to create post-fit plots in multiple regions.
+            #   There seems to be a bug for RooExtendPdf that normalization blows up in multiple regions case.
 
-        modified_pdfPlots = [
-            [pdfPlots[0][0],
-             pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ),
-             None,
-             "Total fit"],
-            [pdfPlots[0][0],
-             pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
-             None,
-             "Sigal"],
-            [pdfPlots[0][0],
-             pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
-             None,
-             "Background"],
-        ]
+            # Correct the shape of f_final
+            args.find("nSig").setVal(nSigDB * sigFrac[regionName])
+            args.find("nBkgComb").setVal(nBkgCombDB * bkgCombFrac[regionName])
+        
+            modified_pdfPlots = [
+                [pdfPlots[0][0],
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+                 pdfPlots[0][2],
+                 pdfPlots[0][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][2],
+                 pdfPlots[1][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][2],
+                 pdfPlots[2][3]],
+                [pdfPlots[0][0],
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+                 pdfPlots[0][2],
+                 None], # Duplication of the Total fit to overwrite components. Legend is ignored.
+            ]
 
         plotFuncs = {
-            'B': {'func': Plotter.plotFrameB, 'tag': ""},
+            'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
             'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
             'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
         }
 
         drawLatexFitResults = False
         for frame in 'BLK':
-            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, marks={'extraArgs': {'msg': ""}} if regionName == "Fit" else None)
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, marks={'extraArgs': {'msg': ""}} if regionName == "Fit" else None, legend=False)
             if drawLatexFitResults:
                 if frame == 'B':
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
@@ -313,7 +345,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         statErrorKey = dbs.get('statErrorKey', 'Minuit')
         drawOpt = dbs.get('drawOpt', ["PO"])
         fillColor = dbs.get('fillColor', 2)
-        fillStyle = dbs.get('fillStyle', 3001)
+        fillStyle = dbs.get('fillStyle', 3003)
         legendOpt = dbs.get('legendOpt', None)
         dbs.update({
             'drawOpt': drawOpt,
@@ -368,14 +400,14 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         grAfb.SetMarkerColor(fillColor if fillColor else 2)
         grAfb.SetLineColor(fillColor if fillColor else 2)
         grAfb.SetFillColor(fillColor if fillColor else 2)
-        grAfb.SetFillStyle(fillStyle if fillStyle else 3001)
+        grAfb.SetFillStyle(fillStyle if fillStyle else 3003)
         grAfbs.append(grAfb)
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(fillColor if fillColor else 2)
         grFl.SetLineColor(fillColor if fillColor else 2)
         grFl.SetFillColor(fillColor if fillColor else 2)
-        grFl.SetFillStyle(fillStyle if fillStyle else 3001)
+        grFl.SetFillStyle(fillStyle if fillStyle else 3003)
         grFls.append(grFl)
 
         if legendOpt:
@@ -405,7 +437,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 yyAfbErrLo[binKeyIdx] = afb['getError']
             else:
                 yyFl[binKeyIdx] = -1
-                yyAfb[binKeyIdx] = -1
+                yyAfb[binKeyIdx] = -2
                 yyFlErrHi[binKeyIdx] = 0
                 yyFlErrLo[binKeyIdx] = 0
                 yyAfbErrHi[binKeyIdx] = 0
@@ -415,22 +447,22 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         grAfb.SetMarkerColor(4)
         grAfb.SetLineColor(4)
         grAfb.SetFillColor(4)
-        grAfb.SetFillStyle(3001)
+        grAfb.SetFillStyle(3003)
         grAfbs.insert(0, grAfb)
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(4)
         grFl.SetLineColor(4)
         grFl.SetFillColor(4)
-        grFl.SetFillStyle(3001)
+        grFl.SetFillStyle(3003)
         grFls.insert(0, grFl)
         Plotter.legend.AddEntry(grAfb, "SM", "LPF")
 
     for grIdx, gr in enumerate(grAfbs):
         gr.SetTitle("")
-        gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
+        gr.GetXaxis().SetTitle(Q2.GetTitle())
         gr.GetYaxis().SetTitle("A_{FB}")
-        gr.GetYaxis().SetRangeUser(-0.75, 1.5)
+        gr.GetYaxis().SetRangeUser(-1., 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -438,8 +470,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 gr.Draw("A" + opt if optIdx == 0 else opt)
             else:
                 gr.Draw(opt + " SAME")
-    jpsiBox = ROOT.TBox(8.68, -0.75, 10.09, 1.5)
-    psi2sBox = ROOT.TBox(12.86, -0.75, 14.18, 1.5)
+    jpsiBox = ROOT.TBox(8.68, -1, 10.09, 1)
+    psi2sBox = ROOT.TBox(12.86, -1, 14.18, 1)
     jpsiBox.SetFillColor(17)
     psi2sBox.SetFillColor(17)
     jpsiBox.Draw()
@@ -450,9 +482,9 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
     for grIdx, gr in enumerate(grFls):
         gr.SetTitle("")
-        gr.GetXaxis().SetTitle("q^{2} [GeV^{2}]")
+        gr.GetXaxis().SetTitle(Q2.GetTitle())
         gr.GetYaxis().SetTitle("F_{L}")
-        gr.GetYaxis().SetRangeUser(0, 1.5)
+        gr.GetYaxis().SetRangeUser(0, 1.2)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -461,7 +493,9 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
             else:
                 gr.Draw(opt + " SAME")
     jpsiBox.SetY1(0)
+    jpsiBox.SetY2(1.2)
     psi2sBox.SetY1(0)
+    psi2sBox.SetY2(1.2)
     jpsiBox.Draw()
     psi2sBox.Draw()
     Plotter.legend.Draw()
@@ -612,7 +646,7 @@ plotterCfg['plots']['angular3D_final'] = {
     'kwargs': {
         'pltName': "angular3D_final",
         'dataReader': "dataReader",
-        'pdfPlots': [["f_final", plotterCfg_styles['allStyleBase'], None, "Total fit"],
+        'pdfPlots': [["f_final", plotterCfg_styles['allStyleBase'], None, "Total fit"], # Draw combined again without put a legend
                      ["f_sig3D", plotterCfg_styles['sigStyleBase'], None, "Sigal"],
                      ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], None, "Background"],
                     ],
@@ -655,7 +689,7 @@ plotterCfg['plots']['angular3D_finalAltBkgCombA'] = {
         'dataReader': "dataReader",
         'pdfPlots': [["f_finalAltBkgCombA", plotterCfg_styles['allStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Total fit"],
                      ["f_sig3D", plotterCfg_styles['sigStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Sigal"],
-                     ["f_bkgCombAltA", plotterCfg_styles['sigStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Background"],
+                     ["f_bkgCombAltA", plotterCfg_styles['bkgStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Background"],
                     ],
     }
 }
@@ -850,8 +884,8 @@ if __name__ == '__main__':
 
     p.setSequence([dataCollection.effiHistReader,
         dataCollection.sigMCReader,
-        dataCollection.bkgJpsiMCReader,
-        dataCollection.bkgPsi2sMCReader,
+        # dataCollection.bkgJpsiMCReader,
+        # dataCollection.bkgPsi2sMCReader,
         dataCollection.dataReader,
         pdfCollection.stdWspaceReader,
         plotter])

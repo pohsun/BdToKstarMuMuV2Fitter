@@ -34,7 +34,7 @@ def table_AN_sysFL_sysAFB():
         dbKeyToLine['syst_altBkgCombA'] = [r"Combinatorial Background shape"]
         dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
         dbKeyToLine['syst_vetoJpsiX'] = [r"\PBp mass fit range"]
-        dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
+        # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
         totalErrorLine = ["Total"]
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
             db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
@@ -180,7 +180,7 @@ def table_paper_sys():
     dbKeyToLine['syst_altBkgCombA'] = [r"Combinatorial Background shape"]
     dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
     dbKeyToLine['syst_vetoJpsiX'] = [r"\PBp mass fit range"]
-    dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
+    # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
     totalErrorLine = ["Total systematic uncertainty"]
     for var in ["afb", "fl"]:
         for binKey in binKeys:

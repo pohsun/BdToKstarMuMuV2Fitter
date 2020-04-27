@@ -662,7 +662,7 @@ def func_altBkgCombA(args):
         'pdf': "f_finalAltBkgCombA",
         'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
-        'saveToDB': False,
+        'saveToDB': True, # For later cross check.
     })
     finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
 

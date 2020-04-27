@@ -14,12 +14,13 @@ modulePath = os.path.abspath(os.path.dirname(__file__))
 
 # q2 bins
 q2bins = {}
+q2LatexLabel = "#font[12]{q^{2}}" # Copy this from varCollection
 def createBinTemplate(name, lowerBd, upperBd):
     template = {
         'q2range': (lowerBd, upperBd),
         'cutString': "Mumumass > {0} && Mumumass < {1}".format(sqrt(lowerBd), sqrt(upperBd)),
         'label': "{0}".format(name),
-        'latexLabel': "{upperBd:.2f} > #font[12]{{q^{{2}}}} > {lowerBd:.2f}".format(upperBd=upperBd, lowerBd=lowerBd),
+        'latexLabel': "{lowerBd:.2f} < {q2} < {upperBd:.2f} GeV^{{2}}".format(upperBd=upperBd, lowerBd=lowerBd, q2=q2LatexLabel),
     }
     return template
 
@@ -29,6 +30,11 @@ q2bins['abovePsi2s'] = createBinTemplate("bin5", 14.18, 19.00)
 # q2bins['summaryLowQ2'] = createBinTemplate("summaryLowQ2", 1., 6.)
 q2bins['summary'] = createBinTemplate("bin0", 1., 19.)
 q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.94618 && Mumumass < 3.17648) && !(Mumumass > 3.58608 && Mumumass < 3.76563)"
+
+q2bins['belowJpsi']['latexLabel'] = "1 < {q2} < 8.68 GeV^{{2}}".format(q2=q2LatexLabel)
+q2bins['betweenPeaks']['latexLabel'] = "10.09 < {q2} < 12.86 GeV^{{2}}".format(q2=q2LatexLabel)
+q2bins['abovePsi2s']['latexLabel'] = "14.18 < {q2} < 19 GeV^{{2}}".format(q2=q2LatexLabel)
+q2bins['summary']['latexLabel'] = "1 < {q2} < 19 GeV^{{2}}".format(q2=q2LatexLabel)
 
 q2bins['jpsi'] = createBinTemplate("bin2", 8.68, 10.09)
 q2bins['jpsiLo'] = createBinTemplate("bin2a", 8.68, 9.37)

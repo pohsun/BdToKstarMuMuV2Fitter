@@ -18,12 +18,12 @@ from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle, isPreliminary
 
 defaultPlotRegion = "Fit"
 plotterCfg_styles = {}
-plotterCfg_styles['dataStyle'] = ()
+plotterCfg_styles['dataStyle'] = (ROOT.RooFit.XErrorSize(0.),)
 plotterCfg_styles['mcStyleBase'] = ()
 plotterCfg_styles['allStyleBase'] = (ROOT.RooFit.LineColor(1),)
 plotterCfg_styles['sigStyleNoFillBase'] = (ROOT.RooFit.LineColor(4),)
-plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3001), ROOT.RooFit.VLines())
-plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(9))
+plotterCfg_styles['sigStyleBase'] = (ROOT.RooFit.LineColor(4), ROOT.RooFit.FillColor(4), ROOT.RooFit.DrawOption("FL"), ROOT.RooFit.FillStyle(3003), ROOT.RooFit.VLines())
+plotterCfg_styles['bkgStyleBase'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(2))
 
 plotterCfg_styles['mcStyle'] = plotterCfg_styles['mcStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 plotterCfg_styles['allStyle'] = plotterCfg_styles['allStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
@@ -43,14 +43,14 @@ class Plotter(Path):
             Plotter.canvas.Print("{0}.pdf".format(name))
 
     latex = ROOT.TLatex()
-    latexCMSMark = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
-    latexCMSSim = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
-    latexCMSToy = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
-    latexCMSMix = staticmethod(lambda x=0.19, y=0.89: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
-    latexCMSExtra = staticmethod(lambda x=0.19, y=0.85, msg="Internal": Plotter.latex.DrawLatexNDC(x, y, "#font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=msg if not isPreliminary else "Preliminary")))
-    latexLumi = staticmethod(lambda x=0.78, y=0.96: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{19.98 fb^{-1} (8 TeV)}"))
+    latexCMSMark = staticmethod(lambda x=0.16, y=0.94: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS}"))
+    latexCMSSim = staticmethod(lambda x=0.16, y=0.94: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}"))
+    latexCMSToy = staticmethod(lambda x=0.16, y=0.94: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Post-fit Toy}}"))
+    latexCMSMix = staticmethod(lambda x=0.16, y=0.94: Plotter.latex.DrawLatexNDC(x, y, "#font[61]{CMS} #font[52]{#scale[0.8]{Toy + Simu.}}"))
+    latexCMSExtra = staticmethod(lambda x=0.20, y=0.80, msg="Internal": Plotter.latex.DrawLatexNDC(x, y, "#font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=msg if not isPreliminary else "Preliminary")))
+    latexLumi = staticmethod(lambda x=0.64, y=0.94: Plotter.latex.DrawLatexNDC(x, y, "#scale[0.8]{20.0 fb^{-1} (8 TeV)}"))
     @staticmethod
-    def latexQ2(binKey, x=0.45, y=0.89):
+    def latexQ2(binKey, x=0.20, y=0.86):
         Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     @staticmethod
     def latexDataMarks(marks=None, extraArgs=None):
@@ -84,15 +84,18 @@ class Plotter(Path):
     frameK = CosThetaK.frame()
     frameK.SetMinimum(0)
     frameK.SetTitle("")
-    frameK_binning = 10
+    frameK_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
+    frameK_binning = ROOT.RooBinning(len(frameK_binning_array)-1, frameK_binning_array)
 
     frameL = CosThetaL.frame()
     frameL.SetMinimum(0)
     frameL.SetTitle("")
-    frameL_binning = 10
+    frameL_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
+    frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
 
-    legend = ROOT.TLegend(.75, .70, .95, .90)
+    legend = ROOT.TLegend(.70, .70, .92, .90)
     legend.SetFillColor(0)
+    legend.SetFillStyle(0)
     legend.SetBorderSize(0)
 
     def initPdfPlotCfg(self, p):
@@ -124,12 +127,19 @@ class Plotter(Path):
         return p
 
     @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, scaleYaxis=1.8):
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4):
         """
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """
         # Major plot
         cloned_frame = frame.emptyClone("cloned_frame") # No need to call RefreshNorm
+        if frame is Plotter.frameB:
+            cloned_frame.SetNdivisions(510, "X")
+            cloned_frame.SetYTitle("Events / {0} GeV".format(binning.averageBinWidth()))
+        elif frame is Plotter.frameL:
+            cloned_frame.SetYTitle("Events / {0}".format(binning.averageBinWidth()))
+        elif frame is Plotter.frameK:
+            cloned_frame.SetYTitle("Events / {0}".format(binning.averageBinWidth()))
         marks = {} if marks is None else marks
         dataPlots = [] if dataPlots is None else dataPlots
         pdfPlots = [] if pdfPlots is None else pdfPlots
@@ -142,19 +152,20 @@ class Plotter(Path):
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
                         *p[1])
-        h0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
-        cloned_frame.SetMaximum(scaleYaxis * h0.GetMaximum())
+        p0 = cloned_frame.findObject("pdfP0" if pdfPlots else "dataP0").GetHistogram()
+        cloned_frame.SetMaximum(scaleYaxis * p0.GetMaximum())
         cloned_frame.Draw()
 
         # Legend
-        Plotter.legend.Clear()
-        for pIdx, p in enumerate(dataPlots):
-            if p[2] is not None:
-                Plotter.legend.AddEntry("dataP{0}".format(pIdx), p[2], "LPFE")
-        for pIdx, p in enumerate(pdfPlots):
-            if p[3] is not None:
-                Plotter.legend.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
-        Plotter.legend.Draw()
+        if legend:
+            Plotter.legend.Clear()
+            for pIdx, p in enumerate(dataPlots):
+                if p[2] is not None:
+                    Plotter.legend.AddEntry("dataP{0}".format(pIdx), p[2], "LPFE")
+            for pIdx, p in enumerate(pdfPlots):
+                if p[3] is not None:
+                    Plotter.legend.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
+            Plotter.legend.Draw()
 
         # Some marks
         Plotter.latexDataMarks(**marks)
@@ -163,8 +174,8 @@ class Plotter(Path):
     plotFrameK = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
     plotFrameL = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))
     plotFrameB_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameB, 'binning': frameB_binning_fine}))
-    plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning * 2}))
-    plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning * 2}))
+    plotFrameK_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameK, 'binning': frameK_binning}))
+    plotFrameL_fine = staticmethod(functools.partial(plotFrame.__func__, **{'frame': frameL, 'binning': frameL_binning}))
 
     @classmethod
     def templateConfig(cls):
