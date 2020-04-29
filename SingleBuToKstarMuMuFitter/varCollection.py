@@ -20,7 +20,7 @@ Mumumasserr = RooRealVar("Mumumasserr", r"Error of #font[132]{m_{#mu#mu}} [GeV]"
 Kstarmass = RooRealVar("Kstarmass", r"#font[132]{m_{K^{*}}} [GeV]", 0, 1.5)
 Kshortmass = RooRealVar("Kshortmass", r"#font[132]{m_{K_{S}}} [GeV]", 0.427, 0.577)
 Lambdamass = RooRealVar("Lambdamass", r"#font[132]{m_{p#pi}} [GeV]", 1., 1.5)
-Q2 = RooRealVar("Q2", r"#font[12]{q^{2}} [GeV^{2}]", 0.5, 20.)
+Q2 = RooRealVar("Q2", r"#font[132]{q^{2}} [GeV^{2}]", 0.5, 20.) # Copy the title to anaSetup.py to sync latexLabel in bins
 Triggers = RooRealVar("Triggers", "", 0, 100)
 dataArgs = RooArgSet(
     Bmass,
@@ -36,7 +36,7 @@ dataArgs.add(Triggers)
 
 genCosThetaK = RooRealVar("genCosThetaK", r"#font[132]{cos} #font[12]{#theta_{K}}", -1., 1.)
 genCosThetaL = RooRealVar("genCosThetaL", r"#font[132]{cos} #font[12]{#theta_{l}}", -1., 1.)
-genQ2 = RooRealVar("genQ2", r"#font[12]{q^{2}} [GeV^{2}]", 0.5, 20.)
+genQ2 = RooRealVar("genQ2", r"#font[132]{q^{2}} [GeV^{2}]", 0.5, 20.)
 dataArgsGEN = RooArgSet(
     genQ2,
     genCosThetaK,

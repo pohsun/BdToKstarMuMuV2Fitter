@@ -14,7 +14,7 @@ modulePath = os.path.abspath(os.path.dirname(__file__))
 
 # q2 bins
 q2bins = {}
-q2LatexLabel = "#font[12]{q^{2}}" # Copy this from varCollection
+q2LatexLabel = "#font[132]{q^{2}}" # Copy this from varCollection
 def createBinTemplate(name, lowerBd, upperBd):
     template = {
         'q2range': (lowerBd, upperBd),

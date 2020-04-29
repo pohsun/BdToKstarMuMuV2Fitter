@@ -93,7 +93,7 @@ class Plotter(Path):
     frameL_binning_array = array('d', [-1 + 0.125*i for i in range(16+1)])
     frameL_binning = ROOT.RooBinning(len(frameL_binning_array)-1, frameL_binning_array)
 
-    legend = ROOT.TLegend(.70, .70, .92, .90)
+    legend = ROOT.TLegend(.72, .72, .92, .92)
     legend.SetFillColor(0)
     legend.SetFillStyle(0)
     legend.SetBorderSize(0)
