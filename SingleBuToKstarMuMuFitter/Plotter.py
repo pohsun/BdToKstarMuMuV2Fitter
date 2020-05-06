@@ -119,11 +119,13 @@ class Plotter(Path):
         p = p + dataPlotTemplate[len(p):]
         if isinstance(p[0], str):
             self.logger.logDEBUG("Initialize dataPlot {0}".format(p[0]))
-            p[0] = self.process.sourcemanager.get(p[0])
-            if p[0] == None:
-                errorMsg = "dataPlot not found in source manager."
+            plt = self.process.sourcemanager.get(p[0])
+            if plt == None:
+                errorMsg = "dataPlot {0} not found in source manager.".format(p[0])
                 self.logger.logERROR(errorMsg)
                 raise RuntimeError(errorMsg)
+            else:
+                p[0] = plt
         return p
 
     @staticmethod

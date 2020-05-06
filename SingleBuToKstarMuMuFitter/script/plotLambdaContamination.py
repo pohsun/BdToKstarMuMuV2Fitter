@@ -4,6 +4,7 @@ import ROOT
 
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
+import SingleBuToKstarMuMuFitter.varCollection as varCollection
 from SingleBuToKstarMuMuFitter.plotCollection import Plotter as Plotter
 
 cimp_Define_LambdaMass = """
@@ -73,55 +74,55 @@ if __name__ == '__main__':
     hists = {}
     hists['h_LambdaMass_bin0'] = {
         'hist': df.Histo1D(("h_LambdaMass_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
-        'xTitle': "m_{p#pi} [GeV]"
+        'xTitle': varCollection.Lambdamass.GetTitle()
     }
     hists['h_LambdaMass_SR_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_LambdaMass_SR_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
-        'xTitle': "m_{p#pi} [GeV]"
+        'xTitle': varCollection.Lambdamass.GetTitle()
     }
     hists['h_LambdaMass_SB_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_LambdaMass_SB_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
-        'xTitle': "m_{p#pi} [GeV]"
+        'xTitle': varCollection.Lambdamass.GetTitle()
     }
     hists['h_LambdaBMass_LambdaSR_bin0'] = {
         'hist': df_LambdaSR.Histo1D(("h_LambdaBMass_LambdaSR_bin0", "", 26, 4.76, 5.80), "LambdaBMass"),
-        'xTitle': "m_{#Lambda#pi#mu#mu} [GeV]"}
+        'xTitle': varCollection.Lambdabmass.GetTitle()}
     hists['h_KshortMass_bin0'] = {
         'hist': df.Histo1D(("h_KshortMass_bin0", "", 30, 0.468, 0.528), "KshortMass"),
-        'xTitle': "m_{#pi#pi} [GeV]"}
+        'xTitle': varCollection.Kshortmass.GetTitle()}
     hists['h_KshortMass_Lambda1p3x_bin0'] = {
         'hist': df_Lambda1330.Histo1D(("h_KshortMass_Lambda1p3x_bin0", "", 30, 0.468, 0.528), "KshortMass"),
-        'xTitle': "m_{#pi#pi} [GeV]"}
+        'xTitle': varCollection.Kshortmass.GetTitle()}
     hists['h_KshortMass_VetoLambda1p3x_bin0'] = {
         'hist': df_vetoLambda1330.Histo1D(("h_KshortMass_VetoLambda1p3x_bin0", "", 30, 0.468, 0.528), "KshortMass"),
-        'xTitle': "m_{#pi#pi} [GeV]"}
+        'xTitle': varCollection.Kshortmass.GetTitle()}
     hists['h_KshortMass_SR_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_KshortMass_SR_bin0", "", 30, 0.468, 0.528), "KshortMass"),
-        'xTitle': "m_{#pi#pi} [GeV]"}
+        'xTitle': varCollection.Kshortmass.GetTitle()}
     hists['h_KshortMass_SB_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_KshortMass_SB_bin0", "", 30, 0.468, 0.528), "KshortMass"),
-        'xTitle': "m_{#pi#pi#pi} [GeV]"}
+        'xTitle': varCollection.Kshortmass.GetTitle()}
     hists['h_KstarMass_bin0'] = {
         'hist': df.Histo1D(("h_KstarMass_bin0", "", 30, 0.742, 1.042), "KstarMass"),
-        'xTitle': "m_{#pi^{+}#pi^{-}#pi^{#pm}} [GeV]"}
+        'xTitle': varCollection.Kstarmass.GetTitle()}
     hists['h_KstarMass_SR_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_KstarMass_SR_bin0", "", 30, 0.742, 1.042), "KstarMass"),
-        'xTitle': "m_{#pi^{+}#pi^{-}#pi^{#pm}} [GeV]"}
+        'xTitle': varCollection.Kstarmass.GetTitle()}
     hists['h_KstarMass_SB_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_KstarMass_SB_bin0", "", 30, 0.742, 1.042), "KstarMass"),
-        'xTitle': "m_{#pi^{+}#pi^{-}#pi^{#pm}} [GeV]"}
+        'xTitle': varCollection.Kstarmass.GetTitle()}
     hists['h_Bmass_LambdaSR_bin0'] = {
         'hist': df_LambdaSR.Histo1D(("h_Bmass_LambdaSR_bin0", "", 26, 4.76, 5.80), "Bmass"),
-        'xTitle': "m_{B} [GeV]"}
+        'xTitle': varCollection.Bmass.GetTitle()}
     hists['h_Bmass_LambdaSR_bin1'] = {
         'hist': df_LambdaSR.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Histo1D(("h_Bmass_LambdaSR_bin1", "", 26, 4.76, 5.80), "Bmass"),
-        'xTitle': "m_{B} [GeV]"}
+        'xTitle': varCollection.Bmass.GetTitle()}
     hists['h_Bmass_LambdaSR_bin3'] = {
         'hist': df_LambdaSR.Filter(anaSetup.q2bins['betweenPeaks']['cutString']).Histo1D(("h_Bmass_LambdaSR_bin3", "", 26, 4.76, 5.80), "Bmass"),
-        'xTitle': "m_{B} [GeV]"}
+        'xTitle': varCollection.Bmass.GetTitle()}
     hists['h_Bmass_LambdaSR_bin5'] = {
         'hist': df_LambdaSR.Filter(anaSetup.q2bins['abovePsi2s']['cutString']).Histo1D(("h_Bmass_LambdaSR_bin5", "", 26, 4.76, 5.80), "Bmass"),
-        'xTitle': "m_{B} [GeV]"}
+        'xTitle': varCollection.Bmass.GetTitle()}
 
     h_Bmass_bin0 = df.Histo1D(("h_Bmass_bin0", "", 13, 4.76, 5.80), "Bmass")
     h_Bmass_VetoLambdaSR_bin0 = df_vetoLambdaSR.Histo1D(("h_Bmass_VetoLambdaSR_bin0", "", 13, 4.76, 5.80), "Bmass")
@@ -135,6 +136,7 @@ if __name__ == '__main__':
     for hName, hData in hists.items():
         hData['hist'].SetMinimum(0)
         hData['hist'].SetMaximum(hData['hist'].GetMaximum()*1.8)
+        hData['hist'].SetNdivisions(510, "X")
         hData['hist'].GetXaxis().SetTitle(hData.get('xTitle', ""))
         hData['hist'].GetYaxis().SetTitle(hData.get('yTitle', "Events"))
         hData['hist'].Draw("E")
@@ -145,10 +147,10 @@ if __name__ == '__main__':
 	canvas.Update()
         canvas.Print(hName+".pdf")
 
-    h_Bmass_bin0.GetXaxis().SetTitle("m_{B} [GeV]")
+    h_Bmass_bin0.GetXaxis().SetTitle(varCollection.Bmass.GetTitle())
     h_Bmass_bin0.GetYaxis().SetTitle("Events")
     h_Bmass_bin0.SetMaximum(h_Bmass_bin0.GetMaximum()*1.8)
-    h_Bmass_VetoLambdaSR_bin0.GetXaxis().SetTitle("m_{B} [GeV]")
+    h_Bmass_VetoLambdaSR_bin0.GetXaxis().SetTitle(varCollection.Bmass.GetTitle())
     h_Bmass_VetoLambdaSR_bin0.GetYaxis().SetTitle("Events")
     h_Bmass_VetoLambdaSR_bin0.SetMarkerColor(2)
     h_Bmass_VetoLambdaSR_bin0.SetLineColor(2)

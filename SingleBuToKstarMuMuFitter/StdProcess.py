@@ -164,7 +164,7 @@ def setStyle():
     ROOT.gStyle.SetPadLeftMargin(0.16)       # default:0.16, avoid to overlap with label
     ROOT.gStyle.SetPadRightMargin(0.05)      # default:0.02
     ROOT.gStyle.SetPalette(57)               # default(0), rainbow palette is much prettier.
-    ROOT.gStyle.SetPaintTextFormat("4.2f")   # precision if plotted with "TEXT"
+    ROOT.gStyle.SetPaintTextFormat(".4g" )    # precision if plotted with "TEXT"
 
     ROOT.gStyle.SetOptTitle(0)               # turn off the title
 
@@ -193,6 +193,9 @@ def setStyle():
     ROOT.gStyle.SetLegendFillColor(ROOT.kWhite)
 
     ROOT.gStyle.cd()
+
+    ROOT.TGaxis.SetMaxDigits(4)
+    ROOT.TGaxis.SetExponentOffset(-0.09, 0, "Y")
     pass
 
 # RooMsgService settings

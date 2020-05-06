@@ -4,7 +4,7 @@
 import os
 
 import ROOT
-import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
+from SingleBuToKstarMuMuFitter.Plotter import Plotter
 import SingleBuToKstarMuMuSelector.StdOptimizerBase as StdOptimizerBase
 
 
@@ -111,8 +111,7 @@ ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const RO
     fout.Close()
 
 def plot_histo():
-    canvas = plotCollection.Plotter.canvas
-    legend = plotCollection.Plotter.legend
+    canvas = Plotter.canvas
 
     fin_data = ROOT.TFile("plotDataMCValidation_data.root")
     fin_mc = ROOT.TFile("plotDataMCValidation_jpsi.root")
@@ -184,10 +183,12 @@ def plot_histo():
     def drawPlot(pName):
         pCfg = pConfig[pName]
         h_data = fin_data.Get(pName)
+        h_data.UseCurrentStyle()
         h_data.SetXTitle(pCfg['xTitle'])
         h_data.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
 
         h_mc = fin_mc.Get(pName)
+        h_mc.UseCurrentStyle()
         h_mc.SetXTitle(pCfg['xTitle'])
         h_mc.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
         h_mc.Scale(h_data.GetSumOfWeights() / h_mc.GetSumOfWeights())
@@ -203,41 +204,53 @@ def plot_histo():
             canvas.SetLogy(0)
             h_mc.SetMaximum(1.8 * h_data.GetMaximum())
             h_mc.SetMinimum(0)
+
         h_mc.Draw("HIST")
         h_data.Draw("E SAME")
+
+        legend = ROOT.gPad.BuildLegend(.60, .70, .95, .89)
+        legend.Clear()
+        legend.SetFillColor(0)
+        legend.SetFillStyle(0)
+        legend.SetBorderSize(0)
+        legend.AddEntry(h_data, "Data", "lep")
+        legend.AddEntry(h_mc, "J/#psi K^{*+} MC", "F")
+        legend.Draw()
+
         line = ROOT.TLine()
         line.SetLineWidth(2)
         line.SetLineStyle(10)
         if pCfg.get('cutPoints', False):
             for pt in pCfg.get('cutPoints'):
                 line.DrawLine(pt, h_mc.GetMinimum(), pt, h_mc.GetMaximum())
-
-        legend.Clear()
-        legend.AddEntry(h_data, "Data", "lep")
-        legend.AddEntry(h_mc, "J/#psi K^{*+} MC", "F")
-        legend.Draw()
-
-        plotCollection.Plotter.latexDataMarks()
+        
+        Plotter.latexDataMarks()
         return h_data, h_mc
 
     def drawRatioPlot(pName, h_data, h_mc):
         pCfg = pConfig[pName]
 
         h_ratio = ROOT.TRatioPlot(h_data, h_mc)
+        h_ratio.SetSeparationMargin(0.04)
         h_ratio.SetH1DrawOpt("E")
         h_ratio.SetH2DrawOpt("HIST")
         h_ratio.Draw()
         if pCfg.get('isLogY', False):
             h_ratio.GetUpperPad().SetLogy(1)
         h_ratio.GetUpperRefYaxis().SetRangeUser(h_mc.GetMinimum(), h_mc.GetMaximum())
-        h_ratio.GetUpperRefYaxis().SetTitleOffset(1)
         h_ratio.GetUpperRefYaxis().SetMaxDigits(3)
-        h_ratio.GetLowerRefXaxis().SetTitleOffset(0.8)
-        h_ratio.GetLowerRefYaxis().SetTitle("Data/MC")
-        h_ratio.GetLowerRefYaxis().SetTitleOffset(1)
-        # h_ratio.GetLowerRefYaxis().SetLabelSize(0.04)
+        h_ratio.GetUpperRefYaxis().SetTitleSize(0.06)
+        h_ratio.GetUpperRefYaxis().SetTitleOffset(1.33)
         h_ratio.GetLowerRefYaxis().SetRangeUser(0.5, 1.5)
+        h_ratio.GetLowerRefYaxis().SetTitle("Data/MC")
+        h_ratio.GetLowerRefYaxis().SetTitleSize(0.06)
+        h_ratio.GetLowerRefYaxis().SetTitleOffset(1.33)
         h_ratio.GetLowYaxis().SetNdivisions(502)
+        h_ratio.SetSplitFraction(0.4)
+        h_ratio.SetUpTopMargin(ROOT.gStyle.GetPadTopMargin()/(1-0.4)) # corrected by split fraction
+        h_ratio.SetLowBottomMargin(ROOT.gStyle.GetPadBottomMargin()/0.4)
+        h_ratio.SetLeftMargin(ROOT.gStyle.GetPadLeftMargin())
+        h_ratio.SetRightMargin(ROOT.gStyle.GetPadRightMargin())
         h_ratio.GetLowerPad().Update()
 
         upperPad = h_ratio.GetUpperPad()
@@ -245,9 +258,10 @@ def plot_histo():
         h_data.Draw("E SAME")
         upperPad.Update()
         
-        legend = upperPad.BuildLegend(.65, .70, .85, .90)
+        legend = upperPad.BuildLegend(.60, .60, .95, .89)
         legend.Clear()
         legend.SetFillColor(0)
+        legend.SetFillStyle(0)
         legend.SetBorderSize(0)
         legend.AddEntry(h_data, "Data", "lep")
         legend.AddEntry(h_mc, "J/#psi K^{*+} MC", "F")
@@ -261,9 +275,9 @@ def plot_histo():
                 line.DrawLine(pt, h_mc.GetMinimum(), pt, h_mc.GetMaximum())
 
         canvas.cd()
-        plotCollection.Plotter.latexLumi()
-        plotCollection.Plotter.latexCMSMark(0.12, 0.89)
-        plotCollection.Plotter.latexCMSExtra(0.12, 0.85)
+        Plotter.latexLumi()
+        Plotter.latexCMSMark()
+        Plotter.latexCMSExtra()
         canvas.Update()
         return h_ratio
 

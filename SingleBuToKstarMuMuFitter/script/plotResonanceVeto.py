@@ -74,8 +74,8 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
     def _plot(hname, q2r):
         h = fin.Get(hname)
         h.SetMarkerSize(0.2)
-        h.SetXTitle(varCollection.Mumumass.getTitle().Data())
-        h.SetYTitle(varCollection.Bmass.getTitle().Data())
+        h.SetXTitle(varCollection.Mumumass.GetTitle())
+        h.SetYTitle(varCollection.Bmass.GetTitle())
         h.Draw()
 
         transparencyPeak = 0. if q2r in ['full', 'peaks'] else 0.  # Binning is irrelavent
