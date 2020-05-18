@@ -194,7 +194,7 @@ def plot_histo():
         h_mc.Scale(h_data.GetSumOfWeights() / h_mc.GetSumOfWeights())
         h_mc.SetLineColor(2)
         h_mc.SetFillColor(2)
-        h_mc.SetFillStyle(3001)
+        h_mc.SetFillStyle(3003)
 
         if pCfg.get('isLogY', False):
             canvas.SetLogy(1)

@@ -91,7 +91,6 @@ class EfficiencyFitter(FitterCore):
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args, self.cfg.get('argAliasInDB'))
 
     def _runFitSteps(self):
-
         effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
         args = self.pdf.getParameters(self.data)
         args_it = args.createIterator()
@@ -142,8 +141,8 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_comp.SetTitleOffset(1.5, "Y")
             h2_effi_2D_comp.SetTitleOffset(1.5, "Z")
             h2_effi_2D_comp.Draw("LEGO2")
-            self.latex.DrawLatexNDC(.08, .93, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            self.latex.DrawLatexNDC(.08, .88, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
+            self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
             self.canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
             # Plot numerator and denominator
@@ -163,7 +162,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_compText.SetMarkerColor(2)
             h2_effi_2D_compText.SetBarOffset(0.1)
             h2_effi_2D_compText.Draw("TEXT SAME")
-            self.latex.DrawLatexNDC(.19, .96, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             self.canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
             h2_accXrec.Scale(1. / compTEXTScale)
 
@@ -176,16 +175,16 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_pull.SetMaximum(3.)
             h2_effi_2D_pull.SetFillColor(42)
             h2_effi_2D_pull.Draw("BOX1 TEXT")
-            self.latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            self.latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+            self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
             self.canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
             h_effi_pull.Fit("gaus", "", "", -2., 2.)
             h_effi_pull.SetXTitle("Pull")
             h_effi_pull.SetYTitle("# of bins")
             h_effi_pull.Draw("")
-            self.latex.DrawLatexNDC(.19, .89, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            self.latex.DrawLatexNDC(.19, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
+            self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
             self.canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
         
         # Check if efficiency is positive definite

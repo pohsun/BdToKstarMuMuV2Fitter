@@ -88,10 +88,12 @@ def plot_histo():
     def drawPlot(pName):
         pCfg = pConfig[pName]
         h_data = fin_data.Get(pName)
+        h_data.UseCurrentStyle()
         h_data.SetXTitle(pCfg['xTitle'])
         h_data.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
 
         h_expc = fin_expc.Get(pName)
+        h_expc.UseCurrentStyle()
         h_expc.SetXTitle(pCfg['xTitle'])
         h_expc.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
         h_expc.Scale(h_data.GetSumOfWeights() / h_expc.GetSumOfWeights())  # Scale to data yields

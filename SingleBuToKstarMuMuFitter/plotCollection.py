@@ -36,7 +36,7 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     getattr(wspace, 'import')(Bmass)
     Bmass.setRange("Fit", 4.76, 5.80)
     wspace.factory("RooGaussian::gauss1(Bmass,mean[5.28,5.25,5.39],sigma1[0.02,0.01,0.04])")
-    wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.04,0.40])")
+    wspace.factory("RooGaussian::gauss2(Bmass,mean,sigma2[0.08,0.04,0.10])")
     wspace.factory("SUM::sigM(sigFrac[0.8,0,1]*gauss1,gauss2)")
     wspace.factory("c1[-5.6,-20,20]")
     wspace.factory("EXPR::bkgCombM('exp(c1*Bmass)',{Bmass,c1})")
@@ -57,9 +57,10 @@ def plotSpectrumWithSimpleFit(self, pltName, dataPlots, marks):
     self.logger.logINFO("Averaged peak width is {0}".format(avgWidth(wspace.var('sigFrac').getVal(), wspace.var('sigma1').getVal(), wspace.var('sigma2').getVal())))
 
     if dataPlots[0][0].sumEntries() > 2e3:
-        Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=True)
     else:
-        Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        Plotter.plotFrameB_fine(dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, legend=True)
+
     self.canvasPrint(pltName)
 
 types.MethodType(plotSpectrumWithSimpleFit, None, Plotter)
@@ -114,8 +115,8 @@ def plotEfficiency(self, dataName, pdfName):
     h2_effi_sigA_fine.SetLineColor(2)
     h2_effi_sigA_fine.Draw("SURF SAME0")
     Plotter.latexCMSSim(.08, .93)
-    Plotter.latexCMSExtra(.08, .89)
-    Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
+    Plotter.latexCMSExtra(.08, .87)
+    Plotter.latexQ2(self.process.cfg['binKey'], .50, .93)
     self.canvasPrint(pltName + "_2D")
 
     data_accXrec.Scale(0.01)  # Scale back, Normalization to be handled with RooFit in 1D plot
@@ -274,7 +275,9 @@ types.MethodType(plotPostfitBLK, None, Plotter)
 def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     """ Check carefully the keys in 'dbSetup' """
     if marks is None:
-        marks = {}
+        marks = {'marks': None,
+                'extraArgs': {'y': 0.86},
+                }
     binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
@@ -336,7 +339,10 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         'Minuit': getStatError_Minuit,
     }
 
-    Plotter.legend.Clear()
+    legend = ROOT.TLegend(.78, .72, .95, .92)
+    legend.SetFillColor(0)
+    legend.SetFillStyle(0)
+    legend.SetBorderSize(0)
     for dbsIdx, dbs in enumerate(dbSetup):
         title = dbs.get('title', None)
         dbPat = dbs.get('dbPat', self.process.dbplayer.absInputDir + "/fitResults_{binLabel}.db")
@@ -398,6 +404,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(fillColor if fillColor else 2)
+        grAfb.SetMarkerSize(2)
         grAfb.SetLineColor(fillColor if fillColor else 2)
         grAfb.SetFillColor(fillColor if fillColor else 2)
         grAfb.SetFillStyle(fillStyle if fillStyle else 3003)
@@ -405,13 +412,14 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(fillColor if fillColor else 2)
+        grFl.SetMarkerSize(2)
         grFl.SetLineColor(fillColor if fillColor else 2)
         grFl.SetFillColor(fillColor if fillColor else 2)
         grFl.SetFillStyle(fillStyle if fillStyle else 3003)
         grFls.append(grFl)
 
         if legendOpt:
-            Plotter.legend.AddEntry(grAfb, title, legendOpt)
+            legend.AddEntry(grAfb, title, legendOpt)
 
     if drawSM:
         dbSetup.insert(0, {
@@ -445,6 +453,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(4)
+        grAfb.SetMarkerStyle(4)
+        grAfb.SetMarkerSize(2)
         grAfb.SetLineColor(4)
         grAfb.SetFillColor(4)
         grAfb.SetFillStyle(3003)
@@ -452,16 +462,20 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(4)
+        grFl.SetMarkerStyle(4)
+        grFl.SetMarkerSize(2)
         grFl.SetLineColor(4)
         grFl.SetFillColor(4)
         grFl.SetFillStyle(3003)
         grFls.insert(0, grFl)
-        Plotter.legend.AddEntry(grAfb, "SM", "LPF")
+        legend.AddEntry(grAfb, "SM", "LPF")
 
     for grIdx, gr in enumerate(grAfbs):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle(Q2.GetTitle())
+        gr.GetXaxis().SetRangeUser(1, 19)
         gr.GetYaxis().SetTitle("A_{FB}")
+        gr.GetYaxis().SetTitleOffset(0.8)
         gr.GetYaxis().SetRangeUser(-1., 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
@@ -476,14 +490,16 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     psi2sBox.SetFillColor(17)
     jpsiBox.Draw()
     psi2sBox.Draw()
-    Plotter.legend.Draw()
+    legend.Draw()
     Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle(Q2.GetTitle())
+        gr.GetXaxis().SetRangeUser(1, 19)
         gr.GetYaxis().SetTitle("F_{L}")
+        gr.GetYaxis().SetTitleOffset(0.8)
         gr.GetYaxis().SetRangeUser(0, 1.2)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
@@ -498,7 +514,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     psi2sBox.SetY2(1.2)
     jpsiBox.Draw()
     psi2sBox.Draw()
-    Plotter.legend.Draw()
+    legend.Draw()
     Plotter.latexDataMarks(**marks)
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
@@ -525,8 +541,8 @@ def plotOnXYZ(self, pltName, dataName, createHistogramArgs, drawOpt=None, marks=
             hist.SetTitleOffset(1.5, "Z")
             hist.Draw(opt)
             Plotter.latexCMSSim(.08, .93)
-            Plotter.latexCMSExtra(.08, .89, marks.get('extraArgs', {}).get('msg', None))
-            Plotter.latexQ2(self.process.cfg['binKey'], .40, .93)
+            Plotter.latexCMSExtra(.08, .87, marks.get('extraArgs', {}).get('msg', None))
+            Plotter.latexQ2(self.process.cfg['binKey'], .50, .93)
             self.canvasPrint(pltName + "_LEGO")
         elif re.match("COL", opt.upper()):
             hist.Draw(opt)
@@ -760,7 +776,7 @@ plotterCfg['plots']['plotOnXY_Bmass_CosThetaK'] = {
                                 ROOT.RooFit.YVar(CosThetaK,
                                                  ROOT.RooFit.Binning(20, -1., 1.))
                                 ),
-        'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+        'drawOpt': ["VIOLIN", "COL TEXT", "LEGO2"],
         'marks': {'marks': ['sim']}}
 }
 plotterCfg['plots']['plotOnXY_Bmass_CosThetaL'] = {
@@ -773,7 +789,7 @@ plotterCfg['plots']['plotOnXY_Bmass_CosThetaL'] = {
                                 ROOT.RooFit.YVar(CosThetaL,
                                                  ROOT.RooFit.Binning(20, -1., 1.))
                                 ),
-        'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+        'drawOpt': ["VIOLIN", "COL TEXT", "LEGO2"],
         'marks': {'marks': ['sim']}}
 }
 plotterCfg['plots']['plotOnXY_CosThetaK_CosThetaL_bkgComb'] = {
@@ -786,7 +802,7 @@ plotterCfg['plots']['plotOnXY_CosThetaK_CosThetaL_bkgComb'] = {
                                 ROOT.RooFit.YVar(CosThetaL,
                                                  ROOT.RooFit.Binning(dataCollection.rAccXEffThetaLBins))
                                 ),
-        'drawOpt': ["VIOLIN", "LEGO2", "COL TEXT"],
+        'drawOpt': ["VIOLIN", "COL TEXT", "LEGO2"],
         'marks': {}}
 }
 plotterCfg['plots']['angular3D_final_altFit0'] = {

@@ -53,7 +53,7 @@ class Plotter(Path):
     def latexQ2(binKey, x=0.20, y=0.86):
         Plotter.latex.DrawLatexNDC(x, y, r"#scale[0.8]{{{latexLabel}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     @staticmethod
-    def latexDataMarks(marks=None, extraArgs=None):
+    def latexDataMarks(marks=None, extraArgs=None, **kwargs):
         if marks is None:
             marks = []
         if extraArgs is None:

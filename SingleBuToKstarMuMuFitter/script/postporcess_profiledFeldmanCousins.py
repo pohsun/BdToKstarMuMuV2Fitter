@@ -257,7 +257,7 @@ def func_fitFCConfInterval(args):
             grHi.Draw("P SAME")
             line.DrawLine(measAfb, -0.75, measAfb, 0.75)
             Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(.20, .86)
             Plotter.latexLumi()
 
         def drawFlPlot(grLo, grHi, measFl):
@@ -276,7 +276,7 @@ def func_fitFCConfInterval(args):
             grHi.Draw("P SAME")
             line.DrawLine(measFl, 0, measFl, 1)
             Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
+            Plotter.latexCMSExtra(.20, .86)
             Plotter.latexLumi()
 
         dbName = args.dbDirPath + "/fitResults_{0}.db".format(q2bins[binKey]['label'])

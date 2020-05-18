@@ -9,7 +9,7 @@ ROOT.ROOT.EnableImplicitMT()
 
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
-import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
+from SingleBuToKstarMuMuFitter.Plotter import Plotter
 
 if __name__ == '__main__':
     treeDATA = ROOT.TChain("tree")
@@ -102,7 +102,7 @@ if __name__ == '__main__':
     #     }
     
     # Draw all figures
-    canvas = plotCollection.Plotter.canvas
+    canvas = Plotter.canvas
     for hName, hCfg in plots.items():
 	hist = hCfg['hist']
 	hist.SetFillColor(2)
@@ -117,7 +117,7 @@ if __name__ == '__main__':
 		hist.SetMinimum(1.5 * hist.GetMaximum())
 	    hist.GetXaxis().SetTitle(hCfg.get('xTitle', "Arbitrary unit"))
 	    hist.GetYaxis().SetTitle(hCfg.get('yTitle', "Events"))
-	    plotCollection.plotter.latexDataMarks(hCfg.get('marks', None))
+	    Plotter.latexDataMarks(hCfg.get('marks', None))
 	    canvas.Update()
 	    canvas.Print("{0}.pdf".format(hName))
 	elif hist.InheritsFrom("TH2"):
@@ -134,7 +134,7 @@ if __name__ == '__main__':
 		hist.SetXTitle(hCfg.get('xTitle', "Arbitrary unit"))
 		hist.SetYTitle(hCfg.get('yTitle', "Events"))
 		hist.SetZTitle(hCfg.get('zTitle', "Events"))
-		plotCollection.plotter.latexDataMarks(hCfg.get('marks', None))
+		Plotter.latexDataMarks(hCfg.get('marks', None))
 		canvas.Update()
 		canvas.Print("{0}__{1}.pdf".format(hName, opt.replace(' ', '_')))
 	else:
@@ -147,6 +147,6 @@ if __name__ == '__main__':
 		    hist.SetMinimum(1.5 * hist.GetMaximum())
 		hist.SetXTitle(hCfg.get('xTitle', "Arbitrary unit"))
 		hist.SetYTitle(hCfg.get('yTitle', "Events"))
-		plotCollection.plotter.latexDataMarks(hCfg.get('marks', None))
+		Plotter.latexDataMarks(hCfg.get('marks', None))
 		canvas.Update()
 		canvas.Print("{0}__{1}.pdf".format(hName, opt.replace(' ', '_')))

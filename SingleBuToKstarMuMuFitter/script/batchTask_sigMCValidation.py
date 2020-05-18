@@ -166,7 +166,6 @@ def func_postproc(args):
         line.DrawLine(fl_GEN, 0, fl_GEN, h_setSummary_fl.GetMaximum())
     plotCollection.Plotter.latexDataMarks(['sim'])
     plotCollection.Plotter.latexQ2(args.binKey)
-    plotCollection.Plotter.latexLumi()
     plotCollection.Plotter.canvas.Print("h_setSummary_sigMCValidation_fl_{0}.pdf".format(q2bins[args.binKey]['label']))
 
     db.close()

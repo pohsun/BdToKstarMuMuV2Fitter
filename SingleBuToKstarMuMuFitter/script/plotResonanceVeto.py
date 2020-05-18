@@ -73,6 +73,7 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
 
     def _plot(hname, q2r):
         h = fin.Get(hname)
+        h.UseCurrentStyle()
         h.SetMarkerSize(0.2)
         h.SetXTitle(varCollection.Mumumass.GetTitle())
         h.SetYTitle(varCollection.Bmass.GetTitle())
