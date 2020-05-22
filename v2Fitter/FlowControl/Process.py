@@ -30,6 +30,9 @@ class Process:
         return self._sequence.__str__()
 
     def reset(self):
+        """ Reset the Paths """
+        for seq in self._sequence:
+            seq.reset()
         pass
 
     @classmethod
