@@ -268,6 +268,12 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
                     Plotter.latex.DrawLatexNDC(.19, .77, "A_{{FB}} = {0:.2f}".format(afbDB))
                 elif frame == 'K':
                     Plotter.latex.DrawLatexNDC(.19, .77, "F_{{L}} = {0:.2f}".format(flDB))
+            else:
+                self.logger.logINFO("Y_{{Signal}} = {0:.2f}".format(nSigDB * sigFrac[regionName]))
+                self.logger.logINFO("Y_{{Background}} = {0:.2f}".format(nBkgCombDB * bkgCombFrac[regionName]))
+                self.logger.logINFO("A_{{FB}} = {0:.2f}".format(afbDB))
+                self.logger.logINFO("F_{{L}} = {0:.2f}".format(flDB))
+
             Plotter.latexQ2(self.process.cfg['binKey'])
             self.canvasPrint(pltName + '_' + regionName + plotFuncs[frame]['tag'])
 types.MethodType(plotPostfitBLK, None, Plotter)
