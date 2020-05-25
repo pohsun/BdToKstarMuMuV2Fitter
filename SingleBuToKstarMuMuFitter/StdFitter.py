@@ -35,15 +35,18 @@ class StdFitter(FitterCore):
 
     def _bookMinimizer(self):
         """"""
-        self.fitter = ROOT.StdFitter()
-        for opt in self.cfg.get("createNLLOpt", []):
-            self.fitter.addNLLOpt(opt)
-        if hasattr(self.data, "InheritsFrom") and hasattr(self.pdf, "InheritsFrom"):
-            self.fitter.Init(self.pdf, self.data)
-            self._nll = self.fitter.GetNLL()
-        else:
-            self.logger.logERROR("Either {data} or {pdf} is not valid.".format(data=self.cfg['data'], pdf=self.cfg['pdf']))
-            raise RuntimeError("{name}: Either {data} or {pdf} is not valid.".format(name=self.name, data=self.cfg['data'], pdf=self.cfg['pdf']))
+        if not hasattr(self, 'fitter'):
+            # Re-define ROOT.StdFitter seem to make errors when StdFitter.Init is called again.
+            # This hot patch works when we run the same fitter multiple times, but it's not working when changeing the pdf/data.
+            self.fitter = ROOT.StdFitter()
+            for opt in self.cfg.get("createNLLOpt", []):
+                self.fitter.addNLLOpt(opt)
+            if hasattr(self.data, "InheritsFrom") and hasattr(self.pdf, "InheritsFrom"):
+                self.fitter.Init(self.pdf, self.data)
+            else:
+                self.logger.logERROR("Either {data} or {pdf} is not valid.".format(data=self.cfg['data'], pdf=self.cfg['pdf']))
+                raise RuntimeError("{name}: Either {data} or {pdf} is not valid.".format(name=self.name, data=self.cfg['data'], pdf=self.cfg['pdf']))
+        self._nll = self.fitter.GetNLL()
 
     def _preFitSteps_initFromDB(self):
         """Initialize from DB"""
@@ -60,7 +63,7 @@ class StdFitter(FitterCore):
         unboundFl = self.args.find("unboundFl")
         unboundAfb = self.args.find("unboundAfb")
         if unboundFl == None or unboundAfb == None:
-            return
+            raise RuntimeError("StdFitter._preFitSteps_preFit failed to find unboundFl or unboundAfb.")
         def isPhysical(uA, uF):
             f = unboundFlToFl(uF)
             a = unboundAfbToAfb(uA, f)
