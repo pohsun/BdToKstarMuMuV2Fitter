@@ -49,10 +49,10 @@ class SourceManager(Service):
 
         return self._sources[key]['obj']
 
-    def update(self, key, obj=None, addHist=None):
+    def update(self, key, obj=None, addHist=None, overwriteExist=True):
         if obj is None:
             self.logger.logWARNING("Update a 'None' with key '{0}'".format(key))
-        if key in self._sources.keys():
+        if key in self._sources.keys() and overwriteExist:
             self.logger.logDEBUG("Overwrite source '{0}'".format(key))
             self._sources[key]['obj'] = obj
         else:
