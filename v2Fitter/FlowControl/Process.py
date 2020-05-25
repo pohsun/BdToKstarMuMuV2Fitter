@@ -31,8 +31,9 @@ class Process:
 
     def reset(self):
         """ Reset the Paths """
-        for seq in self._sequence:
-            seq.reset()
+        for p in self._sequence:
+            p.reset()
+            p.hookProcess(self)
         pass
 
     @classmethod

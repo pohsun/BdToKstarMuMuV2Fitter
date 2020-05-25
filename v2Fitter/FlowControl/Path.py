@@ -13,9 +13,10 @@ import abc
 class Path():
     """Steps to be run in a Process"""
     __metaclass__ = abc.ABCMeta
-    def __init__(self, cfg):
+    def __init__(self, cfg, noRerun=False):
         self.cfg = cfg
         self.name = self.cfg['name'].replace('.', '_')
+        self.noRerun = noRerun
         Path.reset(self)
         pass
 
