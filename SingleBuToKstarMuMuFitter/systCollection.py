@@ -527,7 +527,6 @@ def func_altEffi2(args):
 
 # Simulation mismodeling
 # # Quote the difference between fitting results of unfiltered GEN and that of high stat RECO.
-
 def func_simMismodel(args):
     p.setSequence([])
     try:
@@ -592,8 +591,8 @@ def func_altSigM(args):
 # # The S-wave is estimated to be around 5%.
 # # However, given low stats, the fitted fraction is usually less than 1%.
 # # Fix the fraction at 5% and compare the difference
-def func_altSP(args):
-    """ Set fs to 5% instead of 0% """
+def func_altSP(args, fsRate=0.1):
+    """ Set fs to 10% instead of 0% """
     setupFinalAltSPFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSPFitter.update({
         'argAliasInDB': {'unboundAfb': 'unboundAfb_altSP', 'unboundFl': 'unboundFl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP', 'nSig': 'nSig_altSP', 'nBkgComb': 'nBkgComb_altSP'},
@@ -602,11 +601,11 @@ def func_altSP(args):
     })
     finalAltSPFitter = StdFitter(setupFinalAltSPFitter)
     def _preFitSteps_vetoSmallFs_altSP(self):
-        """ fs is usually negligible, set the alternative fraction to 0.05 """
+        """ fs is usually negligible, set the alternative fraction to a fixed rate. """
         if "fs" in self.cfg.get('argPattern'):
             fs = self.args.find("fs")
             transAs = self.args.find("transAs")
-            fs.setVal(0.05)
+            fs.setVal(fsRate)
             fs.setConstant(True)
             transAs.setVal(0)
             transAs.setConstant(False)
@@ -679,6 +678,57 @@ def func_altBkgCombA(args):
         updateToDB_altShape(args, "altBkgCombA")
     finally:
         p.endSeq()
+
+# # Vary the parameters of analytic model by 1 sigma
+def func_flucBkgCombA(args):
+    setupFinalFlucBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalFlucBkgCombAFitter.update({
+        'FitMinos': [False, ()],
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_flucBkgCombA', 'unboundFl': 'unboundFl_flucBkgCombA', 'fs': 'fs_flucBkgCombA', 'as': 'as_flucBkgCombA', 'nSig': 'nSig_flucBkgCombA', 'nBkgComb': 'nBkgComb_flucBkgCombA'},
+        'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
+        'saveToDB': False,
+    })
+    finalFlucBkgCombAFitter = StdFitter(setupFinalFlucBkgCombAFitter)
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        finalFlucBkgCombAFitter,
+    ])
+    p.beginSeq()
+
+    flucArgs = {} # Update this from pdfCollection.py
+    flucArgs['belowJpsi'] = ["bkgCombL_c1", "bkgCombL_c2", "bkgCombL_c3", "bkgCombL_c4", "bkgCombL_c5", "bkgCombK_c1", "bkgCombK_c2", "bkgCombK_c3"]
+    flucArgs['betweenPeaks'] = ["bkgCombL_c1", "bkgCombL_c2", "bkgCombL_c3", "bkgCombL_c4", "bkgCombL_c5", "bkgCombK_c1", "bkgCombK_c2", "bkgCombK_c3", "bkgCombK_c4"]
+    flucArgs['abovePsi2s'] = ["bkgCombL_c1", "bkgCombK_c1", "bkgCombK_c2", "bkgCombK_c3"]
+    flucArgs['summary'] = flucArgs['belowJpsi']
+    for argName in flucArgs[args.binKey]:
+        for biasSignificance in [1., -1.]:
+            def preFitSteps_flucBkgCombA(self):
+                print(argName, biasSignificance)
+                self.args = self.pdf.getParameters(self.data)
+                self._preFitSteps_initFromDB()
+                self.ToggleConstVar(self.args, False, self.cfg.get('argPattern'))
+
+                # Shift the parameter by biasSignificance
+                FitterCore.ArgLooper(self.args, lambda iArg: iArg.setVal(iArg.getVal()+biasSignificance*iArg.getError()), targetArgs=[argName])
+
+                self._preFitSteps_vetoSmallFs()
+                self._preFitSteps_preFit()
+            finalFlucBkgCombAFitter._preFitSteps = types.MethodType(preFitSteps_flucBkgCombA, finalFlucBkgCombAFitter)
+
+            try:
+                p.runSeq()
+
+                # Keep a record of the biases
+            finally:
+                p.reset()
+                p.setSequence([
+                    finalFlucBkgCombAFitter,
+                ])
+        updateToDB_altShape(args, "flucBkgCombA_{0}".format(argName))
+
+    p.endSeq()
+
 
 # Bmass range
 # # Vary Fit range
@@ -797,6 +847,7 @@ if __name__ == '__main__':
 """
     )
     parser.add_argument(
+        '-b',
         '--binKey',
         dest='binKey',
         default=p.cfg['binKey'],
@@ -847,6 +898,9 @@ if __name__ == '__main__':
 
     subparser_altBkgCombA = subparsers.add_parser('altBkgCombA')
     subparser_altBkgCombA.set_defaults(func=func_altBkgCombA)
+
+    subparser_flucBkgCombA = subparsers.add_parser('flucBkgCombA')
+    subparser_flucBkgCombA.set_defaults(func=func_flucBkgCombA)
 
     subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
     subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
