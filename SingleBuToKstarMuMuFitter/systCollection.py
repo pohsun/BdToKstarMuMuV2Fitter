@@ -18,7 +18,7 @@ import SingleBuToKstarMuMuFitter.varCollection as varCollection
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-from SingleBuToKstarMuMuFitter.StdProcess import p
+from SingleBuToKstarMuMuFitter.StdProcess import p, createNewProcess
 
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.FitterCore import FitterCore
@@ -36,8 +36,8 @@ from argparse import ArgumentParser
 # The standard format to keep the result in db file.
 def updateToDB_altShape(args, tag, tagFiducial=None):
     """ Template db entry maker for syst """
+    db = shelve.open(p.dbplayer.odbfile)
     try:
-        db = shelve.open(p.dbplayer.odbfile)
         if tagFiducial is None:
             fiducial_fl = unboundFlToFl(db['unboundFl']['getVal'])
             fiducial_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fiducial_fl)
@@ -681,6 +681,21 @@ def func_altBkgCombA(args):
 
 # # Vary the parameters of analytic model by 1 sigma
 def func_flucBkgCombA(args):
+    tag = "flucBkgCombA"
+    tagFiducial = None
+    p.beginSeq()
+    db = shelve.open(p.dbplayer.odbfile)
+    p.endSeq()
+    try:
+        if tagFiducial is None:
+            fiducial_fl = unboundFlToFl(db['unboundFl']['getVal'])
+            fiducial_afb = unboundAfbToAfb(db['unboundAfb']['getVal'], fiducial_fl)
+        else:
+            fiducial_fl = db["fl_{0}".format(tagFiducial)]['getVal']
+            fiducial_afb = db["afb_{0}".format(tagFiducial)]['getVal']
+    finally:
+        db.close()
+
     setupFinalFlucBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalFlucBkgCombAFitter.update({
         'FitMinos': [False, ()],
@@ -689,19 +704,38 @@ def func_flucBkgCombA(args):
         'saveToDB': False,
     })
     finalFlucBkgCombAFitter = StdFitter(setupFinalFlucBkgCombAFitter)
-    p.setSequence([
-        pdfCollection.stdWspaceReader,
-        dataCollection.dataReader,
-        finalFlucBkgCombAFitter,
-    ])
-    p.beginSeq()
 
     flucArgs = {} # Update this from pdfCollection.py
-    flucArgs['belowJpsi'] = ["bkgCombL_c1", "bkgCombL_c2", "bkgCombL_c3", "bkgCombL_c4", "bkgCombL_c5", "bkgCombK_c1", "bkgCombK_c2", "bkgCombK_c3"]
-    flucArgs['betweenPeaks'] = ["bkgCombL_c1", "bkgCombL_c2", "bkgCombL_c3", "bkgCombL_c4", "bkgCombL_c5", "bkgCombK_c1", "bkgCombK_c2", "bkgCombK_c3", "bkgCombK_c4"]
-    flucArgs['abovePsi2s'] = ["bkgCombL_c1", "bkgCombK_c1", "bkgCombK_c2", "bkgCombK_c3"]
+    flucArgs['belowJpsi'] = [
+            "bkgCombK_c1",
+            "bkgCombK_c2",
+            "bkgCombK_c3",
+            "bkgCombL_c1",
+            "bkgCombL_c2",
+            "bkgCombL_c3",
+            "bkgCombL_c4",
+            "bkgCombL_c5",]
+    flucArgs['betweenPeaks'] = [
+            "bkgCombK_c1",
+            "bkgCombK_c2",
+            "bkgCombK_c3",
+            "bkgCombK_c4",
+            "bkgCombL_c1",
+            "bkgCombL_c2",
+            "bkgCombL_c3",
+            "bkgCombL_c4",
+            "bkgCombL_c5",]
+    flucArgs['abovePsi2s'] = [
+            "bkgCombK_c1",
+            "bkgCombK_c2",
+            "bkgCombK_c3",
+            "bkgCombL_c1",]
     flucArgs['summary'] = flucArgs['belowJpsi']
+    sumOfSquaredAfbBias = 0.
+    sumOfSquaredFlBias = 0.
     for argName in flucArgs[args.binKey]:
+        maxAfbBias = 0.
+        maxFlBias = 0.
         for biasSignificance in [1., -1.]:
             def preFitSteps_flucBkgCombA(self):
                 print(argName, biasSignificance)
@@ -716,19 +750,48 @@ def func_flucBkgCombA(args):
                 self._preFitSteps_preFit()
             finalFlucBkgCombAFitter._preFitSteps = types.MethodType(preFitSteps_flucBkgCombA, finalFlucBkgCombAFitter)
 
+            pp = createNewProcess()
+            pp.setSequence([
+                pdfCollection.stdWspaceReader,
+                dataCollection.dataReader,
+                finalFlucBkgCombAFitter,
+            ])
             try:
-                p.runSeq()
+                pp.beginSeq()
+                pp.runSeq()
 
-                # Keep a record of the biases
+                # Keep a record of the biases, ignore the case of large bias since it hits boundary.
+                afb = pp.sourcemanager.get('afb').getVal()
+                afbBias = math.fabs(afb - fiducial_afb)
+                maxAfbBias = afbBias if afbBias > maxAfbBias and afbBias < 0.1 else maxAfbBias
+                
+                fl = pp.sourcemanager.get('fl').getVal()
+                flBias = math.fabs(fl - fiducial_fl)
+                maxFlBias = flBias if flBias > maxFlBias and flBias < 0.1 else maxFlBias
+
             finally:
-                p.reset()
-                p.setSequence([
-                    finalFlucBkgCombAFitter,
-                ])
-        updateToDB_altShape(args, "flucBkgCombA_{0}".format(argName))
+                pp.endSeq()
+        sumOfSquaredAfbBias += maxAfbBias*maxAfbBias
+        sumOfSquaredFlBias += maxFlBias*maxFlBias
+        print("INFO\t: Uncertainty from {0} is {1}(AFB) and {2}(FL)".format(argName, maxAfbBias, maxFlBias))
 
-    p.endSeq()
+    # Update summarized result to db, modified from updateToDB_altShape
+    syst_altShape = {}
+    syst_altShape['syst_{0}_afb'.format(tag)] = {
+        'getError': math.sqrt(sumOfSquaredAfbBias),
+        'getErrorHi': math.sqrt(sumOfSquaredAfbBias),
+        'getErrorLo': -1 * math.sqrt(sumOfSquaredAfbBias),
+    }
+    syst_altShape['syst_{0}_fl'.format(tag)] = {
+        'getError': math.sqrt(sumOfSquaredFlBias),
+        'getErrorHi': math.sqrt(sumOfSquaredFlBias),
+        'getErrorLo': -1 * math.sqrt(sumOfSquaredFlBias),
+    }
+    print(syst_altShape)
 
+    if args.updateDB:
+        print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
+        FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
 
 # Bmass range
 # # Vary Fit range

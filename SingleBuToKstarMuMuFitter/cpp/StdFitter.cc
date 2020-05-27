@@ -20,6 +20,7 @@ public:
     StdFitter();
     virtual ~StdFitter();
 
+    void Reset();
     void addNLLOpt(RooCmdArg*);
     RooMinuit* Init(RooAbsPdf*, RooDataSet*);
     RooMinuit* Init(RooAbsReal*, RooDataHist*);
@@ -39,6 +40,20 @@ StdFitter::StdFitter(){}
 StdFitter::~StdFitter(){
     delete minuit;
     minuit = 0;
+    delete nll;
+    nll = 0;
+}
+
+void StdFitter::Reset(){
+    if (minuit != 0){
+        delete minuit;
+        minuit = 0;
+    }
+    if (nll != 0){
+        delete nll;
+        nll = 0;
+    }
+    createNLLOpt.Clear();
 }
 
 void StdFitter::addNLLOpt(RooCmdArg *cmd){
@@ -72,7 +87,7 @@ RooFitResult* StdFitter::FitMigrad(){
 }
 
 void StdFitter::FitHesse(){
-    this->minuit->hesse();
+    minuit->hesse();
 }
 
 RooFitResult* StdFitter::FitMinos(RooArgSet& args){
