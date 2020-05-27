@@ -145,7 +145,7 @@ class EfficiencyFitter(FitterCore):
             self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
             self.canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
 
-            # Plot numerator and denominator
+            # Plot numerator and denominator for the ratio plot
             compTEXTScale = 1e6
             h2_accXrec.Scale(compTEXTScale)  # Efficiency is so low, unable to compare without scale up
             h2_accXrec.Draw("COL")
@@ -186,6 +186,25 @@ class EfficiencyFitter(FitterCore):
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
             self.canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            
+            # Plot comparison between efficiency map w/ and w/o cross term.
+            compXTermScale = 1e6
+            h2_accXrec.Scale(compXTermScale)  # Efficiency is so low, unable to compare without scale up
+            h2_accXrec.Draw("COL")
+            h2_accXrec.SetBarOffset(-0.1)
+            h2_accXrec.Draw("TEXT SAME")
+            args.find('hasXTerm').setVal(0)
+            h2_effi_2D_compXTerm = h2_accXrec.Clone("h2_effi_2D_compXTerm")
+            h2_effi_2D_compXTerm.Reset("ICES")
+            self.pdf.fillHistogram(h2_effi_2D_compXTerm, ROOT.RooArgList(CosThetaL, CosThetaK))
+            h2_effi_2D_compXTerm.Scale(h2_accXrec.GetSumOfWeights()/h2_effi_2D_compXTerm.GetSumOfWeights())
+            h2_effi_2D_compXTerm.SetMarkerColor(2)
+            h2_effi_2D_compXTerm.SetBarOffset(0.1)
+            h2_effi_2D_compXTerm.Draw("TEXT SAME")
+            self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
+            self.canvas.Print("effi_2D_compXTerm_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            args.find('hasXTerm').setVal(1)
+            h2_accXrec.Scale(1. / compXTermScale)
         
         # Check if efficiency is positive definite
         f2_max_x, f2_max_y = ROOT.Double(0), ROOT.Double(0)
