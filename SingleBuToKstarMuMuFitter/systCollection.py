@@ -591,8 +591,8 @@ def func_altSigM(args):
 # # The S-wave is estimated to be around 5%.
 # # However, given low stats, the fitted fraction is usually less than 1%.
 # # Fix the fraction at 5% and compare the difference
-def func_altSP(args, fsRate=0.1):
-    """ Set fs to 10% instead of 0% """
+def func_altSP(args, fsRate=0.05):
+    """ Set fs to 5% instead of 0% """
     setupFinalAltSPFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSPFitter.update({
         'argAliasInDB': {'unboundAfb': 'unboundAfb_altSP', 'unboundFl': 'unboundFl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP', 'nSig': 'nSig_altSP', 'nBkgComb': 'nBkgComb_altSP'},
