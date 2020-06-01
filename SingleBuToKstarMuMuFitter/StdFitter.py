@@ -64,17 +64,16 @@ class StdFitter(FitterCore):
         """ Standard prefit steps """
         unboundFl = self.args.find("unboundFl")
         unboundAfb = self.args.find("unboundAfb")
-        if unboundFl == None or unboundAfb == None:
-            raise RuntimeError("StdFitter._preFitSteps_preFit failed to find unboundFl or unboundAfb.")
-        def isPhysical(uA, uF):
-            f = unboundFlToFl(uF)
-            a = unboundAfbToAfb(uA, f)
-            return abs(a) < (1 - f) * 0.75
-        while not isPhysical(unboundAfb.getVal(), unboundFl.getVal()):
-            fl = unboundFlToFl(unboundFl.getVal())
-            afb = unboundAfbToAfb(unboundAfb.getVal(), fl)
-            unboundAfb.setVal(afbToUnboundAfb(0.5 * afb, fl))
-            unboundFl.setVal(flToUnboundFl(0.5 * fl))
+        if unboundFl != None and unboundAfb != None:
+            def isPhysical(uA, uF):
+                f = unboundFlToFl(uF)
+                a = unboundAfbToAfb(uA, f)
+                return abs(a) < (1 - f) * 0.75
+            while not isPhysical(unboundAfb.getVal(), unboundFl.getVal()):
+                fl = unboundFlToFl(unboundFl.getVal())
+                afb = unboundAfbToAfb(unboundAfb.getVal(), fl)
+                unboundAfb.setVal(afbToUnboundAfb(0.5 * afb, fl))
+                unboundFl.setVal(flToUnboundFl(0.5 * fl))
 
     def _preFitSteps_vetoSmallFs(self):
         """ fs is usually negligible, set the fraction to 0"""
