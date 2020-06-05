@@ -75,8 +75,9 @@ class Process:
             os.makedirs(self.work_dir)
         os.chdir(self.work_dir)
         self.beginSeq_registerServices()
+        self.logger.logINFO("New process initialized at {0}".format(os.path.abspath(self.work_dir)))
         ROOT.gRandom.SetSeed(0)
-        self.logger.logINFO("New process initialized with random seed {0}".format(ROOT.gRandom.GetSeed()))
+        self.logger.logINFO("Random seed = {0}".format(ROOT.gRandom.GetSeed()))
 
     def runSeq(self):
         """Run all path."""
