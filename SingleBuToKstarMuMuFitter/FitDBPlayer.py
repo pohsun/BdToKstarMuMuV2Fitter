@@ -92,11 +92,13 @@ class FitDBPlayer(Service):
                 for key, val in args.items():
                     aliasName = aliasDict.get(key, key)
                     modified_args[aliasName] = val
+                    print("Update {0} as {1} to db.".format(key, aliasName))
                 db.update(modified_args)
             elif args.InheritsFrom("RooArgSet"):
                 def updateToDBImp(iArg):
                     argName = iArg.GetName()
                     aliasName = aliasDict.get(argName, argName)
+                    print("Update {0} as {1} to db.".format(argName, aliasName))
                     if aliasName not in db:
                         db[aliasName] = {}
                     for setter, getter in FitDBPlayer.funcPair:
@@ -105,6 +107,7 @@ class FitDBPlayer(Service):
                         except AttributeError:
                             # In case of no getError for RooNLLVar and so on.
                             pass
+                    print(db[aliasName])
                 FitterCore.ArgLooper(args, updateToDBImp)
             else:
                 raise ValueError("Input arguement of type {0} is not supported".format(type(args)))
@@ -153,6 +156,7 @@ class FitDBPlayer(Service):
         try:
             db = shelve.open(dbfile)
             gaus = ROOT.TF1("gaus", "exp(-0.5*x**2)", -3, 3)
+            print("INFO\t: Parameters are fluctuated to following numbers....")
             def flucturateFromDBImp(iArg):
                 argName = iArg.GetName()
                 aliasName = aliasDict.get(argName, argName)
@@ -163,6 +167,7 @@ class FitDBPlayer(Service):
                         iArg.setVal(min(arg['getMax'], arg['getVal'] + significance * (arg['getErrorHi'] if math.fabs(arg['getErrorHi']) > 1e-5 else arg['getError'])))
                     else:
                         iArg.setVal(max(arg['getMin'], arg['getVal'] + significance * (arg['getErrorLo'] if math.fabs(arg['getErrorLo']) > 1e-5 else arg['getError'])))
+                    iArg.Print()
                 else:
                     print("ERROR\t: Unable to fluctuate {0}, record not found in {1}.".format(aliasName, dbfile))
             FitterCore.ArgLooper(args, flucturateFromDBImp)
