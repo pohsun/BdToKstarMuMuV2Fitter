@@ -116,6 +116,7 @@ class StdFitter(FitterCore):
                 'nll': migradResult.minNll(),
             }
         }
+        self.cfg['source']['{0}.migradResult'.format(self.name)] = migradResult
 
     def FitHesse(self):
         """Hesse"""
@@ -135,6 +136,7 @@ class StdFitter(FitterCore):
                 'nll': minosResult.minNll(),
             }
         })
+        self.cfg['source']['{0}.minosResult'.format(self.name)] = minosResult
 
         # Dont' draw profiled likelihood scanning with following link
         # https://root.cern.ch/root/html/tutorials/roofit/rf605_profilell.C.html
