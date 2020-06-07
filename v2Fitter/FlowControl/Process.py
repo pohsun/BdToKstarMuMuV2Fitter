@@ -77,6 +77,7 @@ class Process:
         self.beginSeq_registerServices()
         self.logger.logINFO("New process initialized at {0}".format(os.path.abspath(self.work_dir)))
         ROOT.gRandom.SetSeed(0)
+        ROOT.RooRandom.setRandomGenerator(ROOT.gRandom)
         self.logger.logINFO("Random seed = {0}".format(ROOT.gRandom.GetSeed()))
 
     def runSeq(self):
