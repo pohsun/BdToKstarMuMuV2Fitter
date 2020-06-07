@@ -30,11 +30,9 @@ def table_AN_sysFL_sysAFB():
         dbKeyToLine = OrderedDict()
         dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
         dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
-        dbKeyToLine['syst_altEffi'] = [r"Efficiency shape"]
-        dbKeyToLine['syst_altBkgCombA'] = [r"Combinatorial Background shape"]
+        dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial Background shape"]
         dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
-        dbKeyToLine['syst_vetoJpsiX'] = [r"\PBp mass fit range"]
-        # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
+        # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"] # Ignore due to low contribution
         totalErrorLine = ["Total"]
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
             db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
@@ -136,12 +134,9 @@ def table_AN_dataresAFBFL():
 
     syst_sources = [
         'syst_randEffi',
-        'syst_altEffi',
         'syst_simMismodel',
+        'syst_bkgCombShape',
         'syst_altSP',
-        'syst_altBkgCombA',
-        'syst_vetoJpsiX',
-        'syst_dataMCDisc',
     ]
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
@@ -176,11 +171,8 @@ def table_paper_sys():
     dbKeyToLine = OrderedDict()
     dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
     dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
-    dbKeyToLine['syst_altEffi'] = [r"Efficiency shape"]
-    dbKeyToLine['syst_altBkgCombA'] = [r"Combinatorial Background shape"]
+    dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial Background shape"]
     dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
-    dbKeyToLine['syst_vetoJpsiX'] = [r"\PBp mass fit range"]
-    # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
     totalErrorLine = ["Total systematic uncertainty"]
     for var in ["afb", "fl"]:
         for binKey in binKeys:
@@ -225,11 +217,8 @@ def table_paper_results():
     syst_sources = [
         'syst_randEffi',
         'syst_simMismodel',
-        'syst_altEffi',
-        'syst_altBkgCombA',
+        'syst_bkgCombShape',
         'syst_altSP',
-        'syst_vetoJpsiX',
-        'syst_dataMCDisc',
     ]
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:

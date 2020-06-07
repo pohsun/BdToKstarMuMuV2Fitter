@@ -659,7 +659,6 @@ def func_altBkgCombM(args):
     finally:
         p.endSeq()
 
-
 # Alternate bkgCombA shape
 # # Smooth function versus analytic function
 def func_altBkgCombA(args):
@@ -722,6 +721,7 @@ def func_altBkgCombA2(args):
 
 # # Vary the parameters of analytic model by 1 sigma
 def func_flucBkgCombA(args):
+    """ DEPRECATED """
     tag = "flucBkgCombA"
     tagFiducial = None
     p.beginSeq()
@@ -834,9 +834,9 @@ def func_flucBkgCombA(args):
         print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
         FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
 
-# # Determinded by varying analytic description with FitDBPlayer.fluctuateFromDB.
+# # Determinded by varying analytic description with correlation matrix considered.
 def func_randBkgCombA(args):
-    """ Typically less than 5% """
+    """ Determinded by varying analytic description with correlation matrix considered. Typically less than 5% """
     bkgCombAFitter = fitCollection.bkgCombAFitter
     bkgCombAFitter.cfg['saveToDB'] = False
 
@@ -984,6 +984,33 @@ def func_randBkgCombA(args):
     finally:
         p.endSeq()
 
+def func_mergeBkgCombShape(args):
+    """ Merge the effects on combinatorial background shape. """
+    syst_sources = ['syst_altBkgCombA', 'syst_altBkgCombA2', 'syst_randBkgCombA']
+    
+    p.setSequence([])
+    try:
+        p.beginSeq()
+        db = shelve.open(p.dbplayer.odbfile)
+        syst_bkgCombShape = {
+            'syst_bkgCombShape_fl': {
+                'getError': math.sqrt(sum([pow(db[v + '_fl']['getError'], 2) for v in syst_sources])),
+                'getErrorHi': math.sqrt(sum([pow(db[v + '_fl']['getErrorHi'], 2) for v in syst_sources])),
+                'getErrorLo': -math.sqrt(sum([pow(db[v + '_fl']['getErrorLo'], 2) for v in syst_sources])),
+            },
+            'syst_bkgCombShape_afb': {
+                'getError': math.sqrt(sum([pow(db[v + '_afb']['getError'], 2) for v in syst_sources])),
+                'getErrorHi': math.sqrt(sum([pow(db[v + '_afb']['getErrorHi'], 2) for v in syst_sources])),
+                'getErrorLo': -math.sqrt(sum([pow(db[v + '_afb']['getErrorLo'], 2) for v in syst_sources])),
+            }
+        }
+        print(syst_bkgCombShape)
+
+        if args.updateDB:
+            FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_bkgCombShape)
+    finally:
+        p.endSeq()
+
 # Bmass range
 # # Vary Fit range
 def func_altFitRange(args):
@@ -1022,7 +1049,7 @@ def func_altFitRange(args):
 # Mis-include B -> Jpsi+X backgroud
 # # Remove LSB from Fit region
 def func_vetoJpsiX(args):
-    """ Remvoe LSB from Fit region """
+    """ DEPRECATED. Remvoe LSB from Fit region """
     dataReaderCfg = deepcopy(dataCollection.dataReaderCfg)
     dataReaderCfg.update({
         'preloadFile': None
@@ -1053,47 +1080,6 @@ def func_vetoJpsiX(args):
         updateToDB_altShape(args, "vetoJpsiX")
     finally:
         p.endSeq()
-
-# Make latex table
-def func_makeLatexTable(args):
-    """ Make table. Force the input db files from StdProcess.dbplayer.absInputDir """
-    print("Create table from db files in {0}.".format(p.dbplayer.absInputDir))
-    for var in ["fl", "afb"]:
-        dbKeyToLine = {
-            'syst_randEffi': [r"Limited MC size"],
-            'syst_altEffi': [r"Eff.\ mapping"],
-            'syst_simMismodel': [r"Simu.\ mismodel"],
-            'syst_altSP': [r"$S$--$P$ wave interf.\ "],
-            'syst_altBkgCombA': [r"Comb.\ Bkg.\ shape"],
-            'syst_vetoJpsiX': [r"$B$ mass range"],
-            'syst_dataMCDisc': [r"Data-MC discrepancy"],
-        }
-        totalErrorLine = ["Total"]
-        for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
-            db = shelve.open("{0}/fitResults_{1}.db".format(p.dbplayer.absInputDir, q2bins[binKey]['label']))
-            totalSystErr = 0.
-            for systKey, latexLine in dbKeyToLine.items():
-                err = db["{0}_{1}".format(systKey, var)]['getError']
-                latexLine.append("{0:.03f}".format(err))
-                totalSystErr += pow(err, 2)
-            db.close()
-            totalErrorLine.append("{0:.03f}".format(math.sqrt(totalSystErr)))
-
-        print("Printing table of syst. unc. for {0}".format(var))
-        indent = "  "
-        print(indent * 2 + r"\begin{tabular}{|l|c|c|c|c|}")
-        print(indent * 3 + r"\hline")
-        print(indent * 3 + r"Syst.\ err.\ $\backslash$ $q^2$ bin & 1 & 3 & 5 & 0 \\")
-        print(indent * 3 + r"\hline")
-        print(indent * 3 + r"\hline")
-        print(indent * 3 + r"\multicolumn{5}{|c|}{Uncorrelated systematic uncertainties} \\")
-        print(indent * 3 + r"\hline")
-        for systKey, latexLine in dbKeyToLine.items():
-            print(indent * 3 + " & ".join(latexLine) + r" \\")
-        print(indent * 3 + r"\hline")
-        print(indent * 3 + " & ".join(totalErrorLine) + r" \\")
-        print(indent * 3 + r"\hline")
-        print(indent * 2 + r"\end{tabular}")
 
 if __name__ == '__main__':
     parser = ArgumentParser(
@@ -1138,11 +1124,11 @@ if __name__ == '__main__':
     subparser_randEffi = subparsers.add_parser('randEffi')
     subparser_randEffi.set_defaults(func=func_randEffi)
 
-    subparser_altEffi = subparsers.add_parser('altEffi')
-    subparser_altEffi.set_defaults(func=func_altEffi)
+    # subparser_altEffi = subparsers.add_parser('altEffi')
+    # subparser_altEffi.set_defaults(func=func_altEffi)
 
-    subparser_altEffi2 = subparsers.add_parser('altEffi2')
-    subparser_altEffi2.set_defaults(func=func_altEffi2)
+    # subparser_altEffi2 = subparsers.add_parser('altEffi2')
+    # subparser_altEffi2.set_defaults(func=func_altEffi2)
 
     subparser_simMismodel = subparsers.add_parser('simMismodel')
     subparser_simMismodel.set_defaults(func=func_simMismodel)
@@ -1162,20 +1148,20 @@ if __name__ == '__main__':
     subparser_altBkgCombA2 = subparsers.add_parser('altBkgCombA2')
     subparser_altBkgCombA2.set_defaults(func=func_altBkgCombA2)
     
-    subparser_flucBkgCombA = subparsers.add_parser('flucBkgCombA')
-    subparser_flucBkgCombA.set_defaults(func=func_flucBkgCombA)
+    # subparser_flucBkgCombA = subparsers.add_parser('flucBkgCombA')
+    # subparser_flucBkgCombA.set_defaults(func=func_flucBkgCombA)
 
     subparser_randBkgCombA = subparsers.add_parser('randBkgCombA')
     subparser_randBkgCombA.set_defaults(func=func_randBkgCombA)
+
+    subparser_mergeBkgCombShape = subparsers.add_parser('mergeBkgCombShape')
+    subparser_mergeBkgCombShape.set_defaults(func=func_mergeBkgCombShape)
     
-    subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
-    subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
+    # subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
+    # subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
 
     # subparser_altFitRange = subparsers.add_parser('altFitRange')
     # subparser_altFitRange.set_defaults(func=func_altFitRange)
-
-    subparser_makeLatexTable = subparsers.add_parser('makeLatexTable')
-    subparser_makeLatexTable.set_defaults(func=func_makeLatexTable)
 
     args = parser.parse_args()
     p.cfg['binKey'] = args.binKey
