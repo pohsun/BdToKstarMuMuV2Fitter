@@ -30,7 +30,7 @@ def table_AN_sysFL_sysAFB():
         dbKeyToLine = OrderedDict()
         dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
         dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
-        dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial Background shape"]
+        dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial background shape"]
         dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
         # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"] # Ignore due to low contribution
         totalErrorLine = ["Total"]
@@ -171,7 +171,7 @@ def table_paper_sys():
     dbKeyToLine = OrderedDict()
     dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
     dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
-    dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial Background shape"]
+    dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial background shape"]
     dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
     totalErrorLine = ["Total systematic uncertainty"]
     for var in ["afb", "fl"]:
@@ -188,13 +188,12 @@ def table_paper_sys():
     print("[table_paper_sys] Printing table of syst. unc.")
     print("")
     print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{l|cc}")
-    print(indent * (baseIndentLevel + 1) + r"\hline")
-    print(indent * (baseIndentLevel + 1) + r"Systematic uncertainty & \afb $(10^{-2})$ & \fl $(10^{-2})$ \\")
+    print(indent * (baseIndentLevel + 1) + r"Source & \afb $(10^{-3})$ & \fl $(10^{-3})$ \\[1pt]")
     print(indent * (baseIndentLevel + 1) + r"\hline")
     for systKey, latexLine in dbKeyToLine.items():
-        print(indent * (baseIndentLevel + 1) + latexLine[0] + " & {0:.1f} -- {1:.1f}".format(100. * min(latexLine[1:1 + len(binKeys)]), 100. * max(latexLine[1:1 + len(binKeys)])) + " & {0:.1f} -- {1:.1f}".format(100. * min(latexLine[1 + len(binKeys)::]), 100. * max(latexLine[1 + len(binKeys)::])) + r" \\")
+        print(indent * (baseIndentLevel + 1) + latexLine[0] + " & {0:.0f} -- {1:.0f}".format(1000. * min(latexLine[1:1 + len(binKeys)]), 1000. * max(latexLine[1:1 + len(binKeys)])) + " & {0:.0f} -- {1:.0f}".format(1000. * min(latexLine[1 + len(binKeys)::]), 1000. * max(latexLine[1 + len(binKeys)::])) + r" \\")
     print(indent * (baseIndentLevel + 1) + r"\hline")
-    print(indent * (baseIndentLevel + 1) + totalErrorLine[0] + " & {0:.1f} -- {1:.1f}".format(100. * min(totalErrorLine[1:1 + len(binKeys)]), 100. * max(totalErrorLine[1:1 + len(binKeys)])) + " & {0:.1f} -- {1:.1f}".format(100. * min(totalErrorLine[1 + len(binKeys)::]), 100. * max(totalErrorLine[1 + len(binKeys)::])) + r" \\")
+    print(indent * (baseIndentLevel + 1) + totalErrorLine[0] + " & {0:.0f} -- {1:.0f}".format(1000. * min(totalErrorLine[1:1 + len(binKeys)]), 1000. * max(totalErrorLine[1:1 + len(binKeys)])) + " & {0:.0f} -- {1:.0f}".format(1000. * min(totalErrorLine[1 + len(binKeys)::]), 1000. * max(totalErrorLine[1 + len(binKeys)::])) + r" \\")
     print(indent * (baseIndentLevel + 1) + r"\hline")
     print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
     print("")
@@ -204,8 +203,8 @@ def table_paper_results():
 
     print("[table_paper_results] Printing table of final result")
     print("")
-    print(indent * (baseIndentLevel + 0) + r"\begin{scotch}{cccc}")
-    print(indent * (baseIndentLevel + 1) + r"\qq{}(\GeVV) & $Y_{\mathrm{S}}$ & \afb & \fl \\")
+    print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{cccc}")
+    print(indent * (baseIndentLevel + 1) + r"\qq ($\GeVns^2$) & Signal yield & \afb & \fl \\[1pt]")
     print(indent * (baseIndentLevel + 1) + r"\hline")
 
     binKeyToLine = OrderedDict()
@@ -236,9 +235,9 @@ def table_paper_results():
                 db['stat_FC_fl']['getErrorLo'],
                 math.sqrt(sum([pow(db[v + '_fl']['getError'], 2) for v in syst_sources]))))
             db.close()
-        print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")
+        print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\[2pt]")
 
-    print(indent * (baseIndentLevel + 0) + r"\end{scotch}")
+    print(indent * (baseIndentLevel + 0) + r"\end{tabular}")
     print("")
 
 if __name__ == '__main__':
