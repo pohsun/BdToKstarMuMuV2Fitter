@@ -10,6 +10,7 @@ import types
 import shelve
 import functools
 import itertools
+import tempfile
 from copy import copy, deepcopy
 
 import ROOT
@@ -18,7 +19,7 @@ import SingleBuToKstarMuMuFitter.varCollection as varCollection
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-from SingleBuToKstarMuMuFitter.StdProcess import p, createNewProcess
+from SingleBuToKstarMuMuFitter.StdProcess import createNewProcess
 
 from v2Fitter.Fitter.ObjProvider import ObjProvider
 from v2Fitter.Fitter.FitterCore import FitterCore
@@ -30,8 +31,8 @@ from SingleBuToKstarMuMuFitter.EfficiencyFitter import EfficiencyFitter
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
 from SingleBuToKstarMuMuFitter.Plotter import Plotter
 
-
 from argparse import ArgumentParser
+p = createNewProcess()
 
 # The standard format to keep the result in db file.
 def updateToDB_altShape(args, tag, tagFiducial=None):
@@ -318,7 +319,6 @@ def func_dataMCDisc2(args):
         'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc2', 'unboundFl': 'unboundFl_dataMCDisc2', 'fs': 'fs_dataMCDisc2', 'as': 'as_dataMCDisc2', 'nSig': 'nSig_dataMCDisc2', 'nBkgComb': 'nBkgComb_dataMCDisc2'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
-        'argAliasToDB': True,
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
 
@@ -360,9 +360,9 @@ def func_randEffi(args):
         self.args = self.pdf.getParameters(self.data)
         self._preFitSteps_initFromDB()
 
-        # Fluctuate cross-term correction
+        # Fluctuate cross-term correction w/o considering the correlation
         effiArgs = ROOT.RooArgSet()
-        FitterCore.ArgLooper(self.args, lambda iArg: effiArgs.add(iArg), targetArgs=[r"x\d{1,2}"])
+        FitterCore.ArgLooper(self.args, lambda iArg: effiArgs.add(iArg), targetArgs=[r"x\d{1,2}", r"l\d", r"k\d"])
         FitDBPlayer.fluctuateFromDB(self.process.dbplayer.odbfile, effiArgs, self.cfg['argAliasInDB'])
 
         self._preFitSteps_vetoSmallFs()
@@ -370,7 +370,11 @@ def func_randEffi(args):
 
     finalRandEffiFitter._preFitSteps = types.MethodType(preFitSteps_randEffi, finalRandEffiFitter)
 
-    foutName = "syst_randEffi_{0}.root".format(q2bins[args.binKey]['label'])
+    if args.isBatchTask:
+        os.chdir(os.path.abspath("/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/"))
+        foutName = "syst_randEffi_{0}_{1}.root".format(q2bins[args.binKey]['label'], next(tempfile._get_candidate_names()))
+    else:
+        foutName = "syst_randEffi_{0}.root".format(q2bins[args.binKey]['label'])
     class effiStudier(AbsToyStudier):
         def _preSetsLoop(self):
             self.hist_afb = ROOT.TH1F("hist_afb", "", 300, -0.75, 0.75)
@@ -407,7 +411,7 @@ def func_randEffi(args):
         'name': "effiStudier",
         'data': "dataReader.Fit",
         'fitter': finalRandEffiFitter,
-        'nSetOfToys': 200,
+        'nSetOfToys': 20 if args.isBatchTask else 200,
     })
     studier = effiStudier(setupStudier)
 
@@ -424,48 +428,51 @@ def func_randEffi(args):
         else:
             p.runSeq()
 
-        fin = ROOT.TFile("{0}".format(foutName))
+        if not args.isBatchTask:
+            fin = ROOT.TFile("{0}".format(foutName))
 
-        hist_fl = fin.Get("hist_fl")
-        gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", 0, 1)
-        hist_fl.Fit(gaus_fl, "WI")
+            hist_fl = fin.Get("hist_fl")
+            gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", 0, 1)
+            hist_fl.Fit(gaus_fl, "WI")
 
-        hist_afb = fin.Get("hist_afb")
-        gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.75, 0.75)
-        hist_afb.Fit(gaus_afb, "WI")
+            hist_afb = fin.Get("hist_afb")
+            gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.75, 0.75)
+            hist_afb.Fit(gaus_afb, "WI")
 
-        syst_randEffi = {
-            'syst_randEffi_fl': {
-                'getError': gaus_fl.GetParameter(2),
-                'getErrorHi': gaus_fl.GetParameter(2),
-                'getErrorLo': -gaus_fl.GetParameter(2),
-            },
-            'syst_randEffi_afb': {
-                'getError': gaus_afb.GetParameter(2),
-                'getErrorHi': gaus_afb.GetParameter(2),
-                'getErrorLo': -gaus_afb.GetParameter(2),
+            syst_randEffi = {
+                'syst_randEffi_fl': {
+                    'getError': gaus_fl.GetParameter(2),
+                    'getErrorHi': gaus_fl.GetParameter(2),
+                    'getErrorLo': -gaus_fl.GetParameter(2),
+                },
+                'syst_randEffi_afb': {
+                    'getError': gaus_afb.GetParameter(2),
+                    'getErrorHi': gaus_afb.GetParameter(2),
+                    'getErrorLo': -gaus_afb.GetParameter(2),
+                }
             }
-        }
-        print(syst_randEffi)
+            print(syst_randEffi)
 
-        if args.updatePlot:
-            canvas = Plotter.canvas.cd()
-            hist_afb.GetXaxis().SetTitle("A_{FB}")
-            hist_afb.Draw("HIST")
-            Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
-            Plotter.latexCMSSim()
-            canvas.Print("syst_randEffi_afb_{0}.pdf".format(q2bins[args.binKey]['label']))
+            if args.updatePlot:
+                canvas = Plotter.canvas.cd()
+                hist_afb.GetXaxis().SetTitle("A_{FB}")
+                hist_afb.Draw("HIST")
+                gaus_afb.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(args.binKey)
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randEffi_afb_{0}.pdf".format(q2bins[args.binKey]['label']))
 
-            hist_fl.GetXaxis().SetTitle("F_{L}")
-            hist_fl.Draw("HIST")
-            Plotter.latexCMSMark()
-            Plotter.latexCMSExtra()
-            Plotter.latexCMSSim()
-            canvas.Print("syst_randEffi_fl_{0}.pdf".format(q2bins[args.binKey]['label']))
+                hist_fl.GetXaxis().SetTitle("F_{L}")
+                hist_fl.Draw("HIST")
+                gaus_fl.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(args.binKey)
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randEffi_fl_{0}.pdf".format(q2bins[args.binKey]['label']))
 
-        if args.updateDB:
-            FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_randEffi)
+            if args.updateDB:
+                FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_randEffi)
     finally:
         p.endSeq()
 
@@ -652,6 +659,7 @@ def func_altBkgCombM(args):
     finally:
         p.endSeq()
 
+
 # Alternate bkgCombA shape
 # # Smooth function versus analytic function
 def func_altBkgCombA(args):
@@ -676,6 +684,39 @@ def func_altBkgCombA(args):
         p.runSeq()
 
         updateToDB_altShape(args, "altBkgCombA")
+    finally:
+        p.endSeq()
+
+# # Ananlytic function from different sideband
+def func_altBkgCombA2(args):
+    """ Background described with ananlytic function from different sidebands. """
+    setupBkgCombA2Fitter = deepcopy(fitCollection.setupBkgCombAFitter)
+    setupBkgCombA2Fitter.update({
+        'data': 'dataReader.innerSB',
+        'saveToDB': False,
+    })
+    bkgCombA2Fitter = StdFitter(setupBkgCombA2Fitter)
+
+    setupFinalAltBkgCombA2Fitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalAltBkgCombA2Fitter.update({
+        'pdf': "f_finalAltBkgCombA",
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA2', 'unboundFl': 'unboundFl_altBkgCombA2', 'fs': 'fs_altBkgCombA2', 'as': 'as_altBkgCombA2', 'nSig': 'nSig_altBkgCombA2', 'nBkgComb': 'nBkgComb_altBkgCombA2'},
+        'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
+    })
+    finalAltBkgCombA2Fitter = StdFitter(setupFinalAltBkgCombA2Fitter)
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        bkgCombA2Fitter,
+        finalAltBkgCombA2Fitter,
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        updateToDB_altShape(args, "altBkgCombA2")
     finally:
         p.endSeq()
 
@@ -793,6 +834,156 @@ def func_flucBkgCombA(args):
         print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
         FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
 
+# # Determinded by varying analytic description with FitDBPlayer.fluctuateFromDB.
+def func_randBkgCombA(args):
+    """ Typically less than 5% """
+    bkgCombAFitter = fitCollection.bkgCombAFitter
+    bkgCombAFitter.cfg['saveToDB'] = False
+
+    setupFinalRandBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalRandBkgCombAFitter.update({
+        'FitMinos': [False, ()],
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_randBkgCombA', 'unboundFl': 'unboundFl_randBkgCombA', 'fs': 'fs_randBkgCombA', 'as': 'as_randBkgCombA', 'nSig': 'nSig_randBkgCombA', 'nBkgComb': 'nBkgComb_randBkgCombA'},
+        'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
+        'saveToDB': False,
+    })
+    finalRandBkgCombAFitter = StdFitter(setupFinalRandBkgCombAFitter)
+
+    def preFitSteps_randBkgCombA(self):
+        self.args = self.pdf.getParameters(self.data)
+        self._preFitSteps_initFromDB()
+
+        # Fluctuate background model, in which the correlation of coefficients is considered.
+        # This treatment is necessary when strong correlation is seen in HESSE step
+        fitResult = self.process.sourcemanager.get("{0}.minosResult".format(bkgCombAFitter.name))
+        randomizedPars = fitResult.randomizePars()
+        args_it = randomizedPars.createIterator()
+        arg = args_it.Next()
+        while arg:
+            arg.Print()
+            FitterCore.ArgLooper(self.args, lambda iArg: iArg.setVal(arg.getVal()), [arg.GetName()])
+            arg = args_it.Next()
+
+        self._preFitSteps_vetoSmallFs()
+        self._preFitSteps_preFit()
+
+    finalRandBkgCombAFitter._preFitSteps = types.MethodType(preFitSteps_randBkgCombA, finalRandBkgCombAFitter)
+
+    if args.isBatchTask:
+        os.chdir(os.path.abspath("/afs/cern.ch/work/p/pchen/public/BuToKstarMuMu/v2Fitter/SingleBuToKstarMuMuFitter/"))
+        foutName = "syst_randBkgCombA_{0}_{1}.root".format(q2bins[args.binKey]['label'], next(tempfile._get_candidate_names()))
+    else:
+        foutName = "syst_randBkgCombA_{0}.root".format(q2bins[args.binKey]['label'])
+    class bkgCombAStudier(AbsToyStudier):
+        def _preSetsLoop(self):
+            self.hist_afb = ROOT.TH1F("hist_afb", "", 300, -0.75, 0.75)
+            self.hist_afb.GetXaxis().SetTitle("A_{FB}")
+            self.hist_fl = ROOT.TH1F("hist_fl", "", 200, 0., 1.)
+            self.hist_fl.GetXaxis().SetTitle("F_{L}")
+            self.hist_nSig = ROOT.TH1F("hist_nSig", "", 200, 0., 200.)
+            self.hist_nBkgComb = ROOT.TH1F("hist_nBkgComb", "", 200, 0., 1000.)
+
+        def _preRunFitSteps(self, setIndex):
+            pass
+
+        def _postRunFitSteps(self, setIndex):
+            if self.fitter.fitResult["{0}.migrad".format(self.fitter.name)]['status'] == 0:
+                fl = self.process.sourcemanager.get('fl')
+                self.hist_fl.Fill(fl.getVal())
+                afb = self.process.sourcemanager.get('afb')
+                self.hist_afb.Fill(afb.getVal())
+                nSig = self.process.sourcemanager.get('nSig')
+                self.hist_nSig.Fill(nSig.getVal())
+                nBkgComb = self.process.sourcemanager.get('nBkgComb')
+                self.hist_nBkgComb.Fill(nBkgComb.getVal())
+
+        def _postSetsLoop(self):
+            fout = ROOT.TFile(foutName, "RECREATE")
+            fout.cd()
+            self.hist_afb.Write()
+            self.hist_fl.Write()
+            fout.Close()
+            print("Create output file {0}".format(foutName))
+
+        def getSubDataEntries(self, setIndex):
+            return 1
+
+        def getSubData(self):
+            while True:
+                yield self.data
+
+    setupStudier = deepcopy(bkgCombAStudier.templateConfig())
+    setupStudier.update({
+        'name': "bkgCombAStudier",
+        'data': "dataReader.Fit",
+        'fitter': finalRandBkgCombAFitter,
+        'nSetOfToys': 20 if args.isBatchTask else 200,
+    })
+    studier = bkgCombAStudier(setupStudier)
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        bkgCombAFitter,
+        studier,
+    ])
+
+    try:
+        p.beginSeq()
+        if os.path.exists("{0}".format(foutName)):
+            print("{0} exists, skip fitting procedure".format(foutName))
+        else:
+            p.runSeq()
+
+        if not args.isBatchTask:
+            fin = ROOT.TFile("{0}".format(foutName))
+
+            hist_fl = fin.Get("hist_fl")
+            gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", 0, 1)
+            hist_fl.Fit(gaus_fl, "WI")
+
+            hist_afb = fin.Get("hist_afb")
+            gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.75, 0.75)
+            hist_afb.Fit(gaus_afb, "WI")
+
+            syst_randBkgCombA = {
+                'syst_randBkgCombA_fl': {
+                    'getError': gaus_fl.GetParameter(2),
+                    'getErrorHi': gaus_fl.GetParameter(2),
+                    'getErrorLo': -gaus_fl.GetParameter(2),
+                },
+                'syst_randBkgCombA_afb': {
+                    'getError': gaus_afb.GetParameter(2),
+                    'getErrorHi': gaus_afb.GetParameter(2),
+                    'getErrorLo': -gaus_afb.GetParameter(2),
+                }
+            }
+            print(syst_randBkgCombA)
+
+            if args.updatePlot:
+                canvas = Plotter.canvas.cd()
+                hist_afb.GetXaxis().SetTitle("A_{FB}")
+                hist_afb.Draw("HIST")
+                gaus_afb.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(args.binKey)
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randBkgCombA_afb_{0}.pdf".format(q2bins[args.binKey]['label']))
+
+                hist_fl.GetXaxis().SetTitle("F_{L}")
+                hist_fl.Draw("HIST")
+                gaus_fl.Draw("SAME")
+                Plotter.latexCMSMark()
+                Plotter.latexQ2(args.binKey)
+                Plotter.latexCMSExtra()
+                canvas.Print("syst_randBkgCombA_fl_{0}.pdf".format(q2bins[args.binKey]['label']))
+
+            if args.updateDB:
+                FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_randBkgCombA)
+
+    finally:
+        p.endSeq()
+
 # Bmass range
 # # Vary Fit range
 def func_altFitRange(args):
@@ -810,8 +1001,8 @@ def func_altFitRange(args):
     fitterCfg = deepcopy(fitCollection.setupFinalFitter)
     fitterCfg.update({
         'data': "dataReader.altFit",
-        'saveToDB': False,
         'createNLLOpt': [ROOT.RooFit.Range("altFit")],
+        'saveToDB': False,
     })
     fitter = StdFitter(fitterCfg)
     p.setSequence([
@@ -845,8 +1036,8 @@ def func_vetoJpsiX(args):
     fitterCfg = deepcopy(fitCollection.setupFinalFitter)
     fitterCfg.update({
         'data': "dataReader.altFit_vetoJpsiX",
-        'saveToDB': False,
         'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("altFit_vetoJpsiX")],
+        'saveToDB': False,
     })
     fitter = StdFitter(fitterCfg)
     p.setSequence([
@@ -928,6 +1119,12 @@ if __name__ == '__main__':
         action='store_false',
         help="Want to update to db file? (Default: True)",
     )
+    parser.add_argument(
+        '--batchTask',
+        dest='isBatchTask',
+        action='store_true',
+        help="Is the job a batch task? (Default: False)",
+    )
     parser.set_defaults(work_dir=p.work_dir)
 
     subparsers = parser.add_subparsers(help="Functions", dest='Function_name')
@@ -962,9 +1159,15 @@ if __name__ == '__main__':
     subparser_altBkgCombA = subparsers.add_parser('altBkgCombA')
     subparser_altBkgCombA.set_defaults(func=func_altBkgCombA)
 
+    subparser_altBkgCombA2 = subparsers.add_parser('altBkgCombA2')
+    subparser_altBkgCombA2.set_defaults(func=func_altBkgCombA2)
+    
     subparser_flucBkgCombA = subparsers.add_parser('flucBkgCombA')
     subparser_flucBkgCombA.set_defaults(func=func_flucBkgCombA)
 
+    subparser_randBkgCombA = subparsers.add_parser('randBkgCombA')
+    subparser_randBkgCombA.set_defaults(func=func_randBkgCombA)
+    
     subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
     subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
 
