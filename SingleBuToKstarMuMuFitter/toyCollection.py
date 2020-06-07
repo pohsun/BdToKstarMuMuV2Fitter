@@ -41,24 +41,6 @@ def decorator_initParameters(func):
         func(self)
     return wrapped_f
 
-def decorator_fluctuateParams(parList=None):
-    """ fluctuate parameters for systematic study """
-    if parList is None:
-        parList = []
-    def wrapper(func):
-        @functools.wraps(func)
-        def wrapped_f(self):
-            func(self)
-
-            targetParams = ROOT.RooArgSet()
-            def setParamsToFluc(arg):
-                if arg.GetName() in parList:
-                    targetParams.add(arg)
-            FitterCore.ArgLooper(self.params, setParamsToFluc)
-            FitDBPlayer.fluctuateFromDB(self.cfg['db'].format(binLabel=q2bins[self.process.cfg['binKey']]['label']), targetParams, self.cfg.get('argAliasInDB', []))
-        return wrapped_f
-    return wrapper
-
 def decorator_setExpectedEvents(yieldVars=None):
     """Generate from fixed dbfile. Default yieldVars  = ["nSig", "nBkgComb"]"""
     if yieldVars is None:
