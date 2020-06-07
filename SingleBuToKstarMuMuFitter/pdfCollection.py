@@ -219,9 +219,9 @@ f_analyticBkgCombA_format['belowJpsi'] = [
     "bkgCombL_c3[-0.8,-0.2]",
     "bkgCombL_c4[0.2, 0.1, 1.0]",
     "bkgCombL_c5[0,10]",
-    "bkgCombK_c1[ 0,10]",
-    "bkgCombK_c2[0,50]",
-    "bkgCombK_c3[-3,0]",
+    "bkgCombK_c1[ 0,20]",
+    "bkgCombK_c2[-50,50]",
+    "bkgCombK_c3[-20,0]",
     "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
         pdfL="exp(-0.5*pow((CosThetaL-bkgCombL_c1)/bkgCombL_c2,2))+bkgCombL_c5*exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))",
         pdfK="exp(bkgCombK_c1*CosThetaK)+exp(bkgCombK_c3*CosThetaK+bkgCombK_c2)",
