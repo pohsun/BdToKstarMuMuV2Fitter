@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import os
 import sys
+import re
 import shutil
 import shelve
 import math
@@ -92,22 +93,27 @@ class FitDBPlayer(Service):
                 for key, val in args.items():
                     aliasName = aliasDict.get(key, key)
                     modified_args[aliasName] = val
-                    print("Update {0} as {1} to db.".format(key, aliasName))
+                    print("INFO\t: Update {0} as {1} to db.".format(key, aliasName))
+                    print(val)
                 db.update(modified_args)
             elif args.InheritsFrom("RooArgSet"):
                 def updateToDBImp(iArg):
                     argName = iArg.GetName()
                     aliasName = aliasDict.get(argName, argName)
-                    print("Update {0} as {1} to db.".format(argName, aliasName))
-                    if aliasName not in db:
-                        db[aliasName] = {}
-                    for setter, getter in FitDBPlayer.funcPair:
-                        try:
-                            db[aliasName][getter] = getattr(iArg, getter)()
-                        except AttributeError:
-                            # In case of no getError for RooNLLVar and so on.
-                            pass
-                    print(db[aliasName])
+                    if any([val is None and re.match(key, argName) for key, val in aliasDict.items()]):
+                        # print("INFO\t: Skip updating {0} to database.".format(argName))
+                        pass
+                    else:
+                        print("INFO\t: Update {0} as {1} to db.".format(argName, aliasName))
+                        if aliasName not in db:
+                            db[aliasName] = {}
+                        for setter, getter in FitDBPlayer.funcPair:
+                            try:
+                                db[aliasName][getter] = getattr(iArg, getter)()
+                            except AttributeError:
+                                # In case of no getError for RooNLLVar and so on.
+                                pass
+                        print(db[aliasName])
                 FitterCore.ArgLooper(args, updateToDBImp)
             else:
                 raise ValueError("Input arguement of type {0} is not supported".format(type(args)))
@@ -128,7 +134,9 @@ class FitDBPlayer(Service):
             def initFromDBImp(iArg):
                 argName = iArg.GetName()
                 aliasName = aliasDict.get(argName, argName)
-                if aliasName in db:
+                if any([val is None and re.match(key, argName) for key, val in aliasDict.items()]):
+                    print("INFO\t: Skip initializing {0} from database.".format(argName))
+                elif aliasName in db:
                     for setter, getter in FitDBPlayer.funcPair:
                         if setter in ["setMax", "setMin"]:
                             continue
@@ -141,7 +149,7 @@ class FitDBPlayer(Service):
                 else:
                     print("WARNING\t: Unable to initialize {0}, record {1} not found in {2}.".format(argName, aliasName, dbfile))
             FitterCore.ArgLooper(args, initFromDBImp)
-            print("Initialized parameters from `{0}`.".format(os.path.abspath(dbfile)))
+            print("INFO\t: Initialized parameters from `{0}`.".format(os.path.abspath(dbfile)))
         finally:
             db.close()
 

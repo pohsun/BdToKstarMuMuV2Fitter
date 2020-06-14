@@ -6,6 +6,7 @@
 # Author          : Po-Hsun Chen (pohsun.chen.hep@gmail.com)
 
 import functools
+import re
 import math
 import ROOT
 import SingleBuToKstarMuMuFitter.cpp
@@ -28,7 +29,7 @@ class StdFitter(FitterCore):
             'createNLLOpt': [ROOT.RooFit.Extended(1), ],
             'argPattern': [r'^.+$', ],
             'argAliasInDB': {}, # When writes result to DB.
-            'argAliasFromDB': {}, # Overwrite argAliasInDB only when initFromDB.
+            'argAliasFromDB': {}, # Overwrite argAliasInDB only when initFromDB, or set to None to skip this variable.
             'saveToDB': True,
         })
         return cfg
@@ -97,6 +98,12 @@ class StdFitter(FitterCore):
         #  FitterCore.ArgLooper(self.args, lambda arg: arg.Print())
         self.ToggleConstVar(self.args, True)
         if self.cfg['saveToDB']:
+            def rejectRedundantArgs(iArg):
+                if any([re.match(pat, iArg.GetName()) for pat in self.cfg['argPattern']]):
+                    self.cfg['argAliasInDB'][iArg.GetName()] = self.cfg['argAliasInDB'].get(iArg.GetName(), iArg.GetName())
+                else:
+                    self.cfg['argAliasInDB'][iArg.GetName()] = None
+            FitterCore.ArgLooper(self.args, rejectRedundantArgs)
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.args, self.cfg['argAliasInDB'])
             FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, self.fitResult)
 

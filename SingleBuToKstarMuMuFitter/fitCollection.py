@@ -30,6 +30,7 @@ setupEffiFitter.update({
     'pdf': "effi_sigA",
     'pdfX': "effi_cosl",
     'pdfY': "effi_cosK",
+    'argPattern': [r"^l\d+$", r"^k\d+$", r"x(\d{1,2})", "effi_norm", "hasXTerm"], # Not used in EfficiencyFitter, but useful if init is not needed in StdFitter.
 })
 effiFitter = EfficiencyFitter(setupEffiFitter)
 
