@@ -247,10 +247,11 @@ def func_dataMCDisc(args):
 
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'saveToDB': False,
-        'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc', 'unboundFl': 'unboundFl_dataMCDisc', 'fs': 'fs_dataMCDisc', 'as': 'as_dataMCDisc', 'nSig': 'nSig_dataMCDisc', 'nBkgComb': 'nBkgComb_dataMCDisc'},
+        'argAliasFromDB': copy(fitCollection.setupFinalFitter['argAliasInDB']),
+        'saveToDB': False,
     })
+    setupFinalAltEffiFitter['argAliasFromDB'].update({pattern: None for pattern in setupWeightEffiFitter['argPattern']})
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
 
     p.setSequence([
@@ -692,16 +693,27 @@ def func_altBkgCombA2(args):
     setupBkgCombA2Fitter = deepcopy(fitCollection.setupBkgCombAFitter)
     setupBkgCombA2Fitter.update({
         'data': 'dataReader.innerSB',
-        'saveToDB': False,
     })
+    setupBkgCombA2Fitter['argAliasInDB'] = {
+        "bkgCombL_c1": "bkgCombL_c1_altBkgCombA2",
+        "bkgCombL_c2": "bkgCombL_c2_altBkgCombA2",
+        "bkgCombL_c3": "bkgCombL_c3_altBkgCombA2",
+        "bkgCombL_c4": "bkgCombL_c4_altBkgCombA2",
+        "bkgCombL_c5": "bkgCombL_c5_altBkgCombA2",
+        "bkgCombK_c1": "bkgCombK_c1_altBkgCombA2",
+        "bkgCombK_c2": "bkgCombK_c2_altBkgCombA2",
+        "bkgCombK_c3": "bkgCombK_c3_altBkgCombA2",
+        "bkgCombK_c4": "bkgCombK_c4_altBkgCombA2",
+        "bkgCombK_c5": "bkgCombK_c5_altBkgCombA2",
+    }
     bkgCombA2Fitter = StdFitter(setupBkgCombA2Fitter)
 
     setupFinalAltBkgCombA2Fitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombA2Fitter.update({
-        'pdf': "f_finalAltBkgCombA",
         'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA2', 'unboundFl': 'unboundFl_altBkgCombA2', 'fs': 'fs_altBkgCombA2', 'as': 'as_altBkgCombA2', 'nSig': 'nSig_altBkgCombA2', 'nBkgComb': 'nBkgComb_altBkgCombA2'},
-        'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
+        'argAliasFromDB': copy(fitCollection.setupFinalFitter['argAliasInDB']),
     })
+    setupFinalAltBkgCombA2Fitter['argAliasFromDB'].update({pattern: None for pattern in setupBkgCombA2Fitter['argPattern']})
     finalAltBkgCombA2Fitter = StdFitter(setupFinalAltBkgCombA2Fitter)
 
     p.setSequence([

@@ -196,6 +196,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             bkgCombFrac[regionName] -= bkgCombFrac['innerSB']
 
         nTotal_local = nSigDB * sigFrac[regionName] + nBkgCombDB * bkgCombFrac[regionName]
+        self.logger.logDEBUG("{0}: {1}, {2}, {3}, {4}".format(regionName, nSigDB, sigFrac[regionName], nBkgCombDB, bkgCombFrac[regionName]))
         self.logger.logINFO("{0}: {1}, {2}, {3}".format(regionName, nSigDB * sigFrac[regionName], nBkgCombDB * bkgCombFrac[regionName], nTotal_local))
 
         if regionName not in ['SB', 'innerSB', 'outerSB']:
@@ -669,7 +670,7 @@ plotterCfg['plots']['angular3D_final'] = {
         'pltName': "angular3D_final",
         'dataReader': "dataReader",
         'pdfPlots': [["f_final", plotterCfg_styles['allStyleBase'], None, "Total fit"], # Draw combined again without put a legend
-                     ["f_sig3D", plotterCfg_styles['sigStyleBase'], None, "Sigal"],
+                     ["f_sig3D", plotterCfg_styles['sigStyleBase'], None, "Signal"],
                      ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], None, "Background"],
                     ],
     }
@@ -703,15 +704,51 @@ plotterCfg['plots']['angular3D_bkgCombAAltA'] = {
                     ],
         'marks': {}}
 }
+angular3D_finalAltBkgCombA_argAliasInDB = {
+        'unboundAfb': 'unboundAfb_altBkgCombA', 
+        'unboundFl': 'unboundFl_altBkgCombA',
+        'fs': 'fs_altBkgCombA',
+        'as': 'as_altBkgCombA',
+        'nSig': 'nSig_altBkgCombA',
+        'nBkgComb': 'nBkgComb_altBkgCombA'}
 plotterCfg['plots']['angular3D_finalAltBkgCombA'] = {
     # argAliasInDB copied from systCollection.func_altBkgCombA.setupFinalAltBkgCombAFitter['argAliasInDB']
     'func': [plotPostfitBLK],
     'kwargs': {
         'pltName': "angular3D_finalAltBkgCombA",
         'dataReader': "dataReader",
-        'pdfPlots': [["f_finalAltBkgCombA", plotterCfg_styles['allStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Total fit"],
-                     ["f_sig3D", plotterCfg_styles['sigStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Sigal"],
-                     ["f_bkgCombAltA", plotterCfg_styles['bkgStyleBase'], {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'}, "Background"],
+        'pdfPlots': [["f_finalAltBkgCombA", plotterCfg_styles['allStyleBase'], angular3D_finalAltBkgCombA_argAliasInDB, "Total fit"],
+                     ["f_sig3D", plotterCfg_styles['sigStyleBase'], angular3D_finalAltBkgCombA_argAliasInDB, "Signal"],
+                     ["f_bkgCombAltA", plotterCfg_styles['bkgStyleBase'], angular3D_finalAltBkgCombA_argAliasInDB, "Background"],
+                    ],
+    }
+}
+angular3D_finalAltBkgCombA2_argAliasInDB = {
+        'unboundAfb': 'unboundAfb_altBkgCombA2', 
+        'unboundFl': 'unboundFl_altBkgCombA2',
+        'fs': 'fs_altBkgCombA2',
+        'as': 'as_altBkgCombA2',
+        'nSig': 'nSig_altBkgCombA2',
+        'nBkgComb': 'nBkgComb_altBkgCombA2',
+        "bkgCombL_c1": "bkgCombL_c1_altBkgCombA2",
+        "bkgCombL_c2": "bkgCombL_c2_altBkgCombA2",
+        "bkgCombL_c3": "bkgCombL_c3_altBkgCombA2",
+        "bkgCombL_c4": "bkgCombL_c4_altBkgCombA2",
+        "bkgCombL_c5": "bkgCombL_c5_altBkgCombA2",
+        "bkgCombK_c1": "bkgCombK_c1_altBkgCombA2",
+        "bkgCombK_c2": "bkgCombK_c2_altBkgCombA2",
+        "bkgCombK_c3": "bkgCombK_c3_altBkgCombA2",
+        "bkgCombK_c4": "bkgCombK_c4_altBkgCombA2",
+        "bkgCombK_c5": "bkgCombK_c5_altBkgCombA2"}
+plotterCfg['plots']['angular3D_finalAltBkgCombA2'] = {
+    # argAliasInDB copied from systCollection.func_altBkgCombA2.setupFinalAltBkgCombAFitter['argAliasInDB']
+    'func': [plotPostfitBLK],
+    'kwargs': {
+        'pltName': "angular3D_finalAltBkgCombA2",
+        'dataReader': "dataReader",
+        'pdfPlots': [["f_final", plotterCfg_styles['allStyleBase'], angular3D_finalAltBkgCombA2_argAliasInDB, "Total fit"],
+                     ["f_sig3D", plotterCfg_styles['sigStyleBase'], angular3D_finalAltBkgCombA2_argAliasInDB, "Signal"],
+                     ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], angular3D_finalAltBkgCombA2_argAliasInDB, "Background"],
                     ],
     }
 }
