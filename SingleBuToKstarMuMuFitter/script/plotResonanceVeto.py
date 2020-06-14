@@ -29,6 +29,8 @@ def create_histo():
     fout = ROOT.TFile("h2_MumumassVsBmass.root", "RECREATE")
     h2_MumumassVsBmass_presel  = [] 
     h2_MumumassVsBmass_resRej  = []
+    h_varAntiRad_jpsi_resRej = []
+    h_varAntiRad_psi2s_resRej = []
     h2_MumumassVsBmass_antiRad = []
     h2_MumumassVsBmass_resVeto = []
 
@@ -40,6 +42,7 @@ def create_histo():
         h2_MumumassVsBmass_resRej.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_resRej".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
         h2_MumumassVsBmass_antiRad.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_antiRad".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
         h2_MumumassVsBmass_resVeto.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_resVeto".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
+        h_varAntiRad_jpsi_resRej.append(ROOT.TH1F("h_varAntiRad_{0}_resRej".format(q2r), "", 200, -2 + 2.182, 2 + 2.182))
 
         tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_presel".format(q2r), "({0})*({1})*({2})".format(q2rCut,
                                                                                       anaSetup.cut_passTrigger,
@@ -50,6 +53,11 @@ def create_histo():
                                                                                             #  anaSetup.cut_kshortWindow,
                                                                                             anaSetup.cut_kstarMassWindow,
                                                                                             anaSetup.cut_resonanceRej))
+        tree.Draw("Bmass-Mumumass >> h_varAntiRad_{0}_resRej".format(q2r), "({0})*({1})*({2})*({3})".format(q2rCut,
+                                                                                                   anaSetup.cut_passTrigger,
+                                                                                                   #  anaSetup.cut_kshortWindow,
+                                                                                                   anaSetup.cut_kstarMassWindow,
+                                                                                                   anaSetup.cut_resonanceRej))
         tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_antiRad".format(q2r), "({0})*({1})*({2})*({3})".format(q2rCut,
                                                                                              anaSetup.cut_passTrigger,
                                                                                              #  anaSetup.cut_kshortWindow,
@@ -64,14 +72,13 @@ def create_histo():
     fout.Write()
     fout.Close()
 
-
 def plot_histo(fname="h2_MumumassVsBmass.root"):
     setStyle()
     canvas = ROOT.TCanvas()
 
     fin = ROOT.TFile(fname)
 
-    def _plot(hname, q2r):
+    def plotH2(hname, q2r):
         h = fin.Get(hname)
         h.UseCurrentStyle()
         h.SetMarkerSize(0.2)
@@ -109,7 +116,7 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         #  latex.DrawLatexNDC(.20, .80, "Yields_{{Non-peaking}}={0:.0f}".format(nEvtInSR))
         #  latex.DrawLatexNDC(.20, .74, "Yields_{{peaking}}={0:.1e}".format(nEvtInPeaks))
 
-        plotCollection.Plotter.latexDataMarks()
+        plotCollection.Plotter.latexDataMarks(extraArgs={'y': 0.86})
         canvas.Update()
         canvas.Print("{0}.pdf".format(hname))
 
@@ -127,20 +134,43 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         canvas.Print("{0}_jpsi.pdf".format(h_projX.GetName()))
         h_projX.GetXaxis().SetRangeUser(3.3, 4.1)
         h_projX.Draw("E")
-        plotCollection.Plotter.latexDataMarks()
+        plotCollection.Plotter.latexDataMarks(extraArgs={'y': 0.86})
         canvas.Update()
         canvas.Print("{0}_psi2s.pdf".format(h_projX.GetName()))
 
         h_projY = h.ProjectionY(hname.replace("h2", "h").replace("MumumassVsBmass", "Bmass"))
         h_projY.SetYTitle("Number of events")
         h_projY.Draw("E")
-        plotCollection.Plotter.latexDataMarks()
+        plotCollection.Plotter.latexDataMarks(extraArgs={'y': 0.86})
         canvas.Update()
         canvas.Print("{0}.pdf".format(h_projY.GetName()))
 
+    def plotH1(hname, q2r):
+        h = fin.Get(hname)
+        h.UseCurrentStyle()
+        h.SetMarkerSize(0.2)
+        h.SetXTitle("m_{B} - m_{ll} [GeV]")
+        h.SetYTitle("Events / 0.02 GeV")
+        h.Draw()
+
+        transparencyPeak = 0.3
+        highlight_jpsi = ROOT.TBox(2.182-0.09, 0, 2.182+0.09, h.GetMaximum())
+        highlight_jpsi.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
+        highlight_jpsi.Draw()
+        highlight_psi2s = ROOT.TBox(1.593-0.03, 0, 1.593+0.03, h.GetMaximum())
+        highlight_psi2s.SetFillColorAlpha(ROOT.kRed, transparencyPeak)
+        highlight_psi2s.Draw()
+
+        plotCollection.Plotter.latexDataMarks(extraArgs={'y': 0.86})
+        canvas.Update()
+        canvas.Print("{0}.pdf".format(hname))
+
     for hname in ["h2_MumumassVsBmass_{0}_presel", "h2_MumumassVsBmass_{0}_resRej", "h2_MumumassVsBmass_{0}_antiRad", "h2_MumumassVsBmass_{0}_resVeto"]:
         for q2r in ['full', 'peaks', 'summary']:
-            _plot(hname.format(q2r), q2r)
+            plotH2(hname.format(q2r), q2r)
+
+    for q2r in ['full', 'peaks', 'summary']:
+        plotH1("h_varAntiRad_{0}_resRej".format(q2r), q2r)
 
 if __name__ == '__main__':
     if not os.path.exists("h2_MumumassVsBmass.root"):
