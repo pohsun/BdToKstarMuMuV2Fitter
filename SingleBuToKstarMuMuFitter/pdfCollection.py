@@ -228,19 +228,18 @@ f_analyticBkgCombA_format['belowJpsi'] = [
         args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3}")
 ]
 f_analyticBkgCombA_format['betweenPeaks'] = [
-    "bkgCombL_c1[-3,3]",
-    "bkgCombL_c2[0.1, 0.01, 0.5]",
-    "bkgCombL_c3[-3,3]",
-    "bkgCombL_c4[0.1, 0.01, 1.0]",
-    "bkgCombL_c5[0,10]",
+    "bkgCombL_c1[-10,10]",
+    "bkgCombL_c2[-10,10]",
+    "bkgCombL_c3[-10,10]",
+    "bkgCombL_c4[-10,10]",
     "bkgCombK_c1[-10,10]",
     "bkgCombK_c2[-10,10]",
     "bkgCombK_c3[-10,10]",
     "bkgCombK_c4[-10,10]",
     "EXPR::f_bkgCombA('({pdfL})*({pdfK})', {args})".format(
-        pdfL="exp(-0.5*pow((CosThetaL-bkgCombL_c1)/bkgCombL_c2,2))+bkgCombL_c5*exp(-0.5*pow((CosThetaL-bkgCombL_c3)/bkgCombL_c4,2))",
+        pdfL="1.+bkgCombL_c1*CosThetaL+bkgCombL_c2*pow(CosThetaL,2)+bkgCombL_c3*pow(CosThetaL, 3)+bkgCombL_c4*pow(CosThetaL,4)",
         pdfK="1+bkgCombK_c1*CosThetaK+bkgCombK_c2*pow(CosThetaK,2)+bkgCombK_c3*pow(CosThetaK, 3)+bkgCombK_c4*pow(CosThetaK,4)",
-        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombL_c5, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4}")
+        args="{CosThetaL, CosThetaK, bkgCombL_c1, bkgCombL_c2, bkgCombL_c3, bkgCombL_c4, bkgCombK_c1, bkgCombK_c2, bkgCombK_c3, bkgCombK_c4}")
 ]
 f_analyticBkgCombA_format['abovePsi2s'] = [
     "bkgCombL_c1[-3,3]",
