@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import math
 import shelve
+from copy import deepcopy
 from collections import OrderedDict
 
 import ROOT
@@ -19,25 +20,27 @@ from SingleBuToKstarMuMuFitter.StdProcess import p
 #   * Input db is forced to be StdProcess.dbplayer.absInputDir
 #   * function name for labelled table is table_label1[_label2]
 
-
 db_dir = p.dbplayer.absInputDir
 
 indent = "  "
 
+dbKeyToLine = OrderedDict()
+dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
+dbKeyToLine['syst_simMismodel'] = [r"Efficiency model"]
+dbKeyToLine['syst_bkgCombShape'] = [r"Background shape"]
+dbKeyToLine['syst_altSP'] = [r"S-wave contamination"]
+# dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
+
 def table_AN_sysFL_sysAFB():
     baseIndentLevel = 2
+    print(dbKeyToLine)
     for var in ["fl", "afb"]:
-        dbKeyToLine = OrderedDict()
-        dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
-        dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
-        dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial background shape"]
-        dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
-        # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"] # Ignore due to low contribution
         totalErrorLine = ["Total"]
+        local_dbKeyToLine = deepcopy(dbKeyToLine)
         for binKey in ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']:
             db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
             totalSystErr = 0.
-            for systKey, latexLine in dbKeyToLine.items():
+            for systKey, latexLine in local_dbKeyToLine.items():
                 err = db["{0}_{1}".format(systKey, var)]['getError']
                 latexLine.append("{0:.03f}".format(err))
                 totalSystErr += pow(err, 2)
@@ -53,7 +56,7 @@ def table_AN_sysFL_sysAFB():
         print(indent * (baseIndentLevel + 1) + r"\hline")
         print(indent * (baseIndentLevel + 1) + r"\multicolumn{5}{|c|}{Uncorrelated systematic uncertainties} \\")
         print(indent * (baseIndentLevel + 1) + r"\hline")
-        for systKey, latexLine in dbKeyToLine.items():
+        for systKey, latexLine in local_dbKeyToLine.items():
             print(indent * (baseIndentLevel + 1) + " & ".join(latexLine) + r" \\")
         print(indent * (baseIndentLevel + 1) + r"\hline")
         print(indent * (baseIndentLevel + 1) + " & ".join(totalErrorLine) + r" \\")
@@ -132,12 +135,7 @@ def table_AN_dataresAFBFL():
     binKeyToLine['abovePsi2s'] = ["5", r"14.18 -- 19.00"]
     binKeyToLine['summary'] = ["0", r"bin\#1 $+$ bin\#3 $+$ bin\#5"]
 
-    syst_sources = [
-        'syst_randEffi',
-        'syst_simMismodel',
-        'syst_bkgCombShape',
-        'syst_altSP',
-    ]
+    syst_sources = dbKeyToLine.keys()
     for binKey, latexLine in binKeyToLine.items():
         if binKey not in ['jpsi', 'psi2s']:
             db = shelve.open(r"{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
@@ -168,17 +166,13 @@ def table_paper_sys():
     baseIndentLevel = 2
     binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s', 'summary']
 
-    dbKeyToLine = OrderedDict()
-    dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
-    dbKeyToLine['syst_simMismodel'] = [r"Simulation mismodelling"]
-    dbKeyToLine['syst_bkgCombShape'] = [r"Combinatorial background shape"]
-    dbKeyToLine['syst_altSP'] = [r"$S$-$P$ wave interference"]
     totalErrorLine = ["Total systematic uncertainty"]
+    local_dbKeyToLine = deepcopy(dbKeyToLine)
     for var in ["afb", "fl"]:
         for binKey in binKeys:
             db = shelve.open("{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
             totalSystErr = 0.
-            for systKey, latexLine in dbKeyToLine.items():
+            for systKey, latexLine in local_dbKeyToLine.items():
                 err = db["{0}_{1}".format(systKey, var)]['getError']
                 latexLine.append(err)
                 totalSystErr += pow(err, 2)
@@ -190,7 +184,7 @@ def table_paper_sys():
     print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{l|cc}")
     print(indent * (baseIndentLevel + 1) + r"Source & \afb $(10^{-3})$ & \fl $(10^{-3})$ \\[1pt]")
     print(indent * (baseIndentLevel + 1) + r"\hline")
-    for systKey, latexLine in dbKeyToLine.items():
+    for systKey, latexLine in local_dbKeyToLine.items():
         print(indent * (baseIndentLevel + 1) + latexLine[0] + " & {0:.0f} -- {1:.0f}".format(1000. * min(latexLine[1:1 + len(binKeys)]), 1000. * max(latexLine[1:1 + len(binKeys)])) + " & {0:.0f} -- {1:.0f}".format(1000. * min(latexLine[1 + len(binKeys)::]), 1000. * max(latexLine[1 + len(binKeys)::])) + r" \\")
     print(indent * (baseIndentLevel + 1) + r"\hline")
     print(indent * (baseIndentLevel + 1) + totalErrorLine[0] + " & {0:.0f} -- {1:.0f}".format(1000. * min(totalErrorLine[1:1 + len(binKeys)]), 1000. * max(totalErrorLine[1:1 + len(binKeys)])) + " & {0:.0f} -- {1:.0f}".format(1000. * min(totalErrorLine[1 + len(binKeys)::]), 1000. * max(totalErrorLine[1 + len(binKeys)::])) + r" \\")
@@ -248,4 +242,5 @@ if __name__ == '__main__':
 
     table_paper_sys()
     table_paper_results()
-    pass
+
+    print("INFO\t: Tables are generated from {0}".format(db_dir))
