@@ -42,7 +42,7 @@ def create_histo():
         h2_MumumassVsBmass_resRej.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_resRej".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
         h2_MumumassVsBmass_antiRad.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_antiRad".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
         h2_MumumassVsBmass_resVeto.append(ROOT.TH2F("h2_MumumassVsBmass_{0}_resVeto".format(q2r), "", 200, 1, 5, int((b_range[1] - b_range[0]) / 0.02), b_range[0], b_range[1]))
-        h_varAntiRad_jpsi_resRej.append(ROOT.TH1F("h_varAntiRad_{0}_resRej".format(q2r), "", 200, -2 + 2.182, 2 + 2.182))
+        h_varAntiRad_jpsi_resRej.append(ROOT.TH1F("h_varAntiRad_{0}_resRej".format(q2r), "", 100, -2 + 2.182, 2 + 2.182))
 
         tree.Draw("Bmass:Mumumass >> h2_MumumassVsBmass_{0}_presel".format(q2r), "({0})*({1})*({2})".format(q2rCut,
                                                                                       anaSetup.cut_passTrigger,
@@ -53,8 +53,9 @@ def create_histo():
                                                                                             #  anaSetup.cut_kshortWindow,
                                                                                             anaSetup.cut_kstarMassWindow,
                                                                                             anaSetup.cut_resonanceRej))
-        tree.Draw("Bmass-Mumumass >> h_varAntiRad_{0}_resRej".format(q2r), "({0})*({1})*({2})*({3})".format(q2rCut,
+        tree.Draw("Bmass-Mumumass >> h_varAntiRad_{0}_resRej".format(q2r), "({0})*({1})*({2})*({3})*({4})".format(q2rCut,
                                                                                                    anaSetup.cut_passTrigger,
+                                                                                                   "Bmass > 5.0 && Bmass < 5.3",
                                                                                                    #  anaSetup.cut_kshortWindow,
                                                                                                    anaSetup.cut_kstarMassWindow,
                                                                                                    anaSetup.cut_resonanceRej))
@@ -150,7 +151,8 @@ def plot_histo(fname="h2_MumumassVsBmass.root"):
         h.UseCurrentStyle()
         h.SetMarkerSize(0.2)
         h.SetXTitle("m_{B} - m_{ll} [GeV]")
-        h.SetYTitle("Events / 0.02 GeV")
+        h.SetMaximum(1.3 * h.GetMaximum())
+        h.SetYTitle("Events / 0.04 GeV")
         h.Draw()
 
         transparencyPeak = 0.3
