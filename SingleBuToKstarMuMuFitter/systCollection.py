@@ -430,15 +430,20 @@ def func_randEffi(args):
             p.runSeq()
 
         if not args.isBatchTask:
+            # ROOT.gStyle.SetOptStat("r")
+            ROOT.gStyle.SetOptFit(11)
+
             fin = ROOT.TFile("{0}".format(foutName))
 
             hist_fl = fin.Get("hist_fl")
+            hist_fl.UseCurrentStyle()
             gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", 0, 1)
-            hist_fl.Fit(gaus_fl, "WI")
+            hist_fl.Fit(gaus_fl, "WLI")
 
             hist_afb = fin.Get("hist_afb")
+            hist_afb.UseCurrentStyle()
             gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.75, 0.75)
-            hist_afb.Fit(gaus_afb, "WI")
+            hist_afb.Fit(gaus_afb, "WLI")
 
             syst_randEffi = {
                 'syst_randEffi_fl': {
@@ -948,15 +953,20 @@ def func_randBkgCombA(args):
             p.runSeq()
 
         if not args.isBatchTask:
+            # ROOT.gStyle.SetOptStat("r")
+            ROOT.gStyle.SetOptFit(11)
+
             fin = ROOT.TFile("{0}".format(foutName))
 
             hist_fl = fin.Get("hist_fl")
+            hist_fl.UseCurrentStyle()
             gaus_fl = ROOT.TF1("gaus_fl", "gaus(0)", 0, 1)
-            hist_fl.Fit(gaus_fl, "WI")
+            hist_fl.Fit(gaus_fl, "WLI")
 
             hist_afb = fin.Get("hist_afb")
+            hist_afb.UseCurrentStyle()
             gaus_afb = ROOT.TF1("gaus_afb", "gaus(0)", -0.75, 0.75)
-            hist_afb.Fit(gaus_afb, "WI")
+            hist_afb.Fit(gaus_afb, "WLI")
 
             syst_randBkgCombA = {
                 'syst_randBkgCombA_fl': {

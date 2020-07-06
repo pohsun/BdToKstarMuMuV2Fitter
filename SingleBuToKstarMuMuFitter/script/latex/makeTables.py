@@ -28,6 +28,9 @@ dbKeyToLine = OrderedDict()
 dbKeyToLine['syst_randEffi'] = [r"MC statistical uncertainty"]
 dbKeyToLine['syst_simMismodel'] = [r"Efficiency model"]
 dbKeyToLine['syst_bkgCombShape'] = [r"Background shape"]
+# dbKeyToLine['syst_altBkgCombA'] = [r"Smooth function"]
+# dbKeyToLine['syst_randBkgCombA'] = [r"Background parameter variation"]
+# dbKeyToLine['syst_altBkgCombA2'] = [r"B mass range"]
 dbKeyToLine['syst_altSP'] = [r"S-wave contamination"]
 # dbKeyToLine['syst_dataMCDisc'] = [r"Data-MC discrepancy"]
 
