@@ -160,14 +160,18 @@ class Plotter(Path):
 
         # Legend
         if legend:
-            Plotter.legend.Clear()
+            if isinstance(legend, bool):
+                legendInstance = Plotter.legend.Clear()
+            else:
+                legendInstance = legend
+            legendInstance.Clear()
             for pIdx, p in enumerate(dataPlots):
                 if p[2] is not None:
-                    Plotter.legend.AddEntry("dataP{0}".format(pIdx), p[2], "LPFE")
+                    legendInstance.AddEntry("dataP{0}".format(pIdx), p[2], "LPFE")
             for pIdx, p in enumerate(pdfPlots):
                 if p[3] is not None:
-                    Plotter.legend.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
-            Plotter.legend.Draw()
+                    legendInstance.AddEntry("pdfP{0}".format(pIdx), p[3], "LF")
+            legendInstance.Draw()
 
         # Some marks
         Plotter.latexDataMarks(**marks)
