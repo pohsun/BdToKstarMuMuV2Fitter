@@ -110,6 +110,13 @@ bMassRegions['altUSB_vetoJpsiX'] = createBmassTemplate("altUSB_vetoJpsiX", 5.38,
 bMassRegions['altSB_vetoJpsiX'] = createBmassTemplate("altSB_vetoJpsiX", 4.76, 5.80)
 bMassRegions['altSB_vetoJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_vetoJpsiX']['cutString'], bMassRegions['altSR_vetoJpsiX']['cutString'])
 
+bMassRegions['altFit_onlyJpsiX'] = createBmassTemplate("altFit_onlyJpsiX", 4.68, 5.38)
+bMassRegions['altSR_onlyJpsiX'] = createBmassTemplate("altSR_onlyJpsiX", 5.18, 5.38)
+bMassRegions['altLSB_onlyJpsiX'] = createBmassTemplate("altLSB_onlyJpsiX", 4.68, 5.18)
+bMassRegions['altUSB_onlyJpsiX'] = createBmassTemplate("altUSB_onlyJpsiX", 5.38, 5.38)
+bMassRegions['altSB_onlyJpsiX'] = createBmassTemplate("altSB_onlyJpsiX", 4.76, 5.18)
+bMassRegions['altSB_onlyJpsiX']['cutString'] = "({0}) && !({1})".format(bMassRegions['altSB_onlyJpsiX']['cutString'], bMassRegions['altSR_onlyJpsiX']['cutString'])
+
 # More tests
 bMassRegions['altFit0'] = createBmassTemplate("altFit0", 4.68, 5.88)
 
