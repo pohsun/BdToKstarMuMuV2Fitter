@@ -30,6 +30,8 @@ plotterCfg_styles['allStyle'] = plotterCfg_styles['allStyleBase'] + (ROOT.RooFit
 plotterCfg_styles['sigStyle'] = plotterCfg_styles['sigStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 plotterCfg_styles['sigStyleNoFill'] = plotterCfg_styles['sigStyleNoFillBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 plotterCfg_styles['bkgStyle'] = plotterCfg_styles['bkgStyleBase'] + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['bkgStyleAlt1'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(5)) + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
+plotterCfg_styles['bkgStyleAlt2'] = (ROOT.RooFit.LineColor(2), ROOT.RooFit.LineStyle(8)) + (ROOT.RooFit.ProjectionRange(defaultPlotRegion), ROOT.RooFit.Range(defaultPlotRegion))
 class Plotter(Path):
     """The plotter"""
     setStyle()
@@ -109,8 +111,8 @@ class Plotter(Path):
                 errorMsg = "pdfPlot not found in source manager."
                 self.logger.logERROR(errorMsg)
                 raise RuntimeError("pdfPlot not found in source manager.")
-        args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass))
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
+            args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass))
+            FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args, p[2])
         return p
 
     def initDataPlotCfg(self, p):
@@ -129,7 +131,7 @@ class Plotter(Path):
         return p
 
     @staticmethod
-    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4):
+    def plotFrame(frame, binning, dataPlots=None, pdfPlots=None, marks=None, legend=False, scaleYaxis=1.4, process=None, **kwargs):
         """
             Use initXXXPlotCfg to ensure elements in xxxPlots fit the format
         """
@@ -151,6 +153,9 @@ class Plotter(Path):
                         ROOT.RooFit.Binning(binning),
                         *p[1])
         for pIdx, p in enumerate(pdfPlots):
+            if process is not None:
+                args = p[0].getParameters(ROOT.RooArgSet(Bmass, CosThetaK, CosThetaL, Mumumass, Kstarmass, Kshortmass))
+                FitDBPlayer.initFromDB(process.dbplayer.odbfile, args, p[2])
             p[0].plotOn(cloned_frame,
                         ROOT.RooFit.Name("pdfP{0}".format(pIdx)),
                         *p[1])
@@ -161,7 +166,7 @@ class Plotter(Path):
         # Legend
         if legend:
             if isinstance(legend, bool):
-                legendInstance = Plotter.legend.Clear()
+                legendInstance = Plotter.legend
             else:
                 legendInstance = legend
             legendInstance.Clear()

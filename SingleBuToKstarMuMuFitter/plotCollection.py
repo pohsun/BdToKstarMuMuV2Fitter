@@ -80,7 +80,7 @@ def plotSimpleBLK(self, pltName, dataPlots, pdfPlots, marks, frames='BLK', share
     }
 
     for frame in frames:
-        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks)
+        plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=pdfPlots, marks=marks, process=self.process, legend=True)
         Plotter.latexQ2(self.process.cfg['binKey'])
         self.canvasPrint(pltName + plotFuncs[frame]['tag'])
 types.MethodType(plotSimpleBLK, None, Plotter)
@@ -120,15 +120,22 @@ def plotEfficiency(self, dataName, pdfName):
     self.canvasPrint(pltName + "_2D")
 
     data_accXrec.Scale(0.01)  # Scale back, Normalization to be handled with RooFit in 1D plot
+
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
     data_accXrec_fine_ProjectionX = ROOT.RooDataHist("data_accXrec_fine_ProjectionX", "", ROOT.RooArgList(CosThetaL), ROOT.RooFit.Import(h_accXrec_fine_ProjectionX))
-    data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Rescale(100))
+    data_accXrec_fine_ProjectionX.plotOn(cloned_frameL, ROOT.RooFit.Name("dataL"), ROOT.RooFit.Rescale(100))
     pdfL = self.process.sourcemanager.get("effi_cosl")
-    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_styles['sigStyleNoFillBase'])
+    pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), ROOT.RooFit.Name("pdfL"), *plotterCfg_styles['sigStyleNoFillBase'])
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
     cloned_frameL.Draw()
+    Plotter.legend.Clear()
+    Plotter.legend.AddEntry(cloned_frameL.findObject("dataL").GetHistogram(), "MC", "LPFE")
+    histL = cloned_frameL.findObject("pdfL").GetHistogram()
+    histL.SetLineColor(4)
+    Plotter.legend.AddEntry(histL, "Fit", "LF")
+    Plotter.legend.Draw()
     Plotter.latexDataMarks(['sim'])
     Plotter.latexQ2(self.process.cfg['binKey'])
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
@@ -137,12 +144,18 @@ def plotEfficiency(self, dataName, pdfName):
     cloned_frameK = Plotter.frameK.emptyClone("cloned_frameK")
     h_accXrec_fine_ProjectionY = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionY")
     data_accXrec_fine_ProjectionY = ROOT.RooDataHist("data_accXrec_fine_ProjectionY", "", ROOT.RooArgList(CosThetaK), ROOT.RooFit.Import(h_accXrec_fine_ProjectionY))
-    data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Rescale(100))
+    data_accXrec_fine_ProjectionY.plotOn(cloned_frameK, ROOT.RooFit.Name("dataK"), ROOT.RooFit.Rescale(100))
     pdfK = self.process.sourcemanager.get("effi_cosK")
-    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), *plotterCfg_styles['sigStyleNoFillBase'])
+    pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), ROOT.RooFit.Name("pdfK"), *plotterCfg_styles['sigStyleNoFillBase'])
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
     cloned_frameK.Draw()
+    Plotter.legend.Clear()
+    Plotter.legend.AddEntry(cloned_frameK.findObject("dataK").GetHistogram(), "MC", "LPFE")
+    histK = cloned_frameK.findObject("pdfK").GetHistogram()
+    histK.SetLineColor(4)
+    Plotter.legend.AddEntry(histK, "Fit", "LF")
+    Plotter.legend.Draw()
     Plotter.latexDataMarks(['sim'])
     Plotter.latexQ2(self.process.cfg['binKey'])
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
@@ -202,17 +215,14 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
         if regionName not in ['SB', 'innerSB', 'outerSB']:
             modified_pdfPlots = [
                 [pdfPlots[0][0],
-                 # pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
                  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
                  pdfPlots[0][2],
                  pdfPlots[0][3]],
                 [pdfPlots[0][0],
-                 # pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
                  pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
                  pdfPlots[1][2],
                  pdfPlots[1][3]],
                 [pdfPlots[0][0],
-                 # pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
                  pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
                  pdfPlots[2][2],
                  pdfPlots[2][3]],
@@ -249,14 +259,18 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
             ]
 
         plotFuncs = {
-            'B': {'func': Plotter.plotFrameB_fine, 'tag': ""},
-            'L': {'func': Plotter.plotFrameL, 'tag': "_cosl"},
-            'K': {'func': Plotter.plotFrameK, 'tag': "_cosK"},
+            'B': {'func': Plotter.plotFrameB_fine, 'tag': "", 'scaleYaxis': 1.4},
+            'L': {'func': Plotter.plotFrameL, 'tag': "_cosl", 'scaleYaxis': 2.0},
+            'K': {'func': Plotter.plotFrameK, 'tag': "_cosK", 'scaleYaxis': 1.6},
         }
 
         drawLatexFitResults = False
+        legend = ROOT.TLegend(.75, .60, .92, .92)
+        legend.SetFillColor(0)
+        legend.SetFillStyle(0)
+        legend.SetBorderSize(0)
         for frame in 'BLK':
-            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, marks={'extraArgs': {'msg': ""}} if regionName == "Fit" else None, legend=False)
+            plotFuncs[frame]['func'](dataPlots=dataPlots, pdfPlots=modified_pdfPlots, marks={'extraArgs': {'msg': ""}} if regionName == "Fit" else None, legend=legend, scaleYaxis=plotFuncs[frame]['scaleYaxis'])
             if drawLatexFitResults:
                 if frame == 'B':
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
@@ -740,6 +754,16 @@ angular3D_finalAltBkgCombA2_argAliasInDB = {
         "bkgCombK_c3": "bkgCombK_c3_altBkgCombA2",
         "bkgCombK_c4": "bkgCombK_c4_altBkgCombA2",
         "bkgCombK_c5": "bkgCombK_c5_altBkgCombA2"}
+plotterCfg['plots']['angular3D_bkgCombAAltA2'] = {
+    'func': [functools.partial(plotSimpleBLK, frames='LK')],
+    'kwargs': {
+        'pltName': "angular3D_bkgCombAAltA2",
+        'dataPlots': [["dataReader.SB", plotterCfg_styles['dataStyle'], "Sideband data"], ],
+        'pdfPlots': [["f_bkgCombA", plotterCfg_styles['bkgStyleAlt1'], angular3D_finalAltBkgCombA2_argAliasInDB, "Alternative Bkg."],
+                     # ["f_bkgCombA", plotterCfg_styles['bkgStyle'], None, "Analytic Bkg."],
+                    ],
+        'marks': {}}
+}
 plotterCfg['plots']['angular3D_finalAltBkgCombA2'] = {
     # argAliasInDB copied from systCollection.func_altBkgCombA2.setupFinalAltBkgCombAFitter['argAliasInDB']
     'func': [plotPostfitBLK],
