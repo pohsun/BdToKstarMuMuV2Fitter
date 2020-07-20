@@ -58,7 +58,7 @@ ObjProvider.getWspace = types.MethodType(getWspace, None, ObjProvider)
 #########################
 
 
-def buildGenericObj(self, objName, factoryCmd, varNames):
+def buildGenericObj(self, objName, factoryCmd, varNames, **kwargs):
     """Build with RooWorkspace.factory. See also RooFactoryWSTool.factory"""
     wspace = self.getWspace()
     obj = wspace.obj(objName)
