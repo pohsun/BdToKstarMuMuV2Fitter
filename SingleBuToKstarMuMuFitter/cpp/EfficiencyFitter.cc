@@ -66,7 +66,7 @@ public:
     TH2* GetH2(){return h2_fcn;}
     TF2* GetF2(){return f2_fcn;}
     double GetChi2(){return chi2Val;}
-    int GetDoF(){return h2_fcn->GetNbinsX()*h2_fcn->GetNbinsY() - f2_fcn->GetNpar();}
+    int GetDoF(){return h2_fcn->GetNbinsX()*h2_fcn->GetNbinsY() - minuit->GetNumFreePars();}
     TH1* GetPull(){return h_pull;}
     TH1* GetPull2D(){return h2_pull;}
     TH2* GetRatio(){return h2_ratio;}

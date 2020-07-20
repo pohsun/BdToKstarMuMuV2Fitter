@@ -33,6 +33,7 @@ class EfficiencyFitter(FitterCore):
             'pdf': "effi_sigA",
             'pdfX': "effi_cosl",
             'pdfY': "effi_cosK",
+            'iterativeCycle': 0,
             'saveToDB': True,
             'argAliasInDB': None,
             'noDraw': False,
@@ -93,20 +94,44 @@ class EfficiencyFitter(FitterCore):
     def _runFitSteps(self):
         effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
         args = self.pdf.getParameters(self.data)
+        xPar = []
+        lPar = []
+        kPar = []
+        effi_norm = self.process.sourcemanager.get("effi_norm")
+        hasXTerm = self.process.sourcemanager.get("hasXTerm")
+
+        # for cycle in range(self.cfg['iterativeCycle']+1):
         args_it = args.createIterator()
         arg = args_it.Next()
-        nPar = 0
+        nxPar = 0
+        nlPar = 0
+        nkPar = 0
         while arg:
-            if any(re.match(pat, arg.GetName()) for pat in ["effi_norm", "hasXTerm", r"^l\d+$", r"^k\d+$"]):
-                effi_sigA_formula = re.sub(arg.GetName(), "({0})".format(arg.getVal()), effi_sigA_formula)
-            elif re.match(r"^x\d+$", arg.GetName()):
-                nPar = nPar + 1
+            if re.match(r"^x\d+$", arg.GetName()):
+                nxPar = nxPar + 1
+            elif re.match(r"^l\d+$", arg.GetName()):
+                nlPar = nlPar + 1
+            elif re.match(r"^k\d+$", arg.GetName()):
+                nkPar = nkPar + 1
             arg = args_it.Next()
-        effi_sigA_formula = re.sub(r"x(\d{1,2})", r"[\1]", effi_sigA_formula)
+        nPar = nkPar + nlPar + nxPar + 2
+        for xP in range(nxPar):
+            effi_sigA_formula = re.sub(r"x{0}([^\d])".format(xP), r"[{0}]\1".format(xP), effi_sigA_formula)
+            xPar.append(self.process.sourcemanager.get("x{0}".format(xP)))
+        for lP in range(nlPar):
+            effi_sigA_formula = re.sub(r"l{0}([^\d])".format(lP+1), r"[{0}]\1".format(lP+nxPar), effi_sigA_formula)
+            lPar.append(self.process.sourcemanager.get("l{0}".format(lP+1)))
+        for kP in range(nkPar):
+            effi_sigA_formula = re.sub(r"k{0}([^\d])".format(kP+1), r"[{0}]\1".format(kP+nlPar+nxPar), effi_sigA_formula)
+            kPar.append(self.process.sourcemanager.get("k{0}".format(kP+1)))
+        effi_sigA_formula = re.sub(r"effi_norm", r"[{0}]".format(nPar-2), effi_sigA_formula)
+        effi_sigA_formula = re.sub(r"hasXTerm", r"[{0}]".format(nPar-1), effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaL", r"x", effi_sigA_formula)
         effi_sigA_formula = re.sub(r"CosThetaK", r"y", effi_sigA_formula)
         f2_effi_sigA = ROOT.TF2("f2_effi_sigA", effi_sigA_formula, -1, 1, -1, 1)
 
+        # Following RooFit setup do not work at all, so we use EfficiencyFitter.
+        # self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
         fitter = ROOT.EfficiencyFitter()
         h2_accXrec = self.process.sourcemanager.get(self.cfg.get('hdata'))
         h2_accXrec.SetXTitle(CosThetaL.GetTitle())
@@ -114,17 +139,55 @@ class EfficiencyFitter(FitterCore):
         minuit = fitter.Init(nPar, h2_accXrec, f2_effi_sigA)
         h_effi_pull = ROOT.TH1F("h_effi_pull", "", 30, -3, 3)
         fitter.SetPull(h_effi_pull)
-        for xIdx in range(nPar):
-            minuit.DefineParameter(xIdx, "x{0}".format(xIdx), 0., 1E-4, -1E+1, 1E+1)
+        for xIdx in range(nxPar):
+            arg = xPar[xIdx]
+            minuit.DefineParameter(xIdx, arg.GetName(), arg.getVal(), arg.getError(), arg.getMin(), arg.getMax())
+        for lIdx in range(nlPar):
+            arg = lPar[lIdx]
+            minuit.DefineParameter(lIdx+nxPar, arg.GetName(), arg.getVal(), arg.getError(), arg.getMin(), arg.getMax())
+        for kIdx in range(nkPar):
+            arg = kPar[kIdx]
+            minuit.DefineParameter(kIdx+nlPar+nxPar, arg.GetName(), arg.getVal(), arg.getError(), arg.getMin(), arg.getMax())
+        minuit.DefineParameter(nPar-2, "effi_norm", effi_norm.getVal(), effi_norm.getError(), effi_norm.getMin(), effi_norm.getMax())
+        minuit.DefineParameter(nPar-1, "hasXTerm", hasXTerm.getVal(), hasXTerm.getError(), hasXTerm.getMin(), hasXTerm.getMax())
+
+        # Remark that the index inside MINUIT starts from 1.
+        # However, in TMinuit, it starts from 0.
+        for pIdx in range(nxPar+1):
+            minuit.Command("REL {0}".format(pIdx))
+        for pIdx in range(nxPar+1, nPar+1):
+            minuit.Command("FIX {0}".format(pIdx))
         minuit.Command("MINI")
         minuit.Command("MINI")
         minuit.Command("MINOS")
+        for cycle in range(self.cfg['iterativeCycle']):
+            for pIdx in range(nxPar+1):
+                minuit.Command("FIX {0}".format(pIdx))
+            for pIdx in range(nxPar+1, nPar+1):
+                minuit.Command("REL {0}".format(pIdx))
+            minuit.Command("MINI")
+            minuit.Command("MINI")
+            minuit.Command("MINOS")
+            for pIdx in range(nxPar+1):
+                minuit.Command("REL {0}".format(pIdx))
+            for pIdx in range(nxPar+1, nPar+1):
+                minuit.Command("FIX {0}".format(pIdx))
+            minuit.Command("MINI")
+            minuit.Command("MINI")
+            minuit.Command("MINOS")
 
         parVal = ROOT.Double(0)
         parErr = ROOT.Double(0)
-        for xIdx in range(nPar):
-            minuit.GetParameter(xIdx, parVal, parErr)
-            arg = args.find("x{0}".format(xIdx))
+        for pIdx in range(nPar-1):
+            minuit.GetParameter(pIdx, parVal, parErr)
+            if pIdx<nxPar:
+                arg = xPar[pIdx]
+            elif pIdx < nlPar+nxPar:
+                arg = lPar[pIdx-nxPar]
+            elif pIdx < nkPar+nlPar+nxPar:
+                arg = kPar[pIdx-nlPar-nxPar]
+            else:
+                arg = effi_norm
             arg.setVal(parVal)
             arg.setError(parErr)
 
@@ -222,7 +285,7 @@ class EfficiencyFitter(FitterCore):
             effi_xTerm_formula = re.sub(r"hasXTerm", r"(1)", effi_xTerm_formula)
 
             f2_effi_xTerm = ROOT.TF2("f2_effi_xTerm", effi_xTerm_formula, -1, 1, -1, 1)
-            for xIdx in range(nPar):
+            for xIdx in range(nxPar):
                 minuit.GetParameter(xIdx, parVal, parErr)
                 f2_effi_xTerm.SetParameter(xIdx, parVal)
                 f2_effi_xTerm.SetParError(xIdx, parErr)
