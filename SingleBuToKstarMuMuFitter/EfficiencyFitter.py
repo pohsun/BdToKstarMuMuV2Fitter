@@ -34,8 +34,9 @@ class EfficiencyFitter(FitterCore):
             'pdfX': "effi_cosl",
             'pdfY': "effi_cosK",
             'iterativeCycle': 0,
+            'argAliasInDB': {}, # When writes result to DB.
+            'argAliasFromDB': {}, # Overwrite argAliasInDB only when initFromDB, or set to None to skip this variable.
             'saveToDB': True,
-            'argAliasInDB': None,
             'noDraw': False,
         })
         del cfg['createNLLOpt']
@@ -47,13 +48,17 @@ class EfficiencyFitter(FitterCore):
 
     def _preFitSteps(self):
         """Prefit uncorrelated term"""
-        args = self.pdf.getParameters(self.data)
-        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, args)
-        self.ToggleConstVar(args, isConst=True)
-        drawPreFitPlots = True if isDEBUG else False
+        self.args = self.pdf.getParameters(self.data)
+        argAliasFromDB = {}
+        for d in [self.cfg['argAliasInDB'], self.cfg['argAliasFromDB']]:
+            for k, v in d.items():
+                argAliasFromDB[k] = v
+        FitDBPlayer.initFromDB(self.process.dbplayer.odbfile, self.args, argAliasFromDB)
+        self.ToggleConstVar(self.args, isConst=True)
+        drawPreFitPlots = isDEBUG 
 
         # Disable xTerm correction and fit to 1-D
-        args.find('hasXTerm').setVal(0)
+        self.args.find('hasXTerm').setVal(0)
 
         h_accXrec_fine_ProjectionX = self.process.sourcemanager.get(self.cfg['dataX'])
         h_accXrec_fine_ProjectionY = self.process.sourcemanager.get(self.cfg['dataY'])
@@ -61,9 +66,9 @@ class EfficiencyFitter(FitterCore):
         effi_cosK = self.process.sourcemanager.get(self.cfg['pdfY'])
         for proj, pdf, var, argPats in [(h_accXrec_fine_ProjectionX, effi_cosl, CosThetaL, [r"^l\d+$"]), (h_accXrec_fine_ProjectionY, effi_cosK, CosThetaK, [r"^k\d+$"])]:
             hdata = ROOT.RooDataHist("hdata", "", ROOT.RooArgList(var), ROOT.RooFit.Import(proj))
-            self.ToggleConstVar(args, isConst=False, targetArgs=argPats)
+            self.ToggleConstVar(self.args, isConst=False, targetArgs=argPats)
             pdf.chi2FitTo(hdata, ROOT.RooLinkedList())
-            self.ToggleConstVar(args, isConst=True, targetArgs=argPats)
+            self.ToggleConstVar(self.args, isConst=True, targetArgs=argPats)
 
             # Draw runtime 1-D comparison
             if drawPreFitPlots:
@@ -75,25 +80,26 @@ class EfficiencyFitter(FitterCore):
                 self.canvas.Update()
                 self.canvas.Print("DEBUG_EfficiencyFitter_preFitSteps_{0}.pdf".format(var.GetName()))
 
-        args.find('effi_norm').setConstant(False)
+        self.args.find('effi_norm').setConstant(False)
         self.pdf.chi2FitTo(self.data, ROOT.RooFit.Minos(True))
-        args.find('effi_norm').setVal(args.find('effi_norm').getVal() / 4.)
-        args.find('effi_norm').setConstant(True)
+        self.args.find('effi_norm').setVal(self.args.find('effi_norm').getVal() / 4.)
+        self.args.find('effi_norm').setConstant(True)
 
         # Fix uncorrelated term and for later update with xTerms in main fit step
-        args.find('hasXTerm').setVal(1)
-        self.ToggleConstVar(args, isConst=False, targetArgs=[r"^x\d+$"])
+        self.args.find('hasXTerm').setVal(1)
+        self.ToggleConstVar(self.args, isConst=False, targetArgs=[r"^x\d+$"])
 
     def _postFitSteps(self):
         """Post-processing"""
         args = self.pdf.getParameters(self.data)
         self.ToggleConstVar(args, True)
         if self.cfg['saveToDB']:
-            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args, self.cfg.get('argAliasInDB'))
+            print("UpdateToDB")
+            FitDBPlayer.UpdateToDB(self.process.dbplayer.odbfile, args, self.cfg.get('argAliasInDB', {}))
+            print("UpdatedToDB")
 
     def _runFitSteps(self):
         effi_sigA_formula = self.pdf.formula().GetExpFormula().Data()
-        args = self.pdf.getParameters(self.data)
         xPar = []
         lPar = []
         kPar = []
@@ -101,7 +107,7 @@ class EfficiencyFitter(FitterCore):
         hasXTerm = self.process.sourcemanager.get("hasXTerm")
 
         # for cycle in range(self.cfg['iterativeCycle']+1):
-        args_it = args.createIterator()
+        args_it = self.args.createIterator()
         arg = args_it.Next()
         nxPar = 0
         nlPar = 0
@@ -141,13 +147,17 @@ class EfficiencyFitter(FitterCore):
         fitter.SetPull(h_effi_pull)
         for xIdx in range(nxPar):
             arg = xPar[xIdx]
-            minuit.DefineParameter(xIdx, arg.GetName(), arg.getVal(), arg.getError(), arg.getMin(), arg.getMax())
+            # Must assign an non-zero error or it will be taken as a const in Minuit.
+            argErr = 0.01 if arg.getError() == 0 else arg.getError()
+            minuit.DefineParameter(xIdx, arg.GetName(), arg.getVal(), argErr, arg.getMin(), arg.getMax())
         for lIdx in range(nlPar):
             arg = lPar[lIdx]
-            minuit.DefineParameter(lIdx+nxPar, arg.GetName(), arg.getVal(), arg.getError(), arg.getMin(), arg.getMax())
+            argErr = 0.01 if arg.getError() == 0 else arg.getError()
+            minuit.DefineParameter(lIdx+nxPar, arg.GetName(), arg.getVal(), argErr, arg.getMin(), arg.getMax())
         for kIdx in range(nkPar):
             arg = kPar[kIdx]
-            minuit.DefineParameter(kIdx+nlPar+nxPar, arg.GetName(), arg.getVal(), arg.getError(), arg.getMin(), arg.getMax())
+            argErr = 0.01 if arg.getError() == 0 else arg.getError()
+            minuit.DefineParameter(kIdx+nlPar+nxPar, arg.GetName(), arg.getVal(), argErr, arg.getMin(), arg.getMax())
         minuit.DefineParameter(nPar-2, "effi_norm", effi_norm.getVal(), effi_norm.getError(), effi_norm.getMin(), effi_norm.getMax())
         minuit.DefineParameter(nPar-1, "hasXTerm", hasXTerm.getVal(), hasXTerm.getError(), hasXTerm.getMin(), hasXTerm.getMax())
 
@@ -256,7 +266,7 @@ class EfficiencyFitter(FitterCore):
             h2_accXrec.Draw("COL")
             h2_accXrec.SetBarOffset(-0.1)
             h2_accXrec.Draw("TEXT SAME")
-            args.find('hasXTerm').setVal(0)
+            self.args.find('hasXTerm').setVal(0)
             h2_effi_2D_compXTerm = h2_accXrec.Clone("h2_effi_2D_compXTerm")
             h2_effi_2D_compXTerm.Reset("ICES")
             self.pdf.fillHistogram(h2_effi_2D_compXTerm, ROOT.RooArgList(CosThetaL, CosThetaK))
@@ -266,7 +276,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_compXTerm.Draw("TEXT SAME")
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             self.canvas.Print("effi_2D_compXTerm_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
-            args.find('hasXTerm').setVal(1)
+            self.args.find('hasXTerm').setVal(1)
             h2_accXrec.Scale(1. / compXTermScale)
         
         # Check if efficiency is positive definite

@@ -34,6 +34,20 @@ setupEffiFitter.update({
 })
 effiFitter = EfficiencyFitter(setupEffiFitter)
 
+setupIterativeEffiFitter = deepcopy(setupEffiFitter)
+setupIterativeEffiFitter.update({
+    'iterativeCycle': 1,
+    'argAliasInDB': {
+        'hasXTerm': "hasXTerm_iter",
+        'effi_norm': "effi_norm_iter",
+    },
+})
+for idx in range(20):
+    setupIterativeEffiFitter['argAliasInDB']["x{0}".format(idx)] = "x{0}_iter".format(idx)
+    setupIterativeEffiFitter['argAliasInDB']["l{0}".format(idx)] = "l{0}_iter".format(idx)
+    setupIterativeEffiFitter['argAliasInDB']["k{0}".format(idx)] = "k{0}_iter".format(idx)
+iterativeEffiFitter = EfficiencyFitter(setupIterativeEffiFitter)
+
 setupSigMFitter = deepcopy(setupTemplateFitter)
 setupSigMFitter.update({
     'name': "sigMFitter",
@@ -120,7 +134,6 @@ setupBkgPsi2sMFitter.update({
     'argAliasInDB': {'sigMGauss1_sigma': 'sigMGauss1_sigma_bkgPsi2s', 'sigMGauss2_sigma': 'sigMGauss2_sigma_bkgPsi2s', 'sigMGauss_mean': 'sigMGauss_mean_bkgPsi2s', 'sigM_frac': 'sigM_frac_bkgPsi2s'},
 })
 bkgPsi2sMFitter = StdFitter(setupBkgPsi2sMFitter)
-
 
 # For additional tests
 setupFinalFitter_altFit0 = deepcopy(setupFinalFitter)
