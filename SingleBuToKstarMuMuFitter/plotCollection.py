@@ -24,7 +24,7 @@ from SingleBuToKstarMuMuFitter.StdProcess import p, setStyle, isPreliminary
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
-import SingleBuToKstarMuMuFitter.systCollection as systCollection
+# import SingleBuToKstarMuMuFitter.systCollection as systCollection
 
 from SingleBuToKstarMuMuFitter.Plotter import Plotter, defaultPlotRegion, plotterCfg_styles
 
@@ -777,6 +777,21 @@ plotterCfg['plots']['angular3D_finalAltBkgCombA2'] = {
     }
 }
 
+angular3D_finalAltEffi3_argAliasInDB = {'unboundAfb': 'unboundAfb_altEffi3', 'unboundFl': 'unboundFl_altEffi3', 'fs': 'fs_altEffi3', 'as': 'as_altEffi3', 'nSig': 'nSig_altEffi3', 'nBkgComb': 'nBkgComb_altEffi3'}
+for k, v in fitCollection.setupIterativeEffiFitter['argAliasInDB'].items():
+    angular3D_finalAltEffi3_argAliasInDB[k] = v
+plotterCfg['plots']['angular3D_finalAltEffi3'] = {
+    'func': [plotPostfitBLK],
+    'kwargs': {
+        'pltName': "angular3D_finalAltEffi3",
+        'dataReader': "dataReader",
+        'pdfPlots': [
+            ["f_final",   plotterCfg_styles['allStyleBase'], angular3D_finalAltEffi3_argAliasInDB, "Total fit"],
+            ["f_sig3D",   plotterCfg_styles['sigStyleBase'], angular3D_finalAltEffi3_argAliasInDB, "Signal"],
+            ["f_bkgComb", plotterCfg_styles['bkgStyleBase'], angular3D_finalAltEffi3_argAliasInDB, "Comb. Bkg."],
+        ]
+    }
+}
 # More tests
 plotterCfg['plots']['plotOnX_Kstarmass'] = {
     'func': [plotOnXYZ],
