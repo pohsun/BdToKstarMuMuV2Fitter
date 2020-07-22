@@ -12,6 +12,7 @@ import functools
 import itertools
 import tempfile
 from copy import copy, deepcopy
+from collections import OrderedDict
 
 import ROOT
 import SingleBuToKstarMuMuFitter.cpp
@@ -19,6 +20,7 @@ import SingleBuToKstarMuMuFitter.varCollection as varCollection
 import SingleBuToKstarMuMuFitter.dataCollection as dataCollection
 import SingleBuToKstarMuMuFitter.pdfCollection as pdfCollection
 import SingleBuToKstarMuMuFitter.fitCollection as fitCollection
+import SingleBuToKstarMuMuFitter.plotCollection as plotCollection
 from SingleBuToKstarMuMuFitter.StdProcess import createNewProcess
 
 from v2Fitter.Fitter.ObjProvider import ObjProvider
@@ -538,6 +540,33 @@ def func_altEffi2(args):
     finally:
         p.endSeq()
 
+# # Use iterative efficiency map
+def func_altEffi3(args):
+    """ Use efficiency map from iterativeEffiFitter """
+    setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalAltEffiFitter.update({
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi3', 'unboundFl': 'unboundFl_altEffi3', 'fs': 'fs_altEffi3', 'as': 'as_altEffi3', 'nSig': 'nSig_altEffi3', 'nBkgComb': 'nBkgComb_altEffi3'},
+        'argAliasFromDB': dict(fitCollection.setupFinalFitter['argAliasInDB'].items()+fitCollection.setupIterativeEffiFitter['argAliasInDB'].items()),
+        'saveToDB': True, # No need to save
+    })
+    finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.effiHistReader,
+        dataCollection.dataReader,
+        fitCollection.iterativeEffiFitter,
+        finalAltEffiFitter,
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        updateToDB_altShape(args, "altEffi3")
+    finally:
+        p.endSeq()
+
 # Simulation mismodeling
 # # Quote the difference between fitting results of unfiltered GEN and that of high stat RECO.
 def func_simMismodel(args):
@@ -736,6 +765,69 @@ def func_altBkgCombA2(args):
     finally:
         p.endSeq()
 
+def func_altBkgCombA3(args):
+    """ Ananlytic function from another different sideband """
+    setupBkgCombA3Fitter = deepcopy(fitCollection.setupBkgCombAFitter)
+    setupBkgCombA3Fitter.update({
+        'data': 'dataReader.altSB_onlyJpsiX',
+    })
+    setupBkgCombA3Fitter['argAliasInDB'] = {
+        "bkgCombL_c1": "bkgCombL_c1_altBkgCombA3",
+        "bkgCombL_c2": "bkgCombL_c2_altBkgCombA3",
+        "bkgCombL_c3": "bkgCombL_c3_altBkgCombA3",
+        "bkgCombL_c4": "bkgCombL_c4_altBkgCombA3",
+        "bkgCombL_c5": "bkgCombL_c5_altBkgCombA3",
+        "bkgCombK_c1": "bkgCombK_c1_altBkgCombA3",
+        "bkgCombK_c2": "bkgCombK_c2_altBkgCombA3",
+        "bkgCombK_c3": "bkgCombK_c3_altBkgCombA3",
+        "bkgCombK_c4": "bkgCombK_c4_altBkgCombA3",
+        "bkgCombK_c5": "bkgCombK_c5_altBkgCombA3",
+    }
+    bkgCombA3Fitter = StdFitter(setupBkgCombA3Fitter)
+
+    setupFinalAltBkgCombA3Fitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalAltBkgCombA3Fitter.update({
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA3', 'unboundFl': 'unboundFl_altBkgCombA3', 'fs': 'fs_altBkgCombA3', 'as': 'as_altBkgCombA3', 'nSig': 'nSig_altBkgCombA3', 'nBkgComb': 'nBkgComb_altBkgCombA3'},
+        'argAliasFromDB': copy(fitCollection.setupFinalFitter['argAliasInDB']),
+    })
+    setupFinalAltBkgCombA3Fitter['argAliasFromDB'].update({pattern: None for pattern in setupBkgCombA3Fitter['argPattern']})
+    finalAltBkgCombA3Fitter = StdFitter(setupFinalAltBkgCombA3Fitter)
+
+    noUpdateDBAlias = {}
+    for k in setupFinalAltBkgCombA3Fitter['argAliasInDB'].keys():
+        noUpdateDBAlias[k] = None
+    for k in setupFinalAltBkgCombA3Fitter['argAliasFromDB'].keys():
+        noUpdateDBAlias[k] = None
+    plotCollection.plotter.cfg['plots']['angular3D_finalAltBkgCombA3'] = {
+        'func': [functools.partial(plotCollection.plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "angular3D_finalAltBkgCombA3",
+        'dataPlots': [["dataReader.Fit", plotCollection.plotterCfg_styles['dataStyle'], "Data"],],
+        'pdfPlots': [["f_final", plotCollection.plotterCfg_styles['allStyle'] + (ROOT.RooFit.NormRange("Fit"),), noUpdateDBAlias, "Total fit"],
+                     ["f_final", plotCollection.plotterCfg_styles['sigStyle'] + (ROOT.RooFit.NormRange("Fit"), ROOT.RooFit.Components("f_sig3D"),), noUpdateDBAlias, "Signal"],
+                     ["f_final", plotCollection.plotterCfg_styles['bkgStyle'] + (ROOT.RooFit.NormRange("Fit"), ROOT.RooFit.Components("f_bkgComb"),), noUpdateDBAlias, "Comb. Bkg."],
+                    ],
+        'marks': {}}
+    }
+    plotCollection.plotter.cfg['switchPlots'] = ['angular3D_finalAltBkgCombA3']
+
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        bkgCombA3Fitter,
+        finalAltBkgCombA3Fitter,
+        plotCollection.plotter
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        updateToDB_altShape(args, "altBkgCombA3")
+    finally:
+        p.endSeq()
+
 # # Vary the parameters of analytic model by 1 sigma
 def func_flucBkgCombA(args):
     """ DEPRECATED """
@@ -850,6 +942,136 @@ def func_flucBkgCombA(args):
     if args.updateDB:
         print("INFO\t: Update syst uncertainty from {0} to database".format(tag))
         FitDBPlayer.UpdateToDB(p.dbplayer.odbfile, syst_altShape)
+
+# # Whatever analytic function
+def func_whateverAnalyticBkgCombA(args):
+    """ Whatever analytic function at hand """
+    # Build new pdf
+    # # Linear model in cosThetaL
+    setupBuildWhateverAnalyticBkgCombA = {
+        'objName': "f_whateverAnalyticBkgCombA",
+        'varNames': ["CosThetaK", "CosThetaL"],
+        'factoryCmd': [
+            "altBkgCombL_c1[-10,10]", # For polynomials
+            "altBkgCombL_c2[-10,10]",
+            "altBkgCombL_c3[-10,10]",
+            "altBkgCombL_c4[-10,10]",
+            # "altBkgCombL_c1[0.2,0.8]", # For gaussian
+            # "altBkgCombL_c2[0.2, 0.1, 1.0]",
+            # "altBkgCombL_c3[-0.8,-0.2]",
+            # "altBkgCombL_c4[0.2, 0.1, 1.0]",
+            # "altBkgCombL_c5[0,10]",
+            "altBkgCombK_c1[-10,10]",
+            "altBkgCombK_c2[-10,10]",
+            "altBkgCombK_c3[-10,10]",
+            "altBkgCombK_c4[-10,10]",
+            "EXPR::f_whateverAnalyticBkgCombA('({pdfL})*({pdfK})', {args})".format(
+                # pdfL="1.+altBkgCombL_c1*CosThetaL+altBkgCombL_c2*pow(CosThetaL,2)+altBkgCombL_c3*pow(CosThetaL, 3)+altBkgCombL_c4*pow(CosThetaL,4)", # pol4
+                # pdfK="1+altBkgCombK_c1*CosThetaK+altBkgCombK_c2*pow(CosThetaK,2)+altBkgCombK_c3*pow(CosThetaK, 3)+altBkgCombK_c4*pow(CosThetaK,4)", # pol4
+                # args="{CosThetaL, CosThetaK, altBkgCombL_c1, altBkgCombL_c2, altBkgCombL_c3, altBkgCombL_c4, altBkgCombK_c1, altBkgCombK_c2,altBkgCombK_c3, altBkgCombK_c4}" # bin3 default
+
+                # bin3 alt pol1 as pdfK: Bias in FL=0.0372, in AFB=0.0277
+                pdfL="1.+altBkgCombL_c1*CosThetaL+altBkgCombL_c2*pow(CosThetaL,2)+altBkgCombL_c3*pow(CosThetaL, 3)+altBkgCombL_c4*pow(CosThetaL,4)", # pol4
+                pdfK="1+altBkgCombK_c1*CosThetaK", # pol1
+                args="{CosThetaL, CosThetaK, altBkgCombL_c1, altBkgCombL_c2, altBkgCombL_c3, altBkgCombL_c4, altBkgCombK_c1}"
+
+                # bin3 alt pol1 as pdfL: Bias in FL=0.0117, in AFB=0.0087
+                # pdfL="1.+altBkgCombL_c1*CosThetaL", # pol1
+                # pdfK="1+altBkgCombK_c1*CosThetaK+altBkgCombK_c2*pow(CosThetaK,2)+altBkgCombK_c3*pow(CosThetaK, 3)+altBkgCombK_c4*pow(CosThetaK,4)", # pol4
+                # args="{CosThetaL, CosThetaK, altBkgCombL_c1, altBkgCombK_c1, altBkgCombK_c2,altBkgCombK_c3, altBkgCombK_c4}" # bin3 alt pol1 as pdfL
+
+                # bin5 default
+                # pdfL="1.+altBkgCombL_c1*CosThetaL", # pol1
+                # pdfK="1.+altBkgCombK_c1*CosThetaK+altBkgCombK_c2*pow(CosThetaK,2)+altBkgCombK_c3*pow(CosThetaK, 3)", # pol3
+                # args="{CosThetaL, CosThetaK, altBkgCombL_c1, altBkgCombK_c1, altBkgCombK_c2, altBkgCombK_c3}" # bin5 default
+
+                # bin5 alt pol1 as pdfK: Bias in FL=0.0251, in AFB=0.0187
+                # pdfL="1.+altBkgCombL_c1*CosThetaL", # pol1
+                # pdfK="1.+altBkgCombK_c1*CosThetaK", # pol1
+                # args="{CosThetaL, CosThetaK, altBkgCombL_c1, altBkgCombK_c1}"
+
+                # bin5 alt double gaus as pdfL: Bias in FL=0.0151, in AFB=0.0112
+                # pdfL="exp(-0.5*pow((CosThetaL-altBkgCombL_c1)/altBkgCombL_c2,2))+altBkgCombL_c5*exp(-0.5*pow((CosThetaL-altBkgCombL_c3)/altBkgCombL_c4,2))",
+                # pdfK="1.+altBkgCombK_c1*CosThetaK+altBkgCombK_c2*pow(CosThetaK,2)+altBkgCombK_c3*pow(CosThetaK, 3)", # pol3
+                # args="{CosThetaL, CosThetaK, altBkgCombL_c1, altBkgCombL_c2, altBkgCombL_c3, altBkgCombL_c4, altBkgCombL_c5, altBkgCombK_c1, altBkgCombK_c2, altBkgCombK_c3}"
+            ),
+        ],
+    }
+    buildWhateverAnalyticBkgCombA = functools.partial(pdfCollection.buildGenericObj, **setupBuildWhateverAnalyticBkgCombA)
+
+    setupBuildFinalWhateverAnalyticBkgCombA = {
+        'objName': "f_final_whateverAnalyticBkgCombA",
+        'varNames': ["Bmass", "CosThetaK", "CosThetaL"],
+        'factoryCmd': [
+            "PROD::f_bkgComb_whateverAnalyticBkgCombA(f_bkgCombM, f_whateverAnalyticBkgCombA)",
+            "SUM::{0}(nSig*{1},nBkgComb*{2})".format("f_final_whateverAnalyticBkgCombA", "f_sig3D", "f_bkgComb_whateverAnalyticBkgCombA"),
+        ],
+    }
+    buildFinalWhateverAnalyticBkgCombA = functools.partial(pdfCollection.buildGenericObj, **setupBuildFinalWhateverAnalyticBkgCombA)
+
+    finalWhateverBkgCombABuilder = ObjProvider(deepcopy(ObjProvider.templateConfig()))
+    finalWhateverBkgCombABuilder.cfg.update({
+        'wspaceTag': q2bins[args.binKey]['label'],
+        'obj': OrderedDict([
+            ('f_whateverAnalyticBkgCombA', [buildWhateverAnalyticBkgCombA]),
+            ('f_final_whateverAnalyticBkgCombA', [buildFinalWhateverAnalyticBkgCombA]),
+        ])
+    })
+
+    # Fit with new pdf
+    setupWhateverAnalyticBkgCombAFitter = deepcopy(fitCollection.setupBkgCombAFitter)
+    setupWhateverAnalyticBkgCombAFitter.update({
+        'pdf': "f_whateverAnalyticBkgCombA",
+        'argPattern': [r'altBkgComb[KL]_c[\d]+', ],
+        'argAliasInDB': {r'altBkgComb[KL]_c[\d]+': None},
+        'saveToDB': False, # To pass numbers to next stage
+    })
+    whateverBkgCombAFitter = StdFitter(setupWhateverAnalyticBkgCombAFitter)
+
+    setupFinalWhateverAnalyticBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
+    setupFinalWhateverAnalyticBkgCombAFitter.update({
+        'pdf': "f_final_whateverAnalyticBkgCombA",
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_whateverAnalyticBkgCombA', 'unboundFl': 'unboundFl_whateverAnalyticBkgCombA', 'fs': 'fs_whateverAnalyticBkgCombA', 'as': 'as_whateverAnalyticBkgCombA', 'nSig': 'nSig_whateverAnalyticBkgCombA', 'nBkgComb': 'nBkgComb_whateverAnalyticBkgCombA'},
+        'argAliasFromDB': dict(fitCollection.setupFinalFitter['argAliasInDB'].items()+setupWhateverAnalyticBkgCombAFitter['argAliasInDB'].items()),
+        'saveToDB': False, # No need to save
+    })
+    finalWhateverBkgCombAFitter = StdFitter(setupFinalWhateverAnalyticBkgCombAFitter)
+
+    # Draw
+    noUpdateDBAlias = {}
+    for k in setupFinalWhateverAnalyticBkgCombAFitter['argAliasInDB'].keys():
+        noUpdateDBAlias[k] = None
+    for k in setupFinalWhateverAnalyticBkgCombAFitter['argAliasFromDB'].keys():
+        noUpdateDBAlias[k] = None
+    plotCollection.plotter.cfg['plots']['angular3D_final_whateverAnalyticBkgCombA'] = {
+        'func': [functools.partial(plotCollection.plotSimpleBLK, frames='BLK')],
+    'kwargs': {
+        'pltName': "angular3D_final_whateverAnalyticBkgCombA",
+        'dataPlots': [["dataReader.Fit", plotCollection.plotterCfg_styles['dataStyle'], "Data"],],
+        'pdfPlots': [["f_final_whateverAnalyticBkgCombA", plotCollection.plotterCfg_styles['allStyle'] + (ROOT.RooFit.NormRange("Fit"),), noUpdateDBAlias, "Total fit"],
+                     ["f_final_whateverAnalyticBkgCombA", plotCollection.plotterCfg_styles['sigStyle'] + (ROOT.RooFit.NormRange("Fit"), ROOT.RooFit.Components("f_sig3D"),), noUpdateDBAlias, "Signal"],
+                     ["f_final_whateverAnalyticBkgCombA", plotCollection.plotterCfg_styles['bkgStyle'] + (ROOT.RooFit.NormRange("Fit"), ROOT.RooFit.Components("f_bkgComb_whateverAnalyticBkgCombA"),), noUpdateDBAlias, "Comb. Bkg."],
+                    ],
+        'marks': {}}
+    }
+    plotCollection.plotter.cfg['switchPlots'] = ['angular3D_final_whateverAnalyticBkgCombA']
+
+    p.setSequence([
+        pdfCollection.stdWspaceReader,
+        dataCollection.dataReader,
+        finalWhateverBkgCombABuilder,
+        whateverBkgCombAFitter,
+        finalWhateverBkgCombAFitter,
+        plotCollection.plotter
+    ])
+
+    try:
+        p.beginSeq()
+        p.runSeq()
+
+        updateToDB_altShape(args, "whateverAnalyticBkgCombA")
+    finally:
+        p.endSeq()
 
 # # Determinded by varying analytic description with correlation matrix considered.
 def func_randBkgCombA(args):
@@ -1152,6 +1374,9 @@ if __name__ == '__main__':
     # subparser_altEffi2 = subparsers.add_parser('altEffi2')
     # subparser_altEffi2.set_defaults(func=func_altEffi2)
 
+    subparser_altEffi3 = subparsers.add_parser('altEffi3')
+    subparser_altEffi3.set_defaults(func=func_altEffi3)
+    
     subparser_simMismodel = subparsers.add_parser('simMismodel')
     subparser_simMismodel.set_defaults(func=func_simMismodel)
 
@@ -1169,18 +1394,24 @@ if __name__ == '__main__':
 
     subparser_altBkgCombA2 = subparsers.add_parser('altBkgCombA2')
     subparser_altBkgCombA2.set_defaults(func=func_altBkgCombA2)
-    
+
+    subparser_altBkgCombA3 = subparsers.add_parser('altBkgCombA3')
+    subparser_altBkgCombA3.set_defaults(func=func_altBkgCombA3)
+
     # subparser_flucBkgCombA = subparsers.add_parser('flucBkgCombA')
     # subparser_flucBkgCombA.set_defaults(func=func_flucBkgCombA)
 
     subparser_randBkgCombA = subparsers.add_parser('randBkgCombA')
     subparser_randBkgCombA.set_defaults(func=func_randBkgCombA)
 
+    subparser_whateverAnalyticBkgCombA = subparsers.add_parser('whateverAnalyticBkgCombA')
+    subparser_whateverAnalyticBkgCombA.set_defaults(func=func_whateverAnalyticBkgCombA)
+
     subparser_mergeBkgCombShape = subparsers.add_parser('mergeBkgCombShape')
     subparser_mergeBkgCombShape.set_defaults(func=func_mergeBkgCombShape)
     
-    # subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
-    # subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
+    subparser_vetoJpsiX = subparsers.add_parser('vetoJpsiX')
+    subparser_vetoJpsiX.set_defaults(func=func_vetoJpsiX)
 
     # subparser_altFitRange = subparsers.add_parser('altFitRange')
     # subparser_altFitRange.set_defaults(func=func_altFitRange)
