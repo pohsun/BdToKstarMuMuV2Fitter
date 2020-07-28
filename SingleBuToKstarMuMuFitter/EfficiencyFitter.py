@@ -38,6 +38,7 @@ class EfficiencyFitter(FitterCore):
             'argAliasFromDB': {}, # Overwrite argAliasInDB only when initFromDB, or set to None to skip this variable.
             'saveToDB': True,
             'noDraw': False,
+            'pltName': "effi",
         })
         del cfg['createNLLOpt']
         return cfg
@@ -216,7 +217,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_comp.Draw("LEGO2")
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}/{1}".format(fitter.GetChi2(), fitter.GetDoF()))
-            self.canvas.Print("effi_2D_comp_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.canvas.Print("{0}_2D_comp_{1}.pdf".format(self.cfg['pltName'], q2bins[self.process.cfg['binKey']]['label']))
 
             # Plot numerator and denominator for the ratio plot
             compTEXTScale = 1e6
@@ -236,7 +237,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_compText.SetBarOffset(0.1)
             h2_effi_2D_compText.Draw("TEXT SAME")
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            self.canvas.Print("effi_2D_compTEXT_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.canvas.Print("{0}_2D_compTEXT_{1}.pdf".format(self.cfg['pltName'], q2bins[self.process.cfg['binKey']]['label']))
             h2_accXrec.Scale(1. / compTEXTScale)
 
             # Plot pull between fitting result to data
@@ -250,7 +251,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_pull.Draw("BOX1 TEXT")
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
-            self.canvas.Print("effi_2D_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.canvas.Print("{0}_2D_pull_{1}.pdf".format(self.cfg['pltName'], q2bins[self.process.cfg['binKey']]['label']))
 
             h_effi_pull.Fit("gaus", "", "", -2., 2.)
             h_effi_pull.SetXTitle("Pull")
@@ -258,7 +259,7 @@ class EfficiencyFitter(FitterCore):
             h_effi_pull.Draw("")
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
             self.latex.DrawLatexNDC(.16, .84, "#chi^{{2}}/DoF={0:.2f}".format(fitter.GetChi2()/fitter.GetDoF()))
-            self.canvas.Print("effi_pull_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.canvas.Print("{0}_pull_{1}.pdf".format(self.cfg['pltName'], q2bins[self.process.cfg['binKey']]['label']))
             
             # Plot comparison between efficiency map w/ and w/o cross term.
             compXTermScale = 1e6
@@ -275,7 +276,7 @@ class EfficiencyFitter(FitterCore):
             h2_effi_2D_compXTerm.SetBarOffset(0.1)
             h2_effi_2D_compXTerm.Draw("TEXT SAME")
             self.latex.DrawLatexNDC(.16, .94, "#font[61]{CMS} #font[52]{#scale[0.8]{Simulation}}")
-            self.canvas.Print("effi_2D_compXTerm_{0}.pdf".format(q2bins[self.process.cfg['binKey']]['label']))
+            self.canvas.Print("{0}_2D_compXTerm_{1}.pdf".format(self.cfg['pltName'], q2bins[self.process.cfg['binKey']]['label']))
             self.args.find('hasXTerm').setVal(1)
             h2_accXrec.Scale(1. / compXTermScale)
         

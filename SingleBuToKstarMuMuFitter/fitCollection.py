@@ -41,6 +41,7 @@ setupIterativeEffiFitter.update({
         'hasXTerm': "hasXTerm_iter",
         'effi_norm': "effi_norm_iter",
     },
+    'pltName': "iterativeEffi",
 })
 for idx in range(20):
     setupIterativeEffiFitter['argAliasInDB']["x{0}".format(idx)] = "x{0}_iter".format(idx)
@@ -115,7 +116,7 @@ setupFinalFitter.update({
     'createNLLOpt': [ROOT.RooFit.Extended(True), ROOT.RooFit.Range("Fit")],
     'FitMinos': [True, ('nSig', 'unboundAfb', 'unboundFl', 'nBkgComb')],
     'argAliasFromDB': dict(setupSigMFitter['argAliasInDB'].items() + setupSigAFitter['argAliasInDB'].items()),
-    'argAliasInDB': {'nSig': 'nSig', 'unboundAfb': 'unboundAfb', 'unboundFl': 'unboundFl', 'fs': 'fs', 'transAs': 'transAs', 'nBkgComb': 'nBkgComb'},
+    'argAliasInDB': {'nSig': 'nSig', 'unboundAfb': 'unboundAfb', 'unboundFl': 'unboundFl', 'fs': 'fs', 'transAs': 'transAs', 'nBkgComb': 'nBkgComb', 'bkgCombM_c1': 'bkgCombM_c1'},
 })
 finalFitter = StdFitter(setupFinalFitter)
 

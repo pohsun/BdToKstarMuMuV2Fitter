@@ -249,7 +249,7 @@ def func_dataMCDisc(args):
 
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc', 'unboundFl': 'unboundFl_dataMCDisc', 'fs': 'fs_dataMCDisc', 'as': 'as_dataMCDisc', 'nSig': 'nSig_dataMCDisc', 'nBkgComb': 'nBkgComb_dataMCDisc'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc', 'unboundFl': 'unboundFl_dataMCDisc', 'fs': 'fs_dataMCDisc', 'as': 'as_dataMCDisc', 'nSig': 'nSig_dataMCDisc', 'nBkgComb': 'nBkgComb_dataMCDisc', 'bkgCombM_c1': 'bkgCombM_c1_dataMCDisc'},
         'argAliasFromDB': copy(fitCollection.setupFinalFitter['argAliasInDB']),
         'saveToDB': False,
     })
@@ -319,7 +319,7 @@ def func_dataMCDisc2(args):
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
         'pdf': 'f_finalAltDataMC',
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc2', 'unboundFl': 'unboundFl_dataMCDisc2', 'fs': 'fs_dataMCDisc2', 'as': 'as_dataMCDisc2', 'nSig': 'nSig_dataMCDisc2', 'nBkgComb': 'nBkgComb_dataMCDisc2'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_dataMCDisc2', 'unboundFl': 'unboundFl_dataMCDisc2', 'fs': 'fs_dataMCDisc2', 'as': 'as_dataMCDisc2', 'nSig': 'nSig_dataMCDisc2', 'nBkgComb': 'nBkgComb_dataMCDisc2', 'bkgCombM_c1': 'bkgCombM_c1_dataMCDisc2'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
     })
@@ -353,7 +353,7 @@ def func_randEffi(args):
     setupFinalRandEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalRandEffiFitter.update({
         'FitMinos': [False, ()],
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_randEffi', 'unboundFl': 'unboundFl_randEffi', 'fs': 'fs_randEffi', 'as': 'as_randEffi', 'nSig': 'nSig_randEffi', 'nBkgComb': 'nBkgComb_randEffi'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_randEffi', 'unboundFl': 'unboundFl_randEffi', 'fs': 'fs_randEffi', 'as': 'as_randEffi', 'nSig': 'nSig_randEffi', 'nBkgComb': 'nBkgComb_randEffi', 'bkgCombM_c1': 'bkgCombM_c1_randEffi'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
     })
@@ -490,7 +490,7 @@ def func_altEffi(args):
     """ Typically less than 1% """
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi', 'unboundFl': 'unboundFl_altEffi', 'fs': 'fs_altEffi', 'as': 'as_altEffi', 'nSig': 'nSig_altEffi', 'nBkgComb': 'nBkgComb_altEffi'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi', 'unboundFl': 'unboundFl_altEffi', 'fs': 'fs_altEffi', 'as': 'as_altEffi', 'nSig': 'nSig_altEffi', 'nBkgComb': 'nBkgComb_altEffi', 'bkgCombM_c1': 'bkgCombM_c1_altEffi'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
     })
@@ -520,7 +520,7 @@ def func_altEffi2(args):
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
         'pdf': 'f_finalAltEffi',
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi2', 'unboundFl': 'unboundFl_altEffi2', 'fs': 'fs_altEffi2', 'as': 'as_altEffi2', 'nSig': 'nSig_altEffi2', 'nBkgComb': 'nBkgComb_altEffi2'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi2', 'unboundFl': 'unboundFl_altEffi2', 'fs': 'fs_altEffi2', 'as': 'as_altEffi2', 'nSig': 'nSig_altEffi2', 'nBkgComb': 'nBkgComb_altEffi2', 'bkgCombM_c1': 'bkgCombM_c1_altEffi2'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
     })
@@ -545,9 +545,9 @@ def func_altEffi3(args):
     """ Use efficiency map from iterativeEffiFitter """
     setupFinalAltEffiFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltEffiFitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi3', 'unboundFl': 'unboundFl_altEffi3', 'fs': 'fs_altEffi3', 'as': 'as_altEffi3', 'nSig': 'nSig_altEffi3', 'nBkgComb': 'nBkgComb_altEffi3'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altEffi3', 'unboundFl': 'unboundFl_altEffi3', 'fs': 'fs_altEffi3', 'as': 'as_altEffi3', 'nSig': 'nSig_altEffi3', 'nBkgComb': 'nBkgComb_altEffi3', 'bkgCombM_c1': 'bkgCombM_c1_altEffi3'},
         'argAliasFromDB': dict(fitCollection.setupFinalFitter['argAliasInDB'].items()+fitCollection.setupIterativeEffiFitter['argAliasInDB'].items()),
-        'saveToDB': True, # No need to save
+        'saveToDB': True, # Have to save for post-fit plots
     })
     finalAltEffiFitter = StdFitter(setupFinalAltEffiFitter)
 
@@ -604,7 +604,7 @@ def func_altSigM(args):
     """ Not used """
     setupFinalAltSigMFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSigMFitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altSigM', 'unboundFl': 'unboundFl_altSigM', 'fs': 'fs_altSigM', 'as': 'as_altSigM', 'nSig': 'nSig_altSigM', 'nBkgComb': 'nBkgComb_altSigM'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altSigM', 'unboundFl': 'unboundFl_altSigM', 'fs': 'fs_altSigM', 'as': 'as_altSigM', 'nSig': 'nSig_altSigM', 'nBkgComb': 'nBkgComb_altSigM', 'bkgCombM_c1': 'bkgCombM_c1_altSigM'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
     })
@@ -637,7 +637,7 @@ def func_altSP(args, fsRate=0.05):
     """ Set fs to 5% instead of 0% """
     setupFinalAltSPFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltSPFitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altSP', 'unboundFl': 'unboundFl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP', 'nSig': 'nSig_altSP', 'nBkgComb': 'nBkgComb_altSP'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altSP', 'unboundFl': 'unboundFl_altSP', 'fs': 'fs_altSP', 'as': 'as_altSP', 'nSig': 'nSig_altSP', 'nBkgComb': 'nBkgComb_altSP', 'bkgCombM_c1': 'bkgCombM_c1_altSP'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
         'saveToDB': False,
     })
@@ -701,9 +701,9 @@ def func_altBkgCombA(args):
     setupFinalAltBkgCombAFitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombAFitter.update({
         'pdf': "f_finalAltBkgCombA",
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA', 'unboundFl': 'unboundFl_altBkgCombA', 'fs': 'fs_altBkgCombA', 'as': 'as_altBkgCombA', 'nSig': 'nSig_altBkgCombA', 'nBkgComb': 'nBkgComb_altBkgCombA', 'bkgCombM_c1': 'bkgCombM_c1_altBkgCombA'},
         'argAliasFromDB': fitCollection.setupFinalFitter['argAliasInDB'],
-        'saveToDB': True, # For later cross check.
+        'saveToDB': True, # For later cross check and plotting
     })
     finalAltBkgCombAFitter = StdFitter(setupFinalAltBkgCombAFitter)
 
@@ -723,7 +723,7 @@ def func_altBkgCombA(args):
 
 # # Ananlytic function from different sideband
 def func_altBkgCombA2(args):
-    """ Background described with ananlytic function from different sidebands. """
+    """ Ananlytic background from different sidebands. (innerSB) """
     setupBkgCombA2Fitter = deepcopy(fitCollection.setupBkgCombAFitter)
     setupBkgCombA2Fitter.update({
         'data': 'dataReader.innerSB',
@@ -744,8 +744,9 @@ def func_altBkgCombA2(args):
 
     setupFinalAltBkgCombA2Fitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombA2Fitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA2', 'unboundFl': 'unboundFl_altBkgCombA2', 'fs': 'fs_altBkgCombA2', 'as': 'as_altBkgCombA2', 'nSig': 'nSig_altBkgCombA2', 'nBkgComb': 'nBkgComb_altBkgCombA2'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA2', 'unboundFl': 'unboundFl_altBkgCombA2', 'fs': 'fs_altBkgCombA2', 'as': 'as_altBkgCombA2', 'nSig': 'nSig_altBkgCombA2', 'nBkgComb': 'nBkgComb_altBkgCombA2', 'bkgCombM_c1': 'bkgCombM_c1_altBkgCombA2'},
         'argAliasFromDB': copy(fitCollection.setupFinalFitter['argAliasInDB']),
+        'saveToDB': True, # For later plotting
     })
     setupFinalAltBkgCombA2Fitter['argAliasFromDB'].update({pattern: None for pattern in setupBkgCombA2Fitter['argPattern']})
     finalAltBkgCombA2Fitter = StdFitter(setupFinalAltBkgCombA2Fitter)
@@ -766,10 +767,11 @@ def func_altBkgCombA2(args):
         p.endSeq()
 
 def func_altBkgCombA3(args):
-    """ Ananlytic function from another different sideband """
+    """ Ananlytic background from different sideband (lower sideband)"""
     setupBkgCombA3Fitter = deepcopy(fitCollection.setupBkgCombAFitter)
     setupBkgCombA3Fitter.update({
         'data': 'dataReader.altSB_onlyJpsiX',
+        'saveToDB': False,
     })
     setupBkgCombA3Fitter['argAliasInDB'] = {
         "bkgCombL_c1": "bkgCombL_c1_altBkgCombA3",
@@ -787,8 +789,9 @@ def func_altBkgCombA3(args):
 
     setupFinalAltBkgCombA3Fitter = deepcopy(fitCollection.setupFinalFitter)
     setupFinalAltBkgCombA3Fitter.update({
-        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA3', 'unboundFl': 'unboundFl_altBkgCombA3', 'fs': 'fs_altBkgCombA3', 'as': 'as_altBkgCombA3', 'nSig': 'nSig_altBkgCombA3', 'nBkgComb': 'nBkgComb_altBkgCombA3'},
+        'argAliasInDB': {'unboundAfb': 'unboundAfb_altBkgCombA3', 'unboundFl': 'unboundFl_altBkgCombA3', 'fs': 'fs_altBkgCombA3', 'as': 'as_altBkgCombA3', 'nSig': 'nSig_altBkgCombA3', 'nBkgComb': 'nBkgComb_altBkgCombA3', 'bkgCombM_c1': 'bkgCombM_c1_altBkgCombA3'},
         'argAliasFromDB': copy(fitCollection.setupFinalFitter['argAliasInDB']),
+        'saveToDB': False,
     })
     setupFinalAltBkgCombA3Fitter['argAliasFromDB'].update({pattern: None for pattern in setupBkgCombA3Fitter['argPattern']})
     finalAltBkgCombA3Fitter = StdFitter(setupFinalAltBkgCombA3Fitter)
@@ -798,6 +801,17 @@ def func_altBkgCombA3(args):
         noUpdateDBAlias[k] = None
     for k in setupFinalAltBkgCombA3Fitter['argAliasFromDB'].keys():
         noUpdateDBAlias[k] = None
+
+    plotCollection.plotterCfg['plots']['angular3D_bkgCombAAltA3'] = {
+        'func': [functools.partial(plotCollection.plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_bkgCombAAltA3",
+            'dataPlots': [["dataReader.SB", plotCollection.plotterCfg_styles['dataStyle'], "Sideband data"], ],
+            'pdfPlots': [["f_bkgCombA", plotCollection.plotterCfg_styles['bkgStyleAlt1'] + (ROOT.RooFit.NormRange("Fit"),), noUpdateDBAlias, "Alternative Bkg."],
+                         # ["f_bkgCombA", plotterCfg_styles['bkgStyle'], None, "Analytic Bkg."],
+                        ],
+            'marks': {}}
+    }
     plotCollection.plotter.cfg['plots']['angular3D_finalAltBkgCombA3'] = {
         'func': [functools.partial(plotCollection.plotSimpleBLK, frames='BLK')],
     'kwargs': {
@@ -809,8 +823,10 @@ def func_altBkgCombA3(args):
                     ],
         'marks': {}}
     }
-    plotCollection.plotter.cfg['switchPlots'] = ['angular3D_finalAltBkgCombA3']
-
+    plotCollection.plotter.cfg['switchPlots'] = [
+            'angular3D_bkgCombAAltA3',
+            # 'angular3D_finalAltBkgCombA3',
+    ]
 
     p.setSequence([
         pdfCollection.stdWspaceReader,
@@ -1043,6 +1059,15 @@ def func_whateverAnalyticBkgCombA(args):
         noUpdateDBAlias[k] = None
     for k in setupFinalWhateverAnalyticBkgCombAFitter['argAliasFromDB'].keys():
         noUpdateDBAlias[k] = None
+    plotCollection.plotterCfg['plots']['angular3D_bkgCombAWhateverAnalytic'] = {
+        'func': [functools.partial(plotCollection.plotSimpleBLK, frames='LK')],
+        'kwargs': {
+            'pltName': "angular3D_bkgCombAWhateverAnalytic",
+            'dataPlots': [["dataReader.SB", plotCollection.plotterCfg_styles['dataStyle'], "Sideband data"], ],
+            'pdfPlots': [["f_whateverAnalyticBkgCombA", plotCollection.plotterCfg_styles['bkgStyle'] + (ROOT.RooFit.NormRange("Fit"),), noUpdateDBAlias, "Alternative Bkg."],
+                        ],
+            'marks': {}}
+    }
     plotCollection.plotter.cfg['plots']['angular3D_final_whateverAnalyticBkgCombA'] = {
         'func': [functools.partial(plotCollection.plotSimpleBLK, frames='BLK')],
     'kwargs': {
@@ -1054,7 +1079,10 @@ def func_whateverAnalyticBkgCombA(args):
                     ],
         'marks': {}}
     }
-    plotCollection.plotter.cfg['switchPlots'] = ['angular3D_final_whateverAnalyticBkgCombA']
+    plotCollection.plotter.cfg['switchPlots'] = [
+            'angular3D_bkgCombAWhateverAnalytic',
+            # 'angular3D_final_whateverAnalyticBkgCombA',
+    ]
 
     p.setSequence([
         pdfCollection.stdWspaceReader,

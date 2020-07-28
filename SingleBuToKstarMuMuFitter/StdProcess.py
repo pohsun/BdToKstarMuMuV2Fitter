@@ -159,7 +159,7 @@ def setStyle():
     # My preferences:
     ROOT.gStyle.SetCanvasDefH(600)           # Height of canvas
     ROOT.gStyle.SetCanvasDefW(800)           # Width of canvas
-    ROOT.gStyle.SetPadTopMargin(0.07)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
+    ROOT.gStyle.SetPadTopMargin(0.08)        # default:0.05, avoid to overlap with 10^n. No Title in paper.
     ROOT.gStyle.SetPadBottomMargin(0.18)     # default:0.13, avoid to overlap with label
     ROOT.gStyle.SetPadLeftMargin(0.16)       # default:0.16, avoid to overlap with label
     ROOT.gStyle.SetPadRightMargin(0.05)      # default:0.02
@@ -170,10 +170,10 @@ def setStyle():
 
     ROOT.gStyle.SetTitleSize(0.08, "XYZ")    # title of axis
     ROOT.gStyle.SetTitleOffset(0.95, "X")
-    ROOT.gStyle.SetTitleOffset(1., "YZ")
+    ROOT.gStyle.SetTitleOffset(1.03, "YZ")
     ROOT.gStyle.SetLabelOffset(0.01, "XYZ")  # label of axis
-    ROOT.gStyle.SetLabelSize(0.06, "X")
-    ROOT.gStyle.SetLabelSize(0.06, "YZ")
+    ROOT.gStyle.SetLabelSize(0.055, "X")
+    ROOT.gStyle.SetLabelSize(0.055, "YZ")
     ROOT.gStyle.SetNdivisions(505, "XYZ")
 
     ROOT.gStyle.SetHistFillColor(0)
