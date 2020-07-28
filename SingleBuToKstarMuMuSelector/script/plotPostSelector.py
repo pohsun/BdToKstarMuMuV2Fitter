@@ -4,6 +4,7 @@ from __future__ import print_function, division
 
 import re
 from copy import copy
+import math
 import ROOT
 ROOT.ROOT.EnableImplicitMT()
 
@@ -42,7 +43,39 @@ if __name__ == '__main__':
 	    'hist': sngDataFrame_DATA.Histo1D(("postSel_LambdaMass", "", 50, 1.1, 1.15), "Lambdamass"),
 	    'xTitle': "m_{p#pi} [GeV]",
 	}
+
+    postSel_KstarMass_formula = ROOT.TF1("postSel_KstarMass_formula", "[0]+[1]*(x-0.892)+[2]*exp(-0.5*((x-[3])/[4])**2)", 0.792, 0.992)
+    postSel_KstarMass_formula.SetParLimits(2, 0, 1e8)
+    postSel_KstarMass_formula.SetParLimits(3, 0.85, 0.95)
+    postSel_KstarMass_formula.SetParLimits(4, 0.01, 0.1)
+    postSel_KstarMass_formula.SetParameter(2, 90)
+    postSel_KstarMass_formula.SetParameter(3, 0.892)
+    postSel_KstarMass_formula.SetParameter(4, 0.05)
+    plots['postSel_KstarMass_data_bin0'] = {
+	    'hist': sngDataFrame_DATA.Filter(anaSetup.q2bins['summary']['cutString']).Filter(anaSetup.cuts[-1]).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'xTitle': "m_{K^{*#pm}} [GeV]",
+	    'fitFormula': postSel_KstarMass_formula
+	}
+
+    plots['postSel_KstarMass_SR_data_bin0'] = {
+	    'hist': sngDataFrame_DATA.Filter(selConditions).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'xTitle': "m_{K^{*#pm}} [GeV]",
+	    'fitFormula': postSel_KstarMass_formula,
+	}
+
+    plots['postSel_KstarMass_SR_sigMC_bin0'] = {
+	    'hist': sngDataFrame_MC.Filter(selConditions).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'xTitle': "m_{K^{*#pm}} [GeV]",
+	    'fitFormula': postSel_KstarMass_formula,
+	    'marks': ['sim']
+	}
     
+    plots['postSel_KstarMass_jpsiCR_data_bin2'] = {
+	    'hist': sngDataFrame_DATA.Filter(selConditions_jpsi).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'xTitle': "m_{K^{*#pm}} [GeV]",
+	    'fitFormula': postSel_KstarMass_formula,
+	}
+
     # It seems RDataFrame.Histo2D is weird, not all draw options is supported.
     treeMC.Draw("Bvtxcl:CosThetaK>>postSel_CosThetaK_Bvtxcl_bin0(10, -1, 1, 18, 0.1, 1)", selConditions, "goff")
     plots['postSel_CosThetaK_Bvtxcl_bin0'] = {
@@ -100,7 +133,11 @@ if __name__ == '__main__':
     #         'yTitle': "B^{+} vtx CL",
     #	      'marks': ['sim'],
     #     }
-    
+
+    for k,v in plots.items():
+	if k not in ["postSel_KstarMass_data_bin0", "postSel_KstarMass_SR_data_bin0", "postSel_KstarMass_SR_sigMC_bin0", "postSel_KstarMass_jpsiCR_data_bin2"]:
+	    plots.pop(k)
+
     # Draw all figures
     canvas = Plotter.canvas
     for hName, hCfg in plots.items():
@@ -134,12 +171,17 @@ if __name__ == '__main__':
 		hist.SetXTitle(hCfg.get('xTitle', "Arbitrary unit"))
 		hist.SetYTitle(hCfg.get('yTitle', "Events"))
 		hist.SetZTitle(hCfg.get('zTitle', "Events"))
-		Plotter.latexDataMarks(hCfg.get('marks', None))
+		Plotter.latexDataMarks(hCfg.get('marks', None), extraArgs={'y':0.86})
 		canvas.Update()
 		canvas.Print("{0}__{1}.pdf".format(hName, opt.replace(' ', '_')))
 	else:
 	    for optIdx, opt in enumerate(hCfg.get('drawOpt', ["E"])):
 		opt = opt.upper()
+		
+		if 'fitFormula' in hCfg.keys():
+		    firResult = hist.Fit(hCfg['fitFormula'], "LSN")
+		    renormFactor = 1./math.sqrt(2*math.pi)/hCfg['fitFormula'].GetParameter(4)
+		    print(hCfg['fitFormula'].GetParameter(2)*renormFactor, hCfg['fitFormula'].GetParError(2)*renormFactor)
 
 		hist.Draw(opt)
 		if optIdx == 0:
@@ -147,6 +189,6 @@ if __name__ == '__main__':
 		    hist.SetMinimum(1.5 * hist.GetMaximum())
 		hist.SetXTitle(hCfg.get('xTitle', "Arbitrary unit"))
 		hist.SetYTitle(hCfg.get('yTitle', "Events"))
-		Plotter.latexDataMarks(hCfg.get('marks', None))
+		Plotter.latexDataMarks(hCfg.get('marks', None), extraArgs={'y':0.86})
 		canvas.Update()
 		canvas.Print("{0}__{1}.pdf".format(hName, opt.replace(' ', '_')))
