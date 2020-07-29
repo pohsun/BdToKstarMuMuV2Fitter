@@ -52,26 +52,26 @@ if __name__ == '__main__':
     postSel_KstarMass_formula.SetParameter(3, 0.892)
     postSel_KstarMass_formula.SetParameter(4, 0.05)
     plots['postSel_KstarMass_data_bin0'] = {
-	    'hist': sngDataFrame_DATA.Filter(anaSetup.q2bins['summary']['cutString']).Filter(anaSetup.cuts[-1]).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'hist': sngDataFrame_DATA.Filter(anaSetup.q2bins['summary']['cutString']).Filter(anaSetup.cuts[-1]).Histo1D(("postSel_KstarMass", "", 20, 0.792, 0.992), "Kstarmass"),
 	    'xTitle': "m_{K^{*#pm}} [GeV]",
 	    'fitFormula': postSel_KstarMass_formula
 	}
 
     plots['postSel_KstarMass_SR_data_bin0'] = {
-	    'hist': sngDataFrame_DATA.Filter(selConditions).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'hist': sngDataFrame_DATA.Filter(selConditions).Histo1D(("postSel_KstarMass", "", 20, 0.792, 0.992), "Kstarmass"),
 	    'xTitle': "m_{K^{*#pm}} [GeV]",
 	    'fitFormula': postSel_KstarMass_formula,
 	}
 
     plots['postSel_KstarMass_SR_sigMC_bin0'] = {
-	    'hist': sngDataFrame_MC.Filter(selConditions).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'hist': sngDataFrame_MC.Filter(selConditions).Histo1D(("postSel_KstarMass", "", 20, 0.792, 0.992), "Kstarmass"),
 	    'xTitle': "m_{K^{*#pm}} [GeV]",
 	    'fitFormula': postSel_KstarMass_formula,
 	    'marks': ['sim']
 	}
     
     plots['postSel_KstarMass_jpsiCR_data_bin2'] = {
-	    'hist': sngDataFrame_DATA.Filter(selConditions_jpsi).Histo1D(("postSel_KstarMass", "", 50, 0.792, 0.992), "Kstarmass"),
+	    'hist': sngDataFrame_DATA.Filter(selConditions_jpsi).Histo1D(("postSel_KstarMass", "", 20, 0.792, 0.992), "Kstarmass"),
 	    'xTitle': "m_{K^{*#pm}} [GeV]",
 	    'fitFormula': postSel_KstarMass_formula,
 	}
