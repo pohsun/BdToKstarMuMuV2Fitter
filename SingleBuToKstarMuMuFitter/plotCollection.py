@@ -112,8 +112,8 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     h2_effi_sigA_fine.SetLineColor(2)
     h2_effi_sigA_fine.Draw("SURF SAME0")
     Plotter.latexCMSSim(.08, .93)
-    # Plotter.latexCMSExtra(.08, .87)
-    Plotter.latexQ2(self.process.cfg['binKey'], .50, .93)
+    Plotter.latexQ2(self.process.cfg['binKey'], .10, .86)
+    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{(8 TeV)}}")
     self.canvasPrint(pltName + "_2D")
 
     data_accXrec.Scale(0.01)  # Scale back, Normalization to be handled with RooFit in 1D plot
@@ -139,6 +139,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     legend.Draw()
     Plotter.latexDataMarks(['sim'])
     Plotter.latexQ2(self.process.cfg['binKey'])
+    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{(8 TeV)}}")
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
@@ -160,6 +161,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     legend.Draw()
     Plotter.latexDataMarks(['sim'])
     Plotter.latexQ2(self.process.cfg['binKey'])
+    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{(8 TeV)}}")
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
 types.MethodType(plotEfficiency, None, Plotter)
