@@ -201,8 +201,8 @@ def table_paper_results():
     print("[table_paper_results] Printing table of final result")
     print("")
     print(indent * (baseIndentLevel + 0) + r"\begin{tabular}{cccc}")
-    print(indent * (baseIndentLevel + 1) + r"\qq ($\GeVns^2$) & Signal yield & \afb & \fl \\[1pt]")
-    print(indent * (baseIndentLevel + 1) + r"\hline")
+    print(indent * (baseIndentLevel + 1) + r"\qq ($\GeVns^2$) & $Y_S$ & \afb & \fl \\[1pt]")
+    print(indent * (baseIndentLevel + 1) + r"\hline\rule{0pt}{3ex}")
 
     binKeyToLine = OrderedDict()
     binKeyToLine['belowJpsi'] = [r"1.00 -- 8.68"]
@@ -221,12 +221,12 @@ def table_paper_results():
             db = shelve.open(r"{0}/fitResults_{1}.db".format(db_dir, q2bins[binKey]['label']))
             latexLine.append(r"${0:.01f} \pm {1:.01f}$".format(db['nSig']['getVal'], db['nSig']['getError']))
             fl = unboundFlToFl(db['unboundFl']['getVal'])
-            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
+            latexLine.append("${0:.2f}^{{\\text{{~}}{1:+.2f}}}_{{\\text{{~}}{2:+.2f}}} \pm {3:.2f}$".format(
                 unboundAfbToAfb(db['unboundAfb']['getVal'], fl),
                 db['stat_FC_afb']['getErrorHi'],
                 db['stat_FC_afb']['getErrorLo'],
                 math.sqrt(sum([pow(db[v + '_afb']['getError'], 2) for v in syst_sources]))))
-            latexLine.append("${0:.2f}^{{{1:+.2f}}}_{{{2:+.2f}}} \pm {3:.2f}$".format(
+            latexLine.append("${0:.2f}^{{\\text{{~}}{1:+.2f}}}_{{\\text{{~}}{2:+.2f}}} \pm {3:.2f}$".format(
                 fl,
                 db['stat_FC_fl']['getErrorHi'],
                 db['stat_FC_fl']['getErrorLo'],
