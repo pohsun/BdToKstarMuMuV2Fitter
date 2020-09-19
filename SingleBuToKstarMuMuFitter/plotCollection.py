@@ -451,7 +451,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         for binKeyIdx, binKey in enumerate(binKeys):
             self.logger.logDEBUG("afb = {0} +{1} -{2} +- {3}".format(yyAfb[binKeyIdx], yyAfbStatErrHi[binKeyIdx], yyAfbStatErrLo[binKeyIdx], yyAfbSystErrHi[binKeyIdx]))
-            self.logger.logDEBUG("fl = {0} +{1} -{2} +- {3}".format(yyFl[binKeyIdx], yyFlStatErrHi[binKeyIdx], yyFlStatErrLo[binKeyIdx], yyFlSystErrHi[binKeyIdx]]))
+            self.logger.logDEBUG("fl = {0} +{1} -{2} +- {3}".format(yyFl[binKeyIdx], yyFlStatErrHi[binKeyIdx], yyFlStatErrLo[binKeyIdx], yyFlSystErrHi[binKeyIdx]))
 
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(fillColor if fillColor else 2)
@@ -558,7 +558,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.GetXaxis().SetRangeUser(1, 19)
         gr.GetYaxis().SetTitle("F_{L}")
         gr.GetYaxis().SetTitleOffset(0.8)
-        gr.GetYaxis().SetRangeUser(0, 1.2)
+        gr.GetYaxis().SetRangeUser(0, 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
@@ -567,9 +567,9 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
             else:
                 gr.Draw(opt + " SAME")
     jpsiBox.SetY1(0)
-    jpsiBox.SetY2(1.2)
+    jpsiBox.SetY2(1.)
     psi2sBox.SetY1(0)
-    psi2sBox.SetY2(1.2)
+    psi2sBox.SetY2(1.)
     jpsiBox.Draw()
     psi2sBox.Draw()
     legendFl.Draw()
