@@ -14,7 +14,7 @@ modulePath = os.path.abspath(os.path.dirname(__file__))
 
 # q2 bins
 q2bins = {}
-q2LatexLabel = "#font[132]{q^{2}}" # Copy this from varCollection
+q2LatexLabel = "#font[12]{q^{2}}" # Copy this from varCollection
 def createBinTemplate(name, lowerBd, upperBd):
     template = {
         'q2range': (lowerBd, upperBd),
@@ -26,7 +26,7 @@ def createBinTemplate(name, lowerBd, upperBd):
 
 q2bins['belowJpsi'] = createBinTemplate("bin1", 1., 8.68)
 q2bins['betweenPeaks'] = createBinTemplate("bin3", 10.09, 12.86)
-q2bins['abovePsi2s'] = createBinTemplate("bin5", 14.18, 19.00)
+q2bins['abovePsi2s'] = createBinTemplate("bin5", 14.18, 19.)
 # q2bins['summaryLowQ2'] = createBinTemplate("summaryLowQ2", 1., 6.)
 q2bins['summary'] = createBinTemplate("bin0", 1., 19.)
 q2bins['summary']['cutString'] = "(Mumumass > 1 && Mumumass < 4.35890) && !(Mumumass > 2.94618 && Mumumass < 3.17648) && !(Mumumass > 3.58608 && Mumumass < 3.76563)"

@@ -41,8 +41,10 @@ class Plotter(Path):
     def canvasPrint(self, name, withBinLabel=True):
         Plotter.canvas.Update()
         if withBinLabel:
+            ROOT.gPad.RedrawAxis()
             Plotter.canvas.Print("{0}_{1}.pdf".format(name, q2bins[self.process.cfg['binKey']]['label']))
         else:
+            ROOT.gPad.RedrawAxis()
             Plotter.canvas.Print("{0}.pdf".format(name))
 
     latex = ROOT.TLatex()
