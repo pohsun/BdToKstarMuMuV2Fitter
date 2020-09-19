@@ -113,7 +113,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     h2_effi_sigA_fine.Draw("SURF SAME0")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexQ2(self.process.cfg['binKey'], .10, .86)
-    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{(8 TeV)}}")
+    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
     self.canvasPrint(pltName + "_2D")
 
     data_accXrec.Scale(0.01)  # Scale back, Normalization to be handled with RooFit in 1D plot
@@ -139,7 +139,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     legend.Draw()
     Plotter.latexDataMarks(['sim'])
     Plotter.latexQ2(self.process.cfg['binKey'])
-    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{(8 TeV)}}")
+    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
@@ -161,7 +161,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     legend.Draw()
     Plotter.latexDataMarks(['sim'])
     Plotter.latexQ2(self.process.cfg['binKey'])
-    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{(8 TeV)}}")
+    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
 types.MethodType(plotEfficiency, None, Plotter)
@@ -283,6 +283,9 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
                     marks={'extraArgs': {'msg': ""}} if regionName == "Fit" else None,
                     legend=plotFuncs[frame].get('legend', legend),
                     scaleYaxis=plotFuncs[frame]['scaleYaxis'])
+            if regionName == "SR":
+                Plotter.latex.DrawLatexNDC(.19, .77, "#font[42]{#scale[0.6]{5.18 < #font[12]{m}(#font[132]{K_{S}^{0}#pi^{+}#mu^{+}#mu^{#font[122]{\55}}}) < 5.38 GeV}}") # Copy from varCollection.py
+
             if drawLatexFitResults:
                 if frame == 'B':
                     Plotter.latex.DrawLatexNDC(.19, .77, "Y_{Signal}")
@@ -328,12 +331,17 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         flSystErrorLo = []
         afbSystErrorHi = []
         afbSystErrorLo = []
-        systErrorSourceBlackList = ["^syst_altFitRange_.*$"]
+        systErrorSourceWhiteList = [
+                "^syst_randEffi_.*$",
+                "^syst_altEffi_.*$",
+                "^syst_bkgCombShape.*$",
+                "^syst_altSP_.*$"]
         for key, val in db.items():
-            if re.match("^syst_.*_afb$", key) and not any([re.match(pat, key) for pat in systErrorSourceBlackList]):
+            if re.match("^syst_.*_afb$", key) and any([re.match(pat, key) for pat in systErrorSourceWhiteList]):
+                print(key)
                 afbSystErrorHi.append(db[key]['getErrorHi'])
                 afbSystErrorLo.append(db[key]['getErrorLo'])
-            if re.match("^syst_.*_fl$", key) and not any([re.match(pat, key) for pat in systErrorSourceBlackList]):
+            if re.match("^syst_.*_fl$", key) and any([re.match(pat, key) for pat in systErrorSourceWhiteList]):
                 flSystErrorHi.append(db[key]['getErrorHi'])
                 flSystErrorLo.append(db[key]['getErrorLo'])
         return quadSum(flSystErrorHi), quadSum(flSystErrorLo), quadSum(afbSystErrorHi), quadSum(afbSystErrorLo)
@@ -441,6 +449,10 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
             finally:
                 db.close()
 
+        for binKeyIdx, binKey in enumerate(binKeys):
+            self.logger.logDEBUG("afb = {0} +{1} -{2} +- {3}".format(yyAfb[binKeyIdx], yyAfbStatErrHi[binKeyIdx], yyAfbStatErrLo[binKeyIdx], yyAfbSystErrHi[binKeyIdx]))
+            self.logger.logDEBUG("fl = {0} +{1} -{2} +- {3}".format(yyFl[binKeyIdx], yyFlStatErrHi[binKeyIdx], yyFlStatErrLo[binKeyIdx], yyFlSystErrHi[binKeyIdx]]))
+
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(fillColor if fillColor else 2)
         grAfb.SetMarkerSize(2)
@@ -537,6 +549,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     line.DrawLineNDC(.785, .335, .785, .365)
     line.DrawLineNDC(.817, .335, .817, .365)
     Plotter.latexDataMarks(**marks)
+    ROOT.gPad.RedrawAxis()
     self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
@@ -563,6 +576,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     line.DrawLineNDC(.785, .855, .785, .885)
     line.DrawLineNDC(.817, .855, .817, .885)
     Plotter.latexDataMarks(**marks)
+    ROOT.gPad.RedrawAxis()
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
