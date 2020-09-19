@@ -239,3 +239,33 @@ TTar Define_GetValAtArgMax(const ROOT::VecOps::RVec<TTar> &targetCol, const ROOT
     return targetCol.at(argmax);
 }
 
+template<class TTar>
+TTar Define_GetSum(const ROOT::VecOps::RVec<TTar> &targetCol, const ROOT::VecOps::RVec<int> &bitSwitch){
+    TTar sum = 0;
+    for(int ibit = 0; ibit < targetCol.size(); ibit++){
+        if (bitSwitch.at(ibit) > 0){
+            sum += targetCol.at(ibit);
+        }
+    }
+    return sum;
+}
+
+template<class TTar>
+TTar Define_GetSum(const ROOT::VecOps::RVec<TTar> &targetCol){
+    TTar sum = 0;
+    for(auto &ibin: targetCol){
+        sum += ibin;
+    }
+    return sum;
+}
+
+template<class TTar>
+int Define_CountNonzero(const ROOT::VecOps::RVec<TTar> &targetCol){
+    int sum = 0;
+    for(auto &ibin: targetCol){
+        if (ibin != 0){
+            sum += 1;
+        }
+    }
+    return sum;
+}
