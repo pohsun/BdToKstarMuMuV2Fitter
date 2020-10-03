@@ -317,7 +317,9 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     binKeys = ['belowJpsi', 'betweenPeaks', 'abovePsi2s']
 
     xx = array('d', [sum(q2bins[binKey]['q2range']) / 2 for binKey in binKeys])
-    xxErr = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
+    xxErrVariedWitdh = array('d', map(lambda t: (t[1] - t[0]) / 2, [q2bins[binKey]['q2range'] for binKey in binKeys]))
+    xxErrFixedWidth = array('d', [ 0. for binKey in binKeys])
+    xxErr = xxErrFixedWidth
 
     grFls = []
     grAfbs = []
@@ -474,8 +476,14 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
             legendFl.AddEntry(grFl, title, legendOpt)
 
     if drawSM:
+        xxSMOffset = 0.5
+        xxSM = array('d', [sum(q2bins[binKey]['q2range']) / 2 + xxSMOffset for binKey in binKeys])
+        # xxErrHiSM = array('d', map(lambda t: (t[1] - t[0]) / 2 - xxSMOffset, [q2bins[binKey]['q2range'] for binKey in binKeys]))
+        # xxErrLoSM = array('d', map(lambda t: (t[1] - t[0]) / 2 + xxSMOffset, [q2bins[binKey]['q2range'] for binKey in binKeys]))
+        xxErrHiSM = xxErr
+        xxErrLoSM = xxErr
         dbSetup.insert(0, {
-            'drawOpt': ["2", "ZP0"],
+            'drawOpt': ["ZP0"],
         })
         yyFl = array('d', [0] * len(binKeys))
         yyFlErrHi = array('d', [0] * len(binKeys))
@@ -503,38 +511,38 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
                 yyAfbErrHi[binKeyIdx] = 0
                 yyAfbErrLo[binKeyIdx] = 0
 
-        grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyAfb, xxErr, xxErr, yyAfbErrLo, yyAfbErrHi)
+        grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xxSM, yyAfb, xxErrLoSM, xxErrHiSM, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(4)
-        grAfb.SetMarkerStyle(4)
+        grAfb.SetMarkerStyle(2)
         grAfb.SetMarkerSize(2)
         grAfb.SetLineColor(4)
         grAfb.SetFillColor(4)
         grAfb.SetFillStyle(3003)
         grAfbs.insert(0, grAfb)
-        legendAfb.AddEntry(grAfb, "SM", "LPF")
+        legendAfb.AddEntry(grAfb, "SM", "PE")
 
-        grFl = ROOT.TGraphAsymmErrors(len(binKeys), xx, yyFl, xxErr, xxErr, yyFlErrLo, yyFlErrHi)
+        grFl = ROOT.TGraphAsymmErrors(len(binKeys), xxSM, yyFl, xxErrLoSM, xxErrHiSM, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(4)
-        grFl.SetMarkerStyle(4)
+        grFl.SetMarkerStyle(2)
         grFl.SetMarkerSize(2)
         grFl.SetLineColor(4)
         grFl.SetFillColor(4)
         grFl.SetFillStyle(3003)
         grFls.insert(0, grFl)
-        legendFl.AddEntry(grFl, "SM", "LPF")
+        legendFl.AddEntry(grFl, "SM", "PE")
 
     for grIdx, gr in enumerate(grAfbs):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle(Q2.GetTitle())
-        gr.GetXaxis().SetRangeUser(1, 19)
+        gr.GetXaxis().SetLimits(1, 19)
         gr.GetYaxis().SetTitle("A_{FB}")
         gr.GetYaxis().SetTitleOffset(0.8)
         gr.GetYaxis().SetRangeUser(-1., 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
-            if grIdx == 0:
-                gr.Draw("A" + opt if optIdx == 0 else opt)
+            if grIdx == 0 and optIdx == 0:
+                gr.Draw("A" + opt)
             else:
                 gr.Draw(opt + " SAME")
     jpsiBox = ROOT.TBox(8.69, -1, 10.08, 1)
@@ -546,24 +554,23 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     legendAfb.Draw()
     line = ROOT.TLine()
     line.SetLineWidth(2)
-    line.DrawLineNDC(.785, .335, .785, .365)
-    line.DrawLineNDC(.817, .335, .817, .365)
+    # line.DrawLineNDC(.785, .335, .785, .365)
+    # line.DrawLineNDC(.817, .335, .817, .365)
     Plotter.latexDataMarks(**marks)
-    ROOT.gPad.RedrawAxis()
     self.canvasPrint(pltName + '_afb', False)
 
     for grIdx, gr in enumerate(grFls):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle(Q2.GetTitle())
-        gr.GetXaxis().SetRangeUser(1, 19)
+        gr.GetXaxis().SetLimits(1, 19)
         gr.GetYaxis().SetTitle("F_{L}")
         gr.GetYaxis().SetTitleOffset(0.8)
         gr.GetYaxis().SetRangeUser(0, 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
         for optIdx, opt in enumerate(drawOpt):
-            if grIdx == 0:
-                gr.Draw("A" + opt if optIdx == 0 else opt)
+            if grIdx == 0 and optIdx == 0:
+                gr.Draw("A" + opt)
             else:
                 gr.Draw(opt + " SAME")
     jpsiBox.SetY1(0)
@@ -573,10 +580,9 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
     jpsiBox.Draw()
     psi2sBox.Draw()
     legendFl.Draw()
-    line.DrawLineNDC(.785, .855, .785, .885)
-    line.DrawLineNDC(.817, .855, .817, .885)
+    # line.DrawLineNDC(.785, .855, .785, .885)
+    # line.DrawLineNDC(.817, .855, .817, .885)
     Plotter.latexDataMarks(**marks)
-    ROOT.gPad.RedrawAxis()
     self.canvasPrint(pltName + '_fl', False)
 types.MethodType(plotSummaryAfbFl, None, Plotter)
 
@@ -735,7 +741,7 @@ plotterCfg['plots']['angular3D_summary'] = {
         'pltName': "angular3D_summary",
         'dbSetup': [{'title': "Data",
                      'statErrorKey': 'FeldmanCousins',
-                     'legendOpt': "LPE",
+                     'legendOpt': "PE",
                      'fillColor': 1,
                      },
                     {'title': "Data",
