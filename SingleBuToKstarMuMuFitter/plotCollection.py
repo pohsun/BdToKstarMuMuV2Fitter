@@ -113,10 +113,12 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     h2_effi_sigA_fine.Draw("SURF SAME0")
     Plotter.latexCMSSim(.08, .93)
     Plotter.latexQ2(self.process.cfg['binKey'], .10, .86)
-    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
+    Plotter.latex.DrawLatexNDC(0.83, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
     self.canvasPrint(pltName + "_2D")
 
     data_accXrec.Scale(0.01)  # Scale back, Normalization to be handled with RooFit in 1D plot
+    extraSpacePadLeftMargin = 0.02
+    self.canvas.SetLeftMargin(Plotter.canvasLeftMargin + extraSpacePadLeftMargin) 
 
     cloned_frameL = Plotter.frameL.emptyClone("cloned_frameL")
     h_accXrec_fine_ProjectionX = self.process.sourcemanager.get("effiHistReader.h_accXrec_fine_ProjectionX")
@@ -125,7 +127,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     pdfL = self.process.sourcemanager.get("effi_cosl")
     pdfL.plotOn(cloned_frameL, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), ROOT.RooFit.Name("pdfL"), *plotterCfg_styles['sigStyleNoFillBase'])
     cloned_frameL.GetYaxis().SetTitle("Efficiency [%]")
-    # cloned_frameL.GetYaxis().SetTitleOffset(1.)
+    cloned_frameL.GetYaxis().SetTitleOffset(1.15)
     cloned_frameL.SetMaximum(1.5 * cloned_frameL.GetMaximum())
     cloned_frameL.Draw()
     legend = ROOT.TLegend(.7,.7,.95,.9)
@@ -137,9 +139,9 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     histL.SetLineColor(4)
     legend.AddEntry(histL, "Fit", "LF")
     legend.Draw()
-    Plotter.latexDataMarks(['sim'])
-    Plotter.latexQ2(self.process.cfg['binKey'])
-    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
+    Plotter.latexCMSSim(x=Plotter.canvasLeftMargin+extraSpacePadLeftMargin)
+    Plotter.latexQ2(self.process.cfg['binKey'], x=Plotter.canvasLeftMargin+0.03+extraSpacePadLeftMargin)
+    Plotter.latex.DrawLatexNDC(0.83, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameL.chiSquare()))
     self.canvasPrint(pltName + "_cosl")
 
@@ -150,7 +152,7 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     pdfK = self.process.sourcemanager.get("effi_cosK")
     pdfK.plotOn(cloned_frameK, ROOT.RooFit.Normalization(100, ROOT.RooAbsReal.Relative), ROOT.RooFit.Name("pdfK"), *plotterCfg_styles['sigStyleNoFillBase'])
     cloned_frameK.GetYaxis().SetTitle("Efficiency [%]")
-    # cloned_frameK.GetYaxis().SetTitleOffset(1.)
+    cloned_frameK.GetYaxis().SetTitleOffset(1.15)
     cloned_frameK.SetMaximum(1.5 * cloned_frameK.GetMaximum())
     cloned_frameK.Draw()
     legend.Clear()
@@ -159,11 +161,13 @@ def plotEfficiency(self, dataName, pdfName, argAliasInDB=None, pltName="effi"):
     histK.SetLineColor(4)
     legend.AddEntry(histK, "Fit", "LF")
     legend.Draw()
-    Plotter.latexDataMarks(['sim'])
-    Plotter.latexQ2(self.process.cfg['binKey'])
-    Plotter.latex.DrawLatexNDC(0.81, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
+    Plotter.latexCMSSim(x=Plotter.canvasLeftMargin+extraSpacePadLeftMargin)
+    Plotter.latexQ2(self.process.cfg['binKey'], x=Plotter.canvasLeftMargin+0.03+extraSpacePadLeftMargin)
+    Plotter.latex.DrawLatexNDC(0.83, 0.938, "#font[42]{#scale[0.8]{8 TeV}}")
     #  Plotter.latex.DrawLatexNDC(.85, .89, "#chi^{{2}}={0:.2f}".format(cloned_frameK.chiSquare()))
     self.canvasPrint(pltName + "_cosK")
+    
+    self.canvas.SetLeftMargin(Plotter.canvasLeftMargin)
 types.MethodType(plotEfficiency, None, Plotter)
 
 def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
@@ -284,7 +288,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
                     legend=plotFuncs[frame].get('legend', legend),
                     scaleYaxis=plotFuncs[frame]['scaleYaxis'])
             if regionName == "SR":
-                Plotter.latex.DrawLatexNDC(.19, .77, "#font[42]{#scale[0.6]{5.18 < #font[12]{m}(#font[132]{K_{S}^{0}#pi^{+}#mu^{+}#mu^{#font[122]{\55}}}) < 5.38 GeV}}") # Copy from varCollection.py
+                Plotter.latex.DrawLatexNDC(.19, .77, "#font[42]{#scale[0.8]{5.18 < #font[12]{m}(#font[132]{K_{S}^{0}#pi^{+}#mu^{+}#mu^{#font[122]{\55}}}) < 5.38 GeV}}") # Copy from varCollection.py
 
             if drawLatexFitResults:
                 if frame == 'B':
@@ -382,7 +386,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         'Minuit': getStatError_Minuit,
     }
 
-    legendFl = ROOT.TLegend(.78, .72, .95, .92)
+    legendFl = ROOT.TLegend(.78, .20, .95, .40)
     legendFl.SetFillColor(0)
     legendFl.SetFillStyle(0)
     legendFl.SetBorderSize(0)
@@ -513,7 +517,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grAfb = ROOT.TGraphAsymmErrors(len(binKeys), xxSM, yyAfb, xxErrLoSM, xxErrHiSM, yyAfbErrLo, yyAfbErrHi)
         grAfb.SetMarkerColor(4)
-        grAfb.SetMarkerStyle(2)
+        grAfb.SetMarkerStyle(8)
         grAfb.SetMarkerSize(2)
         grAfb.SetLineColor(4)
         grAfb.SetFillColor(4)
@@ -523,7 +527,7 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
 
         grFl = ROOT.TGraphAsymmErrors(len(binKeys), xxSM, yyFl, xxErrLoSM, xxErrHiSM, yyFlErrLo, yyFlErrHi)
         grFl.SetMarkerColor(4)
-        grFl.SetMarkerStyle(2)
+        grFl.SetMarkerStyle(8)
         grFl.SetMarkerSize(2)
         grFl.SetLineColor(4)
         grFl.SetFillColor(4)
@@ -535,8 +539,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle(Q2.GetTitle())
         gr.GetXaxis().SetLimits(1, 19)
-        gr.GetYaxis().SetTitle("A_{FB}")
-        gr.GetYaxis().SetTitleOffset(0.8)
+        gr.GetYaxis().SetTitle("#font[12]{A}_{#font[132]{FB}}")
+        gr.GetYaxis().SetTitleOffset(0.9)
         gr.GetYaxis().SetRangeUser(-1., 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]
@@ -563,8 +567,8 @@ def plotSummaryAfbFl(self, pltName, dbSetup, drawSM=False, marks=None):
         gr.SetTitle("")
         gr.GetXaxis().SetTitle(Q2.GetTitle())
         gr.GetXaxis().SetLimits(1, 19)
-        gr.GetYaxis().SetTitle("F_{L}")
-        gr.GetYaxis().SetTitleOffset(0.8)
+        gr.GetYaxis().SetTitle("#font[12]{F}_{#font[132]{L}}")
+        gr.GetYaxis().SetTitleOffset(0.9)
         gr.GetYaxis().SetRangeUser(0, 1.)
         gr.SetLineWidth(2)
         drawOpt = dbSetup[grIdx]['drawOpt'] if isinstance(dbSetup[grIdx]['drawOpt'], list) else [dbSetup[grIdx]['drawOpt']]

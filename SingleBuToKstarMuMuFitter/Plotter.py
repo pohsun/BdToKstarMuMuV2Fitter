@@ -37,6 +37,7 @@ class Plotter(Path):
     """The plotter"""
     setStyle()
     canvas = ROOT.TCanvas()
+    canvasLeftMargin = canvas.GetLeftMargin()
 
     def canvasPrint(self, name, withBinLabel=True):
         Plotter.canvas.Update()
@@ -48,14 +49,14 @@ class Plotter(Path):
             Plotter.canvas.Print("{0}.pdf".format(name))
 
     latex = ROOT.TLatex()
-    latexCMSMark = staticmethod(lambda x=0.16, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
-    latexCMSSim = staticmethod(lambda x=0.16, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{Simulation  {msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
-    latexCMSToy = staticmethod(lambda x=0.16, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{Post-fit Toy  {msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
-    latexCMSMix = staticmethod(lambda x=0.16, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{Toy + Simu.  {msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
-    latexCMSExtra = staticmethod(lambda x=0.19, y=0.79, msg="Internal": Plotter.latex.DrawLatexNDC(x, y, "#font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=msg if not isPreliminary else "Preliminary")))
+    latexCMSMark = staticmethod(lambda x=canvasLeftMargin, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
+    latexCMSSim = staticmethod(lambda x=canvasLeftMargin, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{Simulation  {msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
+    latexCMSToy = staticmethod(lambda x=canvasLeftMargin, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{Post-fit Toy  {msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
+    latexCMSMix = staticmethod(lambda x=canvasLeftMargin, y=0.938, extraMsg="": Plotter.latex.DrawLatexNDC(x, y, "#font[61]{{CMS}} #font[52]{{#scale[0.8]{{Toy + Simu.  {msg}}}}}".format(msg=extraMsg if not isPreliminary else "Preliminary")))
+    latexCMSExtra = staticmethod(lambda x=canvasLeftMargin+0.03, y=0.79, msg="Internal": Plotter.latex.DrawLatexNDC(x, y, "#font[52]{{#scale[0.8]{{{msg}}}}}".format(msg=msg if not isPreliminary else "Preliminary")))
     latexLumi = staticmethod(lambda x=0.64, y=0.938: Plotter.latex.DrawLatexNDC(x, y, "#font[42]{#scale[0.8]{20.0 fb^{-1} (8 TeV)}}"))
     @staticmethod
-    def latexQ2(binKey, x=0.19, y=0.83):
+    def latexQ2(binKey, x=canvasLeftMargin+0.03, y=0.83):
         Plotter.latex.DrawLatexNDC(x, y, r"#font[42]{{#scale[0.8]{{{latexLabel}}}}}".format(latexLabel=q2bins[binKey]['latexLabel']))
     @staticmethod
     def latexDataMarks(marks=None, extraArgs=None, **kwargs):
