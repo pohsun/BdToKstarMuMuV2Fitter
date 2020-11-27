@@ -204,6 +204,29 @@ ROOT::VecOps::RVec<double> Define_cosThetaK(
     return output;
 }
 
+ROOT::VecOps::RVec<double> Define_bzmass(
+        const ROOT::VecOps::RVec<double> &pippt,
+        const ROOT::VecOps::RVec<double> &pipeta,
+        const ROOT::VecOps::RVec<double> &pipphi,
+        const ROOT::VecOps::RVec<double> &pimpt,
+        const ROOT::VecOps::RVec<double> &pimeta,
+        const ROOT::VecOps::RVec<double> &pimphi,
+        const ROOT::VecOps::RVec<double> &mumumass,
+        const ROOT::VecOps::RVec<double> &dimupt,
+        const ROOT::VecOps::RVec<double> &dimueta,
+        const ROOT::VecOps::RVec<double> &dimuphi
+        ){
+    ROOT::VecOps::RVec<double> output(mumumass.size(), -BIGNUMBER);
+    TLorentzVector pip_4vec, pim_4vec, dimu_4vec;
+    for(unsigned int dimuIndex =0; dimuIndex < mumumass.size(); dimuIndex++){
+        pip_4vec.SetPtEtaPhiM(pippt.at(dimuIndex), pipeta.at(dimuIndex), pipphi.at(dimuIndex), PION_MASS);
+        pim_4vec.SetPtEtaPhiM(pimpt.at(dimuIndex), pimeta.at(dimuIndex), pimphi.at(dimuIndex), PION_MASS);
+        dimu_4vec.SetPtEtaPhiM(dimupt.at(dimuIndex), dimueta.at(dimuIndex), dimuphi.at(dimuIndex), mumumass.at(dimuIndex));
+        output.at(dimuIndex) = (pip_4vec+pim_4vec+dimu_4vec).M();
+    }
+    return output;
+}
+
 bool Filter_IsNonEmptyBit(const ROOT::VecOps::RVec<int> &bits){
     for(auto &bit: bits){
         if (bit > 0){

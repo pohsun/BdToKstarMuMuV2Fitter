@@ -46,6 +46,13 @@ float Define_LambdaBMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, f
     dimu.SetPtEtaPhiM(Dimupt, Dimueta, Dimuphi, Mumumass);
     return (proton+pion+dimu).Mag();
 }
+float Define_BdMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, float Pimeta, float Pimphi, float Dimupt, float Dimueta, float Dimuphi, float Mumumass){
+    TLorentzVector pip, pim, dimu;
+    pip.SetPtEtaPhiM(Pippt, Pipeta, Pipphi, PION_MASS);
+    pim.SetPtEtaPhiM(Pimpt, Pimeta, Pimphi, PION_MASS);
+    dimu.SetPtEtaPhiM(Dimupt, Dimueta, Dimuphi, Mumumass);
+    return (pip+pim+dimu).Mag();
+}
 """
 ROOT.gInterpreter.Declare(cimp_Define_LambdaMass)
 
@@ -65,6 +72,7 @@ if __name__ == '__main__':
         .Alias("LambdaMass", "Lambdamass")\
         .Define("KshortMass", "Define_KshortMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
         .Define("KstarMass", "Define_KstarMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Trkpt, Trketa, Trkphi)")\
+        .Define("BdMass", "Define_BdMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")\
         .Define("LambdaBMass", "Define_LambdaBMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")
         #.Define("LambdaMass", "Define_LambdaMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
     df_LambdaSR = df.Filter("LambdaMass>1.11 && LambdaMass<1.125")
@@ -84,6 +92,9 @@ if __name__ == '__main__':
         'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_LambdaMass_SB_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
         'xTitle': varCollection.Lambdamass.GetTitle()
     }
+    hists['h_BdMass_bin0'] = {
+        'hist': df.Histo1D(("h_BdMass_bin0", "", 26, 4.76, 5.80), "BdMass"),
+        'xTitle': varCollection.Bdmass.GetTitle()}
     hists['h_LambdaBMass_LambdaSR_bin0'] = {
         'hist': df_LambdaSR.Histo1D(("h_LambdaBMass_LambdaSR_bin0", "", 26, 4.76, 5.80), "LambdaBMass"),
         'xTitle': varCollection.Lambdabmass.GetTitle()}
