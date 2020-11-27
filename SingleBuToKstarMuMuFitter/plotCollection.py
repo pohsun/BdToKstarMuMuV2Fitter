@@ -288,7 +288,7 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
                     legend=plotFuncs[frame].get('legend', legend),
                     scaleYaxis=plotFuncs[frame]['scaleYaxis'])
             if regionName == "SR":
-                Plotter.latex.DrawLatexNDC(.19, .77, "#font[42]{#scale[0.8]{5.18 < #font[12]{m}(#font[132]{K_{S}^{0}#pi^{+}#mu^{+}#mu^{#font[122]{\55}}}) < 5.38 GeV}}") # Copy from varCollection.py
+                Plotter.latex.DrawLatexNDC(.19, .76, "#font[42]{#scale[0.8]{5.18 < #font[12]{m} < 5.38 GeV}}") # Copy from varCollection.py
 
             if drawLatexFitResults:
                 if frame == 'B':

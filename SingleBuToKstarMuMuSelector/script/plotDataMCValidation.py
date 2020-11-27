@@ -70,7 +70,7 @@ def create_histo(kwargs):
 
     aug_df_PassAll = aug_df\
         .Filter("Filter_IsNonEmptyBit(PassAll)")\
-        .Define("BestCand_weight", "Define_GetValAtArgMax(weight, bvtxcl, PassAll)")\
+        .Define("BestCand_weight", "Define_GetValAtArgMax(weight, bvtxcl, PassAll)")
 
     h_Bmass = aug_df_PassAll\
         .Define("BestCand_bmass", "Define_GetValAtArgMax(bmass, bvtxcl, PassAll)")\
@@ -79,6 +79,10 @@ def create_histo(kwargs):
         .Define("bpt", "sqrt(bpx*bpx+bpy*bpy)")\
         .Define("BestCand_bpt", "Define_GetValAtArgMax(bpt, bvtxcl, PassAll)")\
         .Histo1D(("h_Bpt", "", 50, 0, 100), "BestCand_bpt", "BestCand_weight")
+    h_Bmultiplicity = aug_df_PassAll\
+        .Define("Bmultiplicity", "Define_CountNonzero(PassAll)")\
+        .Histo1D(("h_Bmultiplicity", "", 10, 0, 10), "Bmultiplicity")
+
     cimp_getPhi = """
 #include "math.h"
 ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const ROOT::VecOps::RVec<double> &px)
@@ -103,7 +107,7 @@ ROOT::VecOps::RVec<double> getPhi(const ROOT::VecOps::RVec<double> &py, const RO
         .Define("BestCand_cosThetaK", "Define_GetValAtArgMax(cosThetaK, bvtxcl, PassAll)")\
         .Histo1D(("h_CosThetaK", "", 20, -1, 1), "BestCand_cosThetaK", "BestCand_weight")
 
-    hists = [h_Bmass, h_Trkpt, h_Bvtxcl, h_Blxysig, h_Bcosalphabs2d, h_Trkdcabssig, h_Kshortpt, h_Bpt, h_Bphi, h_CosThetaL, h_CosThetaK]
+    hists = [h_Bmass, h_Trkpt, h_Bvtxcl, h_Blxysig, h_Bcosalphabs2d, h_Trkdcabssig, h_Kshortpt, h_Bpt, h_Bphi, h_CosThetaL, h_CosThetaK, h_Bmultiplicity]
     fout = ROOT.TFile(ofname, "RECREATE")
     for h in hists:
         h.Write()
@@ -131,6 +135,12 @@ def plot_histo():
             'label': "Bphi",
             'xTitle': "B^{+} #phi",
             'yTitle': None,
+        },
+        'h_Bmultiplicity': {
+            'label': "Bmultiplicity",
+            'xTitle': "B multiplicity",
+            'yTitle': "Number of events",
+            'cutPoints': None,
         },
         'h_Bvtxcl': {
             'label': "Bvtxcl",
@@ -185,12 +195,12 @@ def plot_histo():
         h_data = fin_data.Get(pName)
         h_data.UseCurrentStyle()
         h_data.SetXTitle(pCfg['xTitle'])
-        h_data.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
+        h_data.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of candidates")
 
         h_mc = fin_mc.Get(pName)
         h_mc.UseCurrentStyle()
         h_mc.SetXTitle(pCfg['xTitle'])
-        h_mc.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of events")
+        h_mc.SetYTitle(pCfg['yTitle'] if pCfg['yTitle'] else "Number of candidates")
         h_mc.Scale(h_data.GetSumOfWeights() / h_mc.GetSumOfWeights())
         h_mc.SetLineColor(2)
         h_mc.SetFillColor(2)

@@ -9,9 +9,11 @@ from ROOT import RooArgSet
 from SingleBuToKstarMuMuFitter.anaSetup import bMassRegions
 
 Bmass = RooRealVar("Bmass","#font[132]{#it{m}(K_{S}^{0}#pi^{+}#mu^{+}#mu^{#font[122]{\55}})} [GeV]", 4.50, 6.00)
+Bdmass = RooRealVar("Bdmass","#font[132]{#it{m}(K_{S}^{0}#mu^{+}#mu^{#font[122]{\55}})} [GeV]", 4.50, 6.00)
 for regName, regCfg in bMassRegions.items():
     # Remark: Only regions defined while running pdfCollection could be used in ROOT.RooFit(regionName)
     Bmass.setRange(regName, regCfg['range'][0], regCfg['range'][1])
+    Bdmass.setRange(regName, regCfg['range'][0], regCfg['range'][1])
 
 CosThetaK = RooRealVar("CosThetaK", r"cos #font[132]{#it{#theta}_{K}}", -1., 1.)
 CosThetaL = RooRealVar("CosThetaL", r"cos #font[132]{#it{#theta}_{#it{l}}}", -1., 1.)
