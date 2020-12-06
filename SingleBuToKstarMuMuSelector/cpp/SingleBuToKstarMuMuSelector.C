@@ -60,9 +60,15 @@ float Trketa       ;
 float Trkphi       ;
 float Trkdcasigbs  ;
 
-float Dimupt      ;
-float Dimueta     ;
-float Dimuphi     ;
+float Dimupt       ;
+float Dimueta      ;
+float Dimuphi      ;
+float Muppt        ;
+float Mupeta       ;
+float Mupphi       ;
+float Mumpt        ;
+float Mumeta       ;
+float Mumphi       ;
 
 // Branches for Generator level information
 float genQ2        ;
@@ -161,6 +167,12 @@ void ResetEventContent()
     Dimupt         = 0;
     Dimueta        = 0;
     Dimuphi        = 0;
+    Mumpt          = 0;
+    Muppt          = 0;
+    Mumeta         = 0;
+    Mupeta         = 0;
+    Mumphi         = 0;
+    Mupphi         = 0;
 
     // mc
     genBChg = BIGNUMBER;
@@ -323,6 +335,12 @@ void SingleBuToKstarMuMuSelector::SlaveBegin(TTree * /*tree*/)
         fOutputTree_->Branch("Dimupt"        , &Dimupt        , "Dimupt/F");
         fOutputTree_->Branch("Dimueta"       , &Dimueta       , "Dimueta/F");
         fOutputTree_->Branch("Dimuphi"       , &Dimuphi       , "Dimuphi/F");
+        fOutputTree_->Branch("Mumpt"         , &Mumpt         , "Mumpt/F");
+        fOutputTree_->Branch("Mumeta"        , &Mumeta        , "Mumeta/F");
+        fOutputTree_->Branch("Mumphi"        , &Mumphi        , "Mumphi/F");
+        fOutputTree_->Branch("Muppt"         , &Muppt         , "Muppt/F");
+        fOutputTree_->Branch("Mupeta"        , &Mupeta        , "Mupeta/F");
+        fOutputTree_->Branch("Mupphi"        , &Mupphi        , "Mupphi/F");
     }
 
     std::map<string, int> mapcontent;
@@ -530,6 +548,12 @@ void SingleBuToKstarMuMuSelector::UpdateBranchData()
     Dimupt = buff2.Pt();
     Dimueta = buff2.Eta();
     Dimuphi = buff2.Phi();
+    Muppt = Mup_4vec.Pt();
+    Mupeta = Mup_4vec.Eta();
+    Muppt = Mup_4vec.Phi();
+    Mumpt = Mum_4vec.Pt();
+    Mupeta = Mum_4vec.Eta();
+    Mumphi = Mum_4vec.Phi();
 
     buff1.Boost(-buff2.BoostVector());
     buff3 = Bchg > 0 ? Mum_4vec : Mup_4vec;//Take mu- to avoid extra minus sign.
