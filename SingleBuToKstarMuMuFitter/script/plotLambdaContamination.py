@@ -53,11 +53,20 @@ float Define_BdMass(float Pippt, float Pipeta, float Pipphi, float Pimpt, float 
     dimu.SetPtEtaPhiM(Dimupt, Dimueta, Dimuphi, Mumumass);
     return (pip+pim+dimu).Mag();
 }
+float Define_MuTrkMass(int Bchg, float Muppt, float Mupeta, float Mupphi, float Mumpt, float Mumeta, float Mumphi, float Trkpt, float Trketa, float Trkphi){
+    TLorentzVector mu, trk;
+    trk.SetPtEtaPhiM(Trkpt, Trketa, Trkphi, MUON_MASS);
+    if (Bchg > 0){
+        mu.SetPtEtaPhiM(Mumpt, Mumeta, Mumphi, MUON_MASS);
+    }else{
+        mu.SetPtEtaPhiM(Muppt, Mupeta, Mupphi, MUON_MASS);
+    }
+    return (mu+trk).Mag();
+}
 """
 ROOT.gInterpreter.Declare(cimp_Define_LambdaMass)
 
 if __name__ == '__main__':
-
     tree = ROOT.TChain("tree")
     for f in dataCollection.dataReaderCfg['ifile']:
         tree.Add(f)
@@ -72,8 +81,8 @@ if __name__ == '__main__':
         .Alias("LambdaMass", "Lambdamass")\
         .Define("KshortMass", "Define_KshortMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
         .Define("KstarMass", "Define_KstarMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Trkpt, Trketa, Trkphi)")\
-        .Define("BdMass", "Define_BdMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")\
-        .Define("LambdaBMass", "Define_LambdaBMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")
+        .Define("LambdaBMass", "Define_LambdaBMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")\
+        .Define("MuTrkMass", "Define_MuTrkMass(Bchg, Muppt, Mupeta, Mupphi, Mumpt, Mumeta, Mumphi, Trkpt, Trketa, Trkphi)")
         #.Define("LambdaMass", "Define_LambdaMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi)")\
     df_LambdaSR = df.Filter("LambdaMass>1.11 && LambdaMass<1.125")
     df_vetoLambdaSR = df.Filter("LambdaMass<1.11 || LambdaMass>1.125")
@@ -82,19 +91,13 @@ if __name__ == '__main__':
     hists = {}
     hists['h_LambdaMass_bin0'] = {
         'hist': df.Histo1D(("h_LambdaMass_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
-        'xTitle': varCollection.Lambdamass.GetTitle()
-    }
+        'xTitle': varCollection.Lambdamass.GetTitle()}
     hists['h_LambdaMass_SR_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SR']['cutString']).Histo1D(("h_LambdaMass_SR_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
-        'xTitle': varCollection.Lambdamass.GetTitle()
-    }
+        'xTitle': varCollection.Lambdamass.GetTitle()}
     hists['h_LambdaMass_SB_bin0'] = {
         'hist': df.Filter(anaSetup.bMassRegions['SB']['cutString']).Histo1D(("h_LambdaMass_SB_bin0", "", 30, 1.0, 1.3), "LambdaMass"),
-        'xTitle': varCollection.Lambdamass.GetTitle()
-    }
-    hists['h_BdMass_bin0'] = {
-        'hist': df.Histo1D(("h_BdMass_bin0", "", 26, 4.76, 5.80), "BdMass"),
-        'xTitle': varCollection.Bdmass.GetTitle()}
+        'xTitle': varCollection.Lambdamass.GetTitle()}
     hists['h_LambdaBMass_LambdaSR_bin0'] = {
         'hist': df_LambdaSR.Histo1D(("h_LambdaBMass_LambdaSR_bin0", "", 26, 4.76, 5.80), "LambdaBMass"),
         'xTitle': varCollection.Lambdabmass.GetTitle()}
@@ -134,6 +137,9 @@ if __name__ == '__main__':
     hists['h_Bmass_LambdaSR_bin5'] = {
         'hist': df_LambdaSR.Filter(anaSetup.q2bins['abovePsi2s']['cutString']).Histo1D(("h_Bmass_LambdaSR_bin5", "", 26, 4.76, 5.80), "Bmass"),
         'xTitle': varCollection.Bmass.GetTitle()}
+    hists['h_MuTrkMass_bin0'] = {
+        'hist': df.Histo1D(("h_MuTrkMass_bin0", "", 30, 3., 4.), "MuTrkMass"),
+        'xTitle': varCollection.Mumumass.GetTitle()}
 
     h_Bmass_bin0 = df.Histo1D(("h_Bmass_bin0", "", 13, 4.76, 5.80), "Bmass")
     h_Bmass_VetoLambdaSR_bin0 = df_vetoLambdaSR.Histo1D(("h_Bmass_VetoLambdaSR_bin0", "", 13, 4.76, 5.80), "Bmass")
