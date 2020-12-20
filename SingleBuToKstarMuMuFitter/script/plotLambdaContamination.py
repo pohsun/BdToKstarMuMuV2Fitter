@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import ROOT
 
 import SingleBuToKstarMuMuFitter.anaSetup as anaSetup
@@ -176,3 +178,5 @@ if __name__ == '__main__':
     Plotter.latexDataMarks()
     canvas.Update()
     canvas.Print(h_Bmass_VetoLambdaSR_bin0.GetName()+".pdf")
+
+    print("The fractionn of Lambda-related events is {0:.4f}".format(1. - h_Bmass_VetoLambdaSR_bin0.GetSumOfWeights()/h_Bmass_bin0.GetSumOfWeights()))

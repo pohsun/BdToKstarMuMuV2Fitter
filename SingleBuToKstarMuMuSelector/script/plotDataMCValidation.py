@@ -309,4 +309,10 @@ if __name__ == '__main__':
             'ofname': "plotDataMCValidation_jpsi.root",
             'iTreeFiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarJPsi_8TeV_*.root"]
         })
+    if not os.path.exists("plotDataMCValidation_psi2s.root"):
+        # Remark: Takes ~5 minutes for data processing
+        create_histo({
+            'ofname': "plotDataMCValidation_psi2s.root",
+            'iTreeFiles': ["/eos/cms/store/user/pchen/BToKstarMuMu/dat/ntp/v3p2/BuToKstarPsi2S_8TeV_*.root"]
+        })
     plot_histo()

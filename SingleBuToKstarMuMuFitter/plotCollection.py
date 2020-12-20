@@ -224,20 +224,37 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
 
         if regionName not in ['SB', 'innerSB', 'outerSB']:
             modified_pdfPlots = [
+                # Official 'ProjectionRange' seems to be buggy, the normalization in angular axes looks odd.
+                # [pdfPlots[0][0],
+                #  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                #  pdfPlots[0][2],
+                #  pdfPlots[0][3]],
+                # [pdfPlots[0][0],
+                #  pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                #  pdfPlots[1][2],
+                #  pdfPlots[1][3]],
+                # [pdfPlots[0][0],
+                #  pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                #  pdfPlots[2][2],
+                #  pdfPlots[2][3]],
+                # [pdfPlots[0][0],
+                #  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                #  pdfPlots[0][2],
+                #  None], # Duplication of the Total fit to overwrite components. Legend is ignored.
                 [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
                  pdfPlots[0][2],
                  pdfPlots[0][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
                  pdfPlots[1][2],
                  pdfPlots[1][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
                  pdfPlots[2][2],
                  pdfPlots[2][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
                  pdfPlots[0][2],
                  None], # Duplication of the Total fit to overwrite components. Legend is ignored.
             ]
@@ -707,7 +724,9 @@ plotterCfg['plots']['angular3D_bkgJpsiM'] = {
     'func': [functools.partial(plotSimpleBLK, frames='B')],
     'kwargs': {
         'pltName': "angular3D_bkgJpsiM",
-        'dataPlots': [["bkgJpsiMCReader.Fit", plotterCfg_styles['mcStyle'], "Simulation"], ],
+        'dataPlots': [["bkgJpsiMCReader.Fit", 
+                plotterCfg_styles['mcStyle'] + (ROOT.RooFit.Rescale(dataCollection.dataReaderCfg['lumi']/dataCollection.bkgJpsiMCReaderCfg['lumi']), ),
+                "Simulation"], ],
         'pdfPlots': [],
         'marks': {'marks': ['sim']}}
 }
@@ -715,7 +734,9 @@ plotterCfg['plots']['angular3D_bkgPsi2sM'] = {
     'func': [functools.partial(plotSimpleBLK, frames='B')],
     'kwargs': {
         'pltName': "angular3D_bkgPsi2sM",
-        'dataPlots': [["bkgPsi2sMCReader.Fit", plotterCfg_styles['mcStyle'], "Simulation"], ],
+        'dataPlots': [["bkgPsi2sMCReader.Fit",
+                plotterCfg_styles['mcStyle'] + (ROOT.RooFit.Rescale(dataCollection.dataReaderCfg['lumi']/dataCollection.bkgPsi2sMCReaderCfg['lumi']), ), 
+                "Simulation"], ],
         'pdfPlots': [],
         'marks': {'marks': ['sim']}}
 }

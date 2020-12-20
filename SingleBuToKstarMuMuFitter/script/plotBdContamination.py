@@ -81,8 +81,8 @@ if __name__ == '__main__':
         .Filter(anaSetup.cut_antiRadiation)\
         .Define("BdMass", "Define_BdMass(Pippt, Pipeta, Pipphi, Pimpt, Pimeta, Pimphi, Dimupt, Dimueta, Dimuphi, Mumumass)")\
         .Define("MuTrkMass", "Define_MuTrkMass(Bchg, Muppt, Mupeta, Mupphi, Mumpt, Mumeta, Mumphi, Trkpt, Trketa, Trkphi)")
-    df_BdSR = df.Filter("BdMass > 5.18 && BdMass<5.38")
-    df_vetoBdSR = df.Filter("BdMass < 5.18 || BdMass>5.38")
+    df_BdSR = df.Filter("BdMass > 5.20 && BdMass<5.36")
+    df_vetoBdSR = df.Filter("BdMass < 5.20 || BdMass>5.36")
     hists = {}
     hists['h_BdMass_bin0'] = {
         'hist': df.Histo1D(("h_BdMass_bin0", "", 26, 4.76, 5.80), "BdMass"),
@@ -110,21 +110,27 @@ if __name__ == '__main__':
         'xTitle': varCollection.Bmass.GetTitle()}
     hists['h_CosThetaK_BdSR_bin1'] = {
         'hist': df_BdSR.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Histo1D(("h_CosThetaK_BdSR_bin1", "", 16, -1, 1.), "CosThetaK"),
+        'yTitle': "Events",
         'xTitle': varCollection.CosThetaK.GetTitle()}
-    hists['h_CosThetaK_BdMass512-522_bin1'] = {
-        'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter("BdMass>5.12 && BdMass<5.22").Histo1D(("h_CosThetaK_BdMass512-522_bin1", "", 16, -1, 1.), "CosThetaK"),
+    hists['h_CosThetaK_BdMass510-520_bin1'] = {
+        'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter("BdMass>5.10 && BdMass<5.20").Histo1D(("h_CosThetaK_BdMass512-522_bin1", "", 16, -1, 1.), "CosThetaK"),
+        'yTitle': "Events",
         'xTitle': varCollection.CosThetaK.GetTitle()}
-    hists['h_CosThetaK_BdMass522-534_bin1'] = {
-        'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter("BdMass>5.22 && BdMass<5.34").Histo1D(("h_CosThetaK_BdMass522-534_bin1", "", 16, -1, 1.), "CosThetaK"),
+    hists['h_CosThetaK_BdMass520-536_bin1'] = {
+        'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter("BdMass>5.20 && BdMass<5.36").Histo1D(("h_CosThetaK_BdMass522-534_bin1", "", 16, -1, 1.), "CosThetaK"),
+        'yTitle': "Events",
         'xTitle': varCollection.CosThetaK.GetTitle()}
-    hists['h_CosThetaK_BdMass534-560_bin1'] = {
-        'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter("BdMass>5.34 && BdMass<5.60").Histo1D(("h_CosThetaK_BdMass534-560_bin1", "", 16, -1, 1.), "CosThetaK"),
+    hists['h_CosThetaK_BdMass536-560_bin1'] = {
+        'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter("BdMass>5.36 && BdMass<5.60").Histo1D(("h_CosThetaK_BdMass534-560_bin1", "", 16, -1, 1.), "CosThetaK"),
+        'yTitle': "Events",
         'xTitle': varCollection.CosThetaK.GetTitle()}
     hists['h_CosThetaK_USB_bin1'] = {
         'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter(anaSetup.bMassRegions['USB']['cutString']).Histo1D(("h_CosThetaK_USB_bin1", "", 16, -1, 1.), "CosThetaK"),
+        'yTitle': "Events",
         'xTitle': varCollection.CosThetaK.GetTitle()}
     hists['h_CosThetaK_LSB_bin1'] = {
         'hist': df.Filter(anaSetup.q2bins['belowJpsi']['cutString']).Filter(anaSetup.bMassRegions['LSB']['cutString']).Histo1D(("h_CosThetaK_LSB_bin1", "", 16, -1, 1.), "CosThetaK"),
+        'yTitle': "Events",
         'xTitle': varCollection.CosThetaK.GetTitle()}
 
     canvas = Plotter.canvas
@@ -138,7 +144,7 @@ if __name__ == '__main__':
         hData['hist'].SetMaximum(hData['hist'].GetMaximum()*1.8)
         hData['hist'].SetNdivisions(510, "X")
         hData['hist'].GetXaxis().SetTitle(hData.get('xTitle', ""))
-        hData['hist'].GetYaxis().SetTitle(hData.get('yTitle', "Events"))
+        hData['hist'].GetYaxis().SetTitle(hData.get('yTitle', "Events / 40 MeV"))
         hData['hist'].Draw("E")
         if hName == "h_BdMass_bin0":
             f = ROOT.TF1("f", "gaus(0)+expo(3)", 4.76, 5.80)
@@ -148,7 +154,7 @@ if __name__ == '__main__':
             f.SetParLimits(1, 5.25, 5.31)
             f.SetParameter(2, 0.05)
             f.SetParLimits(2, 0.01, 0.1)
-            hData['hist'].Fit("f", "LE") # "0" optionn turns off plotting
+            hData['hist'].Fit("f", "LE0") # "0" option turns off plotting
 	if re.match('h_BdMass_bin[0135]', hName):
 	    line.DrawLine(5.20, hData['hist'].GetMinimum(), 5.20, hData['hist'].GetMaximum())
 	    line.DrawLine(5.36, hData['hist'].GetMinimum(), 5.36, hData['hist'].GetMaximum())
