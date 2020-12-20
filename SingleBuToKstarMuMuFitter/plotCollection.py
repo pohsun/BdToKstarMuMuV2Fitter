@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 import ROOT
 
 import SingleBuToKstarMuMuFitter.cpp
-from SingleBuToKstarMuMuFitter.anaSetup import q2bins
+from SingleBuToKstarMuMuFitter.anaSetup import q2bins, bMassRegions
 from SingleBuToKstarMuMuFitter.StdFitter import unboundFlToFl, unboundAfbToAfb, flToUnboundFl, afbToUnboundAfb
 
 from SingleBuToKstarMuMuFitter.FitDBPlayer import FitDBPlayer
@@ -190,7 +190,8 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
     bkgCombFrac = {}
     for regionName in ["Fit", "SR", "LSB", "USB", "SB", "innerSB", "outerSB"]:
         drawRegionName = {'SB': "LSB,USB", 'innerSB': "innerLSB,innerUSB", 'outerSB': "outerLSB,outerUSB"}.get(regionName, regionName)
-        dataPlots = [["{0}.{1}".format(dataReader, "Full"), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.CutRange(drawRegionName),), "Data"], ]
+        # WARNING: Here you must use correct region instead of using CutRange option, or the normalization will go crazy.
+        dataPlots = [["{0}.{1}".format(dataReader, regionName), plotterCfg_styles['dataStyle'] + (ROOT.RooFit.RefreshNorm(),), "Data"], ]
         for pIdx, p in enumerate(dataPlots):
             dataPlots[pIdx] = self.initDataPlotCfg(p)
 
@@ -225,42 +226,25 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
         if regionName not in ['SB', 'innerSB', 'outerSB']:
             modified_pdfPlots = [
                 # Official 'ProjectionRange' seems to be buggy, the normalization in angular axes looks odd.
-                # [pdfPlots[0][0],
-                #  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
-                #  pdfPlots[0][2],
-                #  pdfPlots[0][3]],
-                # [pdfPlots[0][0],
-                #  pdfPlots[1][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
-                #  pdfPlots[1][2],
-                #  pdfPlots[1][3]],
-                # [pdfPlots[0][0],
-                #  pdfPlots[2][1] + (ROOT.RooFit.ProjectionRange(drawRegionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
-                #  pdfPlots[2][2],
-                #  pdfPlots[2][3]],
-                # [pdfPlots[0][0],
-                #  pdfPlots[0][1] + (ROOT.RooFit.ProjectionRange(drawRegionName),),
-                #  pdfPlots[0][2],
-                #  None], # Duplication of the Total fit to overwrite components. Legend is ignored.
+                # It's necessary to use correct range in dataPlots, or the normalization will go crazy.
+                # See also: https://root.cern/doc/master/rf311__rangeplot_8py.html
                 [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+                 pdfPlots[0][1] + (ROOT.RooFit.Range(regionName), ROOT.RooFit.ProjectionRange(regionName)),
                  pdfPlots[0][2],
                  pdfPlots[0][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][1] + (ROOT.RooFit.Range(regionName), ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Components(pdfPlots[1][0].GetName()), ROOT.RooFit.MoveToBack()),
                  pdfPlots[1][2],
                  pdfPlots[1][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][1] + (ROOT.RooFit.Range(regionName), ROOT.RooFit.ProjectionRange(regionName), ROOT.RooFit.Components(pdfPlots[2][0].GetName()), ROOT.RooFit.MoveToBack()),
                  pdfPlots[2][2],
                  pdfPlots[2][3]],
-                [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
-                 pdfPlots[0][2],
-                 None], # Duplication of the Total fit to overwrite components. Legend is ignored.
             ]
         else:
             # WARNING: An expedient to create post-fit plots in multiple regions.
             #   There seems to be a bug for RooExtendPdf that normalization blows up in multiple regions case.
+            # See also https://root-forum.cern.ch/t/problems-implementing-multiple-range-sideband-fit-unbinned-extended-maximum-likelihood-for-a-2d-data-set/39790/3
 
             # Correct the shape of f_final
             args.find("nSig").setVal(nSigDB * sigFrac[regionName])
@@ -268,21 +252,17 @@ def plotPostfitBLK(self, pltName, dataReader, pdfPlots):
         
             modified_pdfPlots = [
                 [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
+                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ),
                  pdfPlots[0][2],
                  pdfPlots[0][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName())),
+                 pdfPlots[1][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[1][0].GetName()), ROOT.RooFit.MoveToBack()),
                  pdfPlots[1][2],
                  pdfPlots[1][3]],
                 [pdfPlots[0][0],
-                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName())),
+                 pdfPlots[2][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent), ROOT.RooFit.Components(pdfPlots[2][0].GetName()), ROOT.RooFit.MoveToBack()),
                  pdfPlots[2][2],
                  pdfPlots[2][3]],
-                [pdfPlots[0][0],
-                 pdfPlots[0][1] + (ROOT.RooFit.Normalization(nTotal_local, ROOT.RooAbsReal.NumEvent),),
-                 pdfPlots[0][2],
-                 None], # Duplication of the Total fit to overwrite components. Legend is ignored.
             ]
 
         legend = ROOT.TLegend(.64, .60, .94, .90)
